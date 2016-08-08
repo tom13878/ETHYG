@@ -1,0 +1,86 @@
+---
+title: "Ethiopia maize yield gap"
+author:
+- affiliation: Wageningen Economic Research & IIASA
+  name: Michiel van Dijk
+- affiliation: Wageningen Economic Research
+  name: Zuzana Smeets Kristkova
+- affiliation: Wageningen Economic Research
+  name: Tom Morley
+- affiliation: Ethiopian Economic Policy Research Institute
+  name: Assefa Admassie
+- affiliation: ADD
+  name: Lenny van Bussel
+  
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  pdf_document:
+    fig_caption: yes
+    keep_tex: yes
+    latex_engine: pdflatex
+    number_sections: yes
+    template: D:\\Dropbox\\Michiel_research\\Templates\\r-markdown-templates\\svm-latex-ms.tex
+  html_document: default
+  word_document: default
+fontsize: 11pt
+geometry: margin=1in
+keywords: Yield Gap
+bibliography: M:/My Documents/bibTex/library.bib
+subtitle: Check
+thanks: "**Current version**: `r format(Sys.time(), '%B %d, %Y')`; **Corresponding author**: michiel.vandijk@wur.nl."
+abstract: ETH Maize yield gaps abstract
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+
+
+
+# Introduction
+
+
+
+
+# Background
+
+
+# Methodology
+
+We use a stochastic frontier production function [@Aigner1977; @Meeusen1977] to estimate the technical efficiency yield gap. The model is specified as follows for our study:
+
+\begin{equation}
+\label{sfa}
+y_i=x_i\beta+v_i-u_i
+\end{equation}
+
+where, $y_i$ is the logarithm of actual yield (ya) for maize plot $i$, $x_i$ is a vector containing growth defining, growth limiting and growth reducing factors a set of control variables, $\beta$ is a vector of parameters, $v_i$  is a symmetric random error and $u_i$ is non-negative random variable with a half normal distribution that measures technical inefficiency. The error terms $v_i$  and $u_i$ will be influenced by unobserved household and plot-specific effects, such as farmers’ management skills and soil quality, which are correlated with some of the explanatory variables, such as for example fertilizer application. Simply pooling the data for the two survey years will result in coefficients that are biased (Hausman and Taylor, 1981). 
+
+To control for time-invariant unobserved heterogeneity, we apply the correlated random effects (CRE) estimator [@Wooldridge2002], which is also referred to as the Mundlak-Chamberlain device, following the work of Mundlak [-@Mundlak1978] and Chamberlain [-@Chamberlain1984]. CRE is the standard approach in recent and similar micro-econometric studies that use panel data to control for time-invariant heterogeneity [e.g. @Mason2013; @Mason2013a; @Sheahan2013]. It can be used on unbalanced samples and be combined with stochastic frontier analysis [@Farsi2006; @Abdulai2007]. The CRE estimator allows for correlation between the time invariant unobserved household specific omitted variable and the explanatory variables. The technique is implemented by modelling the distribution of the omitted variable, conditional on the means of the strictly exogenous variables: 
+
+# Data
+
+# Results
+
+# Conclusions
+
+
+
+## R Markdown
+
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+# References

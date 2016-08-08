@@ -19,9 +19,23 @@
 # From the BID: Addis Ababa, Amhara, Oromiya, SNNP, Tigray, and "other regions" (including Dire Dawa). 
 # In those regions with the greatest urban populations, Addis Ababa and Oromiya, 20 EAs were selected; while in all other strata, 15 EAs were selected.
 
-###################################
-dataPath <- "D:\\Data\\IPOP\\SurveyData\\"
-wdPath <- "D:\\Dropbox\\Michiel_research\\2285000066 Africa Maize Yield Gap"
+#######################################
+#### CLEAN DATA PREPARE ETH PANEL #####
+#######################################
+
+############################################
+############## READ THE DATA ###############
+############################################
+
+source("N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code\\ETH\\ETH_2011.r")
+source("N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code\\ETH\\ETH_2013.r")
+
+#######################################
+############## PACKAGES ETC ###########
+#######################################
+
+dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/"
+wdPath <- "D:\\Data\\Projects\\ETHYG"
 setwd(wdPath)
 
 library(plyr)
@@ -31,19 +45,65 @@ library(stargazer)
 library(haven)
 library(tidyr)
 library(xtable)
-library(DescTools)
 
-source("Analysis/ETH/Code/waterfall_plot.R")
+source("Code/winsor.R")
+source("waterfall_plot.R")
 
 options(scipen=999)
 
+
+
 #######################################
-############## READ DATA ##############
+###### POOLED DATABASE ################
 #######################################
 
-CS2013 <- readRDS("./Analysis/ETH/Data/ETH_data_2013.rds")
+# in the second wave, the household
+# identification number of the first
+# wave is used. However these are recorded
+# as an empty character string if the 
+# household entered the survey in wave
+# two. ("")
+table(ETH2013$household_id %in% "")
+ETH2013$household_id <- zap_empty(ETH2013$household_id)
+table(is.na(ETH2013$household_id))
+
+# the same is true of the individual id
+table(ETH2013$individual_id %in% "")
+ETH2013$individual_id <- zap_empty(ETH2013$individual_id )
+table(is.na(ETH2013$individual_id))
+
+# use the first wave household identification
+# number. Where this is missing use the
+# second wave household identification number
+ETH2013$household_id <- ifelse(is.na(ETH2013$household_id), ETH2013$household_id2, ETH2013$household_id)
+ETH2013$individual_id <- ifelse(is.na(ETH2013$individual_id), ETH2013$individual_id2, ETH2013$individual_id)
+
+# -------------------------------------
+# Some waves of the data have variables
+# that were not available in others.
+# -------------------------------------
+
+# get all name variables that are common to both waves
+good <- Reduce(intersect, list(names(ETH2011), names(ETH2013)))
+
+# select only those names common in both waves
+ETH2011_2 <- ETH2011[, good]
+ETH2013_2 <- ETH2013[, good]
+
+# new full dataset
+dbP <- rbind(ETH2011_2,ETH2013_2) %>%
+  select(hhid=household_id, indidy=individual_id, everything())
+
+#rm(good, path, ETH2011, ETH2011_2, ETH2013, ETH2013_2)
+
+# new full dataset
+dbP <- rbind(ETH2011_2, ETH2013_2) %>%
+  dplyr::select(hhid2010, indidy2, hhid2012, indidy3, everything())
 
 
+#######################################
+############## CLEANING ###############
+#######################################
 ######################################
 ######## Modify and add variables ####
 ######################################
