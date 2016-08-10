@@ -69,7 +69,7 @@ ETH2013_2 <- ETH2013[, good]
 dbP <- rbind(ETH2011_2,ETH2013_2) %>%
   select(hhid=household_id, indidy=individual_id, everything())
 
-rm(good, path, ETH2011, ETH2011_2, ETH2013, ETH2013_2)
+rm(good, ETH2011, ETH2011_2, ETH2013, ETH2013_2)
 
 # Write file
 saveRDS(dbP, "Cache/Pooled_ETH.rds")
