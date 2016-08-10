@@ -25,8 +25,6 @@ library(haven)
 library(tidyr)
 library(xtable)
 
-source("Code/winsor.R")
-
 options(scipen=999)
 
 ###########################
@@ -71,11 +69,8 @@ ETH2013_2 <- ETH2013[, good]
 dbP <- rbind(ETH2011_2,ETH2013_2) %>%
   select(hhid=household_id, indidy=individual_id, everything())
 
-#rm(good, path, ETH2011, ETH2011_2, ETH2013, ETH2013_2)
-
-# Select maize plots and head of household
-dbP <- filter(dbP, status %in% "HEAD", crop_code %in% 2)
+rm(good, path, ETH2011, ETH2011_2, ETH2013, ETH2013_2)
 
 # Write file
-saveRDS(dbP, "Cache/Pooled_EHT.rds")
+saveRDS(dbP, "Cache/Pooled_ETH.rds")
 
