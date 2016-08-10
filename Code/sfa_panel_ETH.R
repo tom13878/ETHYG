@@ -20,7 +20,6 @@
 ############## PACKAGES ETC ###########
 #######################################
 
-detach(package:dplyr)
 library(plyr)
 library(dplyr)
 library(stargazer)
@@ -32,8 +31,14 @@ library(frontier)
 library(moments)
 library(tidyr)
 library(openxlsx)
+library(frontier)
+library(moments)
+
+wdPath <- "D:\\Data\\Projects\\ETHYG"
+setwd(wdPath)
 
 source("Code/winsor.r")
+options(scipen=999)
 
 #######################################
 ############## LOAD DATA ##############
@@ -113,6 +118,7 @@ db0 <- dbP %>%
                 sex, age,
                 literate, cage, ed_any, N1555, family_size, death,
                 dist_hh, dist_road, dist_market, dist_popcenter, dist_regcap,
+                trans_cost,
                 title,
                 popEA,
                 road, cost2small_town, bank, micro_finance, ext_agent, extension, 
@@ -211,8 +217,15 @@ db1 <- left_join(db0, Prices)
 # Drop unused levels (e.g. Zanzibar in zone), which are giving problems with sfa
 db1 <- droplevels(db1)
 
+
+
+############################
+###### INPUT DEMAND ########
+############################
+
+
 #######################################
-############## ANALYSIS ###############
+###### PRODUCTION FUNCTION ############
 #######################################
 
 
@@ -240,7 +253,6 @@ olsCD2 <- lm(logyld ~ noN + logN + loglab +
                crop_count2 + surveyyear2 + 
                noN_bar + logN_bar + loglab_bar +
                irrig_bar + 
-               herb_bar + fung_bar +
                impr_bar +
                crop_count_bar,
              data = db0)
@@ -250,13 +262,11 @@ stargazer(olsCD1, olsCD2, type="text")
 # Assess skewness of OLS - should be left skewed which is confirmed.
 hist( residuals(olsCD1), 15)
 hist( residuals(olsCD2), 15)
-library("moments")
 skewness(residuals(olsCD1))
 skewness(residuals(olsCD2))
 
 
 # Frontier estimation
-library(frontier)
 sfaCD1 <- sfa(logyld ~ noN + logN +
                 loglab +
                 logarea +
@@ -290,54 +300,73 @@ sfaCD2 <- sfa(logyld ~ noN + logN + loglab +
 summary(sfaCD2, extraPar = TRUE)
 lrtest(sfaCD2)
 
-sfaCD3 <- sfa(logyld ~ noN + logN + 
-                logasset + 
-                logae + 
-                logseed_q +
+check <- select(db0, sex, literate, cage, ed_any, N1555, family_size, death, dist_hh, dist_road, dist_market, dist_popcenter, dist_regcap,
+title, popEA,
+road, cost2small_town, bank, micro_finance, ext_agent, extension)
+summary(check)
+
+db0X <- db0 %>% mutate(title = as.numeric(ifelse(title == "YES", 1, ifelse(title == "NO", 0, title))),
+                       literate = as.numeric(ifelse(literate == "YES", 1, ifelse(literate == "NO", 0, literate))),
+                       ed_any = as.numeric(ifelse(ed_any == "YES", 1, ifelse(ed_any == "NO", 0, ed_any))),
+                       N1555 = as.factor(N1555),
+                       extension = as.numeric(ifelse(extension == "YES", 1, ifelse(extension == "NO", 0, extension))),
+                       micro_finance = as.numeric(ifelse(micro_finance == "YES", 1, ifelse(micro_finance == "NO", 0, micro_finance))),
+                       bank = as.numeric(ifelse(bank == "YES", 1, ifelse(bank == "NO", 0, bank))),
+                       popEA = log(popEA)
+                       )
+
+summary(db0X$extension)
+table(db0X$extension)
+
+check2 <- select(db0X, sex, literate, cage, ed_any, N1555, family_size, death, dist_hh, dist_road, dist_market, dist_popcenter, dist_regcap,
+                title, popEA,
+                road, cost2small_town, bank, micro_finance, ext_agent, extension)
+
+hist(log(db0$popEA))
+
+sfaCD3 <- sfa(logyld ~ noN + logN + loglab +
                 logarea +
                 irrig + 
-                AEZ +
-                #pestherb +
-                herb + pest +
-                mech + antrac +
-                seed +
-                inter_crop +
+                impr +
                 slope + elevation +
                 SOC2 + phdum2 + 
                 rain_wq + rain_wq2+
-                crop_count2 + 
-                surveyyear2 + 
-                noN_bar + logN_bar + 
-                logasset_bar +
-                logae_bar + logarea_bar + 
-                logseed_q_bar +
-                irrig_bar +
-                #pestherb_bar +
-                herb_bar + pest_bar +
-                mech_bar + antrac_bar +
-                seed_bar +
-                inter_crop_bar +
+                fs +
+                # AEZ
+                crop_count2 + surveyyear2 + 
+                noN_bar + logN_bar + loglab_bar +
+                irrig_bar + 
+                impr_bar +
                 crop_count_bar
-              | age + sex +
-                hirelab_sh +
-                infra_dummy_finance_ph +
-                infra_dummy_market_ph + 
-                plot_right + 
-                borrow_dummy_pp +
-                #ext_topic_agro_ph + ext_topic_econ_ph + ext_topic_other_ph +
-                ext +
-                #ext_dummy_ph + 
-                #mobile_access_ph +
-                #dist_hh +
-                dist_market-1 + 
-                #dist_popcenter +
-                #fs +
-                -1,
-              data = db0, maxit = 1500, restartMax = 20, tol = 0.000001)
+              | 
+                sex +
+                age + 
+                title +
+                #literate +
+                ed_any +
+                extension +
+                # #N1555
+                dist_hh +
+                dist_market 
+                #hirelab_sh +
+                #micro_finance +
+                #popEA
+                #cost2small_town 
+                #trans_cost
+                
+                
+                # hirelab_sh +
+                
+                
+                # dist_popcenter 
+                # #fs +
+                 -1
+              ,
+              data = db0X, maxit = 1500, restartMax = 20, tol = 0.000001)
 
 summary(sfaCD3, extraPar = TRUE)
 lrtest(sfaCD3)
-
+summary(db0$age)
 
 # Compute profit maximizing Pn per zone and other summary statistics
 # Select model

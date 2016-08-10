@@ -7,11 +7,11 @@
 # Compute community prices!
 # Compare prices with other prices and check if they are realistic!
 
-wdPath <- "D:\\Dropbox\\Michiel_research\\2285000066 Africa Maize Yield Gap\\Analysis\\ETH\\"
+wdPath <- "D:\\Data\\Projects\\ETHYG"
 extraDataPath <- "D:\\Dropbox\\Michiel_research\\2285000066 Africa Maize Yield Gap\\Analysis\\ETH\\Data"
 setwd(wdPath)
 
-surveyPath <- "W:\\LEI\\Internationaal Beleid  (IB)\\Projecten\\2285000066 Africa Maize Yield Gap\\SurveyData"
+surveyPath <- "N:\\Internationaal Beleid  (IB)\\Projecten\\2285000066 Africa Maize Yield Gap\\SurveyData"
 
 library(plyr)
 library(dplyr)
