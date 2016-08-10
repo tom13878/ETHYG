@@ -1,9 +1,6 @@
 #######################################
 ###### ANALYSIS of ETH panel data #####
 #######################################
-######### Version 09-12-15 ############
-#######################################
-
 
 # CHECK:
 # Imputation of dummy variables.
@@ -11,7 +8,7 @@
 # SFA from other package
 # Panel estimator
 # Including CRE
-# relation betwee residuals and error computed below
+# relation between residuals and error computed below
 # Translog estimation
 # Do grubbs test for outliers on N?
 # Add texture to soil variables
@@ -20,108 +17,122 @@
 # In those regions with the greatest urban populations, Addis Ababa and Oromiya, 20 EAs were selected; while in all other strata, 15 EAs were selected.
 
 #######################################
-#### CLEAN DATA PREPARE ETH PANEL #####
-#######################################
-
-############################################
-############## READ THE DATA ###############
-############################################
-
-source("N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code\\ETH\\ETH_2011.r")
-source("N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code\\ETH\\ETH_2013.r")
-
-#######################################
 ############## PACKAGES ETC ###########
 #######################################
 
-dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/"
-wdPath <- "D:\\Data\\Projects\\ETHYG"
-setwd(wdPath)
-
+detach(package:dplyr)
 library(plyr)
 library(dplyr)
-library(ggplot2)
 library(stargazer)
-library(haven)
-library(tidyr)
+library(broom)
+library(DescTools)
+library(ggplot2)
 library(xtable)
+library(frontier)
+library(moments)
+library(tidyr)
+library(openxlsx)
 
-source("Code/winsor.R")
-source("waterfall_plot.R")
-
-options(scipen=999)
-
-
+source("Code/winsor.r")
 
 #######################################
-###### POOLED DATABASE ################
+############## LOAD DATA ##############
 #######################################
 
-# in the second wave, the household
-# identification number of the first
-# wave is used. However these are recorded
-# as an empty character string if the 
-# household entered the survey in wave
-# two. ("")
-table(ETH2013$household_id %in% "")
-ETH2013$household_id <- zap_empty(ETH2013$household_id)
-table(is.na(ETH2013$household_id))
-
-# the same is true of the individual id
-table(ETH2013$individual_id %in% "")
-ETH2013$individual_id <- zap_empty(ETH2013$individual_id )
-table(is.na(ETH2013$individual_id))
-
-# use the first wave household identification
-# number. Where this is missing use the
-# second wave household identification number
-ETH2013$household_id <- ifelse(is.na(ETH2013$household_id), ETH2013$household_id2, ETH2013$household_id)
-ETH2013$individual_id <- ifelse(is.na(ETH2013$individual_id), ETH2013$individual_id2, ETH2013$individual_id)
-
-# -------------------------------------
-# Some waves of the data have variables
-# that were not available in others.
-# -------------------------------------
-
-# get all name variables that are common to both waves
-good <- Reduce(intersect, list(names(ETH2011), names(ETH2013)))
-
-# select only those names common in both waves
-ETH2011_2 <- ETH2011[, good]
-ETH2013_2 <- ETH2013[, good]
-
-# new full dataset
-dbP <- rbind(ETH2011_2,ETH2013_2) %>%
-  select(hhid=household_id, indidy=individual_id, everything())
-
-#rm(good, path, ETH2011, ETH2011_2, ETH2013, ETH2013_2)
-
-# new full dataset
-dbP <- rbind(ETH2011_2, ETH2013_2) %>%
-  dplyr::select(hhid2010, indidy2, hhid2012, indidy3, everything())
-
+# Load pooled data
+dbP <- readRDS("Cache/Pooled_ETH.rds")
 
 #######################################
 ############## CLEANING ###############
 #######################################
+
+
+# Select maize plots and head of household
+dbP <- filter(dbP, status %in% "HEAD", crop_code %in% 2)
+
+# # Create rel_harv_area variable
+# dbP$area_farmer[dbP$area_farmer %in% 0] <- NA
+# dbP$harv_area[dbP$harv_area %in% 0] <- NA
+# 
+# dbP <- dbP %>%
+#   mutate( sh_harv_area = harv_area/area_farmer,
+#           sh_harv_area = ifelse(sh_harv_area >1, 1, sh_harv_area), # for some farmers the harvested area > plot size. Set to 1
+#           rel_harv_area = sh_harv_area * area_gps)
+
+# Create id for plots
+dbP <- dbP %>% 
+  mutate(id=1:dim(.)[1]) 
+
+# Cleaning and analysis depends strongly on which measure is chosen for area, which is the denominator for many variables.
+# there are three possible yield variables. 
+# that can be created for the last two waves of data. 
+# 1. yld1: above uses the full gps areas as denominator
+# 2. yld2: uses harvested area as denominator
+# 3. yld3: Uses relative harvest area to correct gps area
+# To simplify the code we set these values in this part. Subsequent analysis code can then be used for any definition of yield.
+
+# ETH does not present information  on area harvested for 2011. We use area_gps here yld1)
+
+dbP <- dbP %>% 
+  mutate(
+    area = area_gps, 
+    #area = area_gps,
+    yld = crop_qty_harv/area,
+    N = N/area)
+
+
+# As we focus on small scale farmers we restrict area size
+dbP <- filter(dbP, area_gps <=10)
+
+# cap yield at 18593 kg/ha, the highest potential yield in ETH (not water limited)
+dbP <- filter(dbP, yld <= 18592.85714)
+
+# restrict attention to plots that use N < 700. 700kg/hectare  represents an upper bound limit associated with inorganic fertilizer use in the United States under irrigated corn conditions (Sheahan & Barett 2014) 
+dbP <- filter(dbP, N < 700)
+
+# Select relevant variables and complete cases
+db0 <- dbP %>% 
+  dplyr::select(hhid, ea_id, DISNAME = ZONENAME, REGNAME, parcel_id, field_id, holder_id,
+                AEZ, fs,
+                SOC, SOC2, ph, ph2, RootDepth, 
+                rain_year, rain_wq, SPEI,
+                YA, YW, YP,
+                slope, elevation,
+                nutr_av,
+                yld, 
+                crop_qty_harv, sold_qty_kg, sold_qty_gr,
+                harv_lab, harv_lab_hire ,
+                #ae,
+                impr, 
+                fung, herb,
+                N, P, 
+                manure, compost, other_org,
+                crop_stand, cropping,
+                legume, irrig, 
+                area, area_tot, area_gps,
+                sex, age,
+                literate, cage, ed_any, N1555, family_size, death,
+                dist_hh, dist_road, dist_market, dist_popcenter, dist_regcap,
+                title,
+                popEA,
+                road, cost2small_town, bank, micro_finance, ext_agent, extension, 
+                crop_count, surveyyear,
+                rural, 
+                lat, lon)
+
+
+summary(db0)
+
+#db0 <- db0 %>%
+#  do(filter(., complete.cases(.)))
+
+
+
 ######################################
 ######## Modify and add variables ####
 ######################################
 
-# Select relevant variables and complete cases
-db0 <- CS2013 %>% 
-  dplyr::select(ea_id2, holder_id, household_id2, parcel_id, field_id, lat, lon, region_lsms, 
-                qty, AEZ, plant_lab, harv_lab, N, P, hybrd, irrig, manure, herb,  fung,
-                sex, age, rural, dist_household, dist_popcenter, dist_market, pop_density, title,
-                legume, crop_count, extension,
-                rain_wq, 
-                SOC, SOC2, ph, ph2, RootDepth, SPEI, rain,
-                rural, area_im, slope, elevation, lat, lon) %>%
-  do(filter(., complete.cases(.)))
 
-###### VIM analysis of missing variables
-
-# Add variables
 # Following Burke
 db0$phdum[db0$ph < 55] <- 1
 db0$phdum[db0$ph >= 55 & db0$ph <=70] <- 2 # Neutral and best suited for crops
@@ -135,67 +146,55 @@ db0$phdum2[db0$ph2 > 70] <- 3
 db0$phdum2 <- factor(db0$phdum2)
 
 # Recode AEZ into 4 zones
-db0$AEZ2 <- db0$AEZ
-db0$AEZ2 <- mapvalues(db0$AEZ2, from = c("Tropic-warm / semi-arid"), to = c("Tropic-warm"))
-db0$AEZ2 <- mapvalues(db0$AEZ2, from = c("Tropic-warm / sub-humid"), to = c("Tropic-warm"))
-db0$AEZ2 <- factor(db0$AEZ2)
+# db0$AEZ2 <- db0$AEZ
+# db0$AEZ2 <- mapvalues(db0$AEZ2, from = c("Tropic-warm / semi-arid"), to = c("Tropic-warm"))
+# db0$AEZ2 <- mapvalues(db0$AEZ2, from = c("Tropic-warm / sub-humid"), to = c("Tropic-warm"))
+# db0$AEZ2 <- factor(db0$AEZ2)
 
 # Crop count > 1
 db0$crop_count2[db0$crop_count==1] <- 1
 db0$crop_count2[db0$crop_count>1] <- 0
 
 # additional variables
-db0 <- db0 %>% mutate (yld = qty/area_im,
-                       lab = (plant_lab + harv_lab)/area_im,#CHECK
-                       logyld=log(yld),
-                       N=N/area_im,
-                       P=P/area_im,
+db0 <- db0 %>% mutate (logyld=log(yld),
                        yesN = ifelse(N>0, 1,0), # Dummy when plot does not use fertilizer, following approach of Battese (1997)
-                       noN = ifelse(N<=0, 1,0), # Dummy when plot does not use fertilizer, following approach of Battese (1997)
+                       noN = ifelse(N<=0, 1,0), # Dummy when plot does use fertilizer, following approach of Battese (1997)
                        logN = log(pmax(N, noN)), # maximum of dummy and N following Battese (1997)
-                       loglab = log(lab), 
-                       area2= area_im*area_im,
-                       logarea = log(area_im),
-                       rain_wq_2 =rain_wq*rain_wq
-                       )
+                       lab = harv_lab + harv_lab_hire,
+                       hirelab_sh = harv_lab_hire/(harv_lab_hire + harv_lab)*100,
+                       lab=lab/area,
+                       #logae = log(ae),
+                       #asset = implmt_value + lvstk2_valu,
+                       #assetph=asset/area_tot,
+                       #logasset = log(assetph+1),
+                       loglab = log(lab+1),
+                       logarea = log(area_gps), # area_gps not area because we want to add plot size as proxy for economies of scale
+                       rain_wq2 = rain_wq*rain_wq,
+                       rain_year2 = rain_year*rain_year,
+                       #pestherb = ifelse(herb==1 | pest==1, 1, 0),
+                       #ext = ifelse(ext_dummy_pp==1 | ext_dummy_ph ==1, 1, 0),
+                       lograin = log(rain_year),
+                       sex = as.numeric(ifelse(sex == "MALE", 0, 1)),
+                       surveyyear2 = replace(surveyyear==2011, 1, 0))
 
-#db0 <- cbind(db0, model.matrix( ~ soil - 1, data=db0)) # add separate dummy for soil instead of factor for CRE
-# Redo analysis with CRE on hh with multiple plots
+# Add CRE variables
+db0 <- db0 %>%
+  group_by(hhid) %>%
+  mutate(loglab_bar=mean(loglab, na.rm=TRUE),
+         #logae_bar=mean(loglab, na.rm=TRUE),
+         logN_bar=mean(logN, na.rm=TRUE),
+         noN_bar=mean(noN, na.rm=TRUE),
+         area_bar=mean(area, na.rm=TRUE),
+         logarea_bar=mean(logarea, na.rm=TRUE),
+         irrig_bar=mean(irrig, na.rm = TRUE),
+         legume_bar=mean(legume, na.rm = TRUE),
+         fung_bar=mean(fung, na.rm = TRUE),
+         herb_bar=mean(herb, na.rm = TRUE),
+         impr_bar=mean(impr, na.rm = TRUE),
+         crop_count_bar=mean(crop_count2, na.rm=TRUE))
 
-# # Add CRE variables
-# db0 <- ddply(db0, .(holder_id), transform,
-#              loglab_bar=mean(loglab, na.rm=TRUE),
-#              logN_bar=mean(logN, na.rm=TRUE),
-#              noN_bar=mean(noN, na.rm=TRUE),
-#              area_bar=mean(area_im, na.rm=TRUE),
-#              logarea_bar=mean(logarea, na.rm=TRUE),
-#              manure_bar=mean(manure, na.rm=TRUE),
-#              irrig_bar=mean(irrig, na.rm = TRUE),
-#              herb_bar=mean(herb, na.rm = TRUE),
-#              fung_bar=mean(fung, na.rm = TRUE),
-#              hybrd_bar=mean(hybrd, na.rm = TRUE),
-#              legume_bar=mean(legume, na.rm = TRUE),
-#              crop_count_bar=mean(crop_count2, na.rm=TRUE))
-
-
-#######################################
-############## CLEANING ###############
-#######################################
-
-############CHECK THESE....
-
-# cap yield at 18071 kg/ha, the highest potential yield in ETH
-db0 <- filter(db0, yld <=18071.79)
-
-# Sample includes very small plots <0.005 ha that bias result upwards and very large >35 ha. 
-# As we focus on small scale farmers we restrict area size
-# ETH has a lot of plots below 0.005 ha. For now we only cap at 10.
-db0 <- filter(db0, area_im <=10)
-
-# restrict attention to plots that use N < 1000
-Freq(db0$N)
-db0 <- filter(db0, N < 1000)
-
+db0 <- droplevels(db0)
+summary(db0)
 
 #######################################
 ############## ADD PRICE DATA #########
@@ -212,62 +211,132 @@ db1 <- left_join(db0, Prices)
 # Drop unused levels (e.g. Zanzibar in zone), which are giving problems with sfa
 db1 <- droplevels(db1)
 
-
 #######################################
 ############## ANALYSIS ###############
 #######################################
 
-#### revise what to include - Irrig?
-
 
 # Cobb Douglas
-olsCD1 <- lm(logyld ~ noN + AEZ2:logN + loglab + 
+olsCD1 <- lm(logyld ~ noN + logN + loglab + 
                logarea +
-               hybrd + manure + herb + fung + legume + irrig +
+               irrig +
+               impr +
                slope + elevation +
                SOC2 + phdum2 + 
-               rain_wq + rain_wq_2+
-               crop_count2,
-               data = db0)
+               rain_wq + rain_wq2+
+               AEZ +
+               crop_count2 + surveyyear2,
+             data = db0)
 
-stargazer(olsCD1, type="text")
 
+olsCD2 <- lm(logyld ~ noN + logN + loglab +
+               logarea +
+               irrig + 
+               impr +
+               slope + elevation +
+               SOC2 + phdum2 + 
+               rain_wq + rain_wq2+
+               AEZ +
+               crop_count2 + surveyyear2 + 
+               noN_bar + logN_bar + loglab_bar +
+               irrig_bar + 
+               herb_bar + fung_bar +
+               impr_bar +
+               crop_count_bar,
+             data = db0)
 
+stargazer(olsCD1, olsCD2, type="text")
 
 # Assess skewness of OLS - should be left skewed which is confirmed.
 hist( residuals(olsCD1), 15)
-
+hist( residuals(olsCD2), 15)
 library("moments")
 skewness(residuals(olsCD1))
+skewness(residuals(olsCD2))
+
 
 # Frontier estimation
 library(frontier)
-sfaCD1 <- sfa(logyld ~ yesN + AEZ2:logN + loglab + 
-               logarea +  
-                hybrd + manure + herb + fung + legume +
+sfaCD1 <- sfa(logyld ~ noN + logN +
+                loglab +
+                logarea +
+                irrig +
+                impr +
                 slope + elevation +
-                SOC2 + phdum2 + 
-                rain_wq + rain_wq_2+
-                crop_count2,
-                data = db0)
+                SOC2 + phdum2 +
+                rain_wq + rain_wq2+
+                AEZ +
+                crop_count2 + surveyyear2,
+              data = db0, maxit = 1500, restartMax = 20, printIter = 1, tol = 0.000001)
 
 summary(sfaCD1, extraPar = TRUE)
 lrtest(sfaCD1)
 
-# Frontier estimation with explanatory factors
-library(frontier)
-sfaCD1_E <- sfa(logyld ~ noN + AEZ2:logN + loglab + 
-                logarea +  
-                hybrd + manure + herb + fung + legume + irrig +
+sfaCD2 <- sfa(logyld ~ noN + logN + loglab +
+                logarea +
+                irrig + 
+                impr +
                 slope + elevation +
                 SOC2 + phdum2 + 
-                rain_wq + rain_wq_2+
-                crop_count2
-                | age + sex + title + rural + extension + dist_market + dist_household-1, 
-              data = db0, maxit = 1500, restartMax = 20, printIter = 1, tol = 0.000001 )
+                rain_wq + rain_wq2+
+                AEZ +
+                crop_count2 + surveyyear2 + 
+                noN_bar + logN_bar + loglab_bar +
+                irrig_bar + 
+                impr_bar +
+                crop_count_bar,
+                data = db0, maxit = 1500, restartMax = 20, tol = 0.000001)
 
-summary(sfaCD1_E, extraPar = TRUE)
-lrtest(sfaCD1_E)
+summary(sfaCD2, extraPar = TRUE)
+lrtest(sfaCD2)
+
+sfaCD3 <- sfa(logyld ~ noN + logN + 
+                logasset + 
+                logae + 
+                logseed_q +
+                logarea +
+                irrig + 
+                AEZ +
+                #pestherb +
+                herb + pest +
+                mech + antrac +
+                seed +
+                inter_crop +
+                slope + elevation +
+                SOC2 + phdum2 + 
+                rain_wq + rain_wq2+
+                crop_count2 + 
+                surveyyear2 + 
+                noN_bar + logN_bar + 
+                logasset_bar +
+                logae_bar + logarea_bar + 
+                logseed_q_bar +
+                irrig_bar +
+                #pestherb_bar +
+                herb_bar + pest_bar +
+                mech_bar + antrac_bar +
+                seed_bar +
+                inter_crop_bar +
+                crop_count_bar
+              | age + sex +
+                hirelab_sh +
+                infra_dummy_finance_ph +
+                infra_dummy_market_ph + 
+                plot_right + 
+                borrow_dummy_pp +
+                #ext_topic_agro_ph + ext_topic_econ_ph + ext_topic_other_ph +
+                ext +
+                #ext_dummy_ph + 
+                #mobile_access_ph +
+                #dist_hh +
+                dist_market-1 + 
+                #dist_popcenter +
+                #fs +
+                -1,
+              data = db0, maxit = 1500, restartMax = 20, tol = 0.000001)
+
+summary(sfaCD3, extraPar = TRUE)
+lrtest(sfaCD3)
 
 
 # Compute profit maximizing Pn per zone and other summary statistics
