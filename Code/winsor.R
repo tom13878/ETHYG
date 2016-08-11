@@ -1,5 +1,5 @@
 
-
+# Winsoring using fraction
 winsor <- function(x, fraction=0.05, lower=TRUE, upper=TRUE){
   # Winsor functions at a quantile chosen by fraction
   if (length(fraction) != 1 || fraction < 0 || fraction > 0.1){
@@ -17,7 +17,7 @@ winsor <- function(x, fraction=0.05, lower=TRUE, upper=TRUE){
   return(x)
 }
 
-
+# Winsoring using median
 winsor2 <- function (x, multiple=3){
   # winsor function by so many multiples from median average
   # deviation
@@ -32,7 +32,7 @@ winsor2 <- function (x, multiple=3){
   y + med
 }
 
-
+# Trimming data using fraction
 trim <- function(x, fraction=0.05, lower=TRUE, upper=TRUE){
   # set values below or above a certain quantile to NA
   if (length(fraction) != 1 || fraction < 0 || fraction > 0.1){
