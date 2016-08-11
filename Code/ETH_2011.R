@@ -189,6 +189,7 @@ field <- read_dta(file.path(dataPath, "sect3_pp_w1.dta")) %>%
                 manure=pp_s3q21, compost=pp_s3q23,
                 other_org=pp_s3q25) 
 
+field$irrig <- ifelse(field$irrig %in% 2, 0, field$irrig)
 field$crop_stand <- toupper(as_factor(field$crop_stand))
 field$extension <- recode(field$extension, c("1=1; 2=0; 3=NA")) # for some reason there are a few '3' in the variable => NA.
 field$parcel_id <- as.integer(field$parcel_id)

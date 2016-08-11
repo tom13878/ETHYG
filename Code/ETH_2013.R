@@ -167,6 +167,7 @@ field <- read_dta(file.path(dataPath, "Post-Planting/sect3_pp_w2.dta")) %>%
                 other_inorg=pp_s3q20a, manure=pp_s3q21, compost=pp_s3q23,
                 other_org=pp_s3q25, eros_prot=pp_s3q32, mulch=pp_s3q37) 
 
+field$irrig <- ifelse(field$irrig %in% 2, 0, field$irrig)
 field$crop_stand <- toupper(as_factor(field$crop_stand))
 field$extension <- ifelse(field$extension %in% 2, 0, field$extension)
 field$parcel_id <- as.integer(field$parcel_id)
