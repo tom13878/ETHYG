@@ -100,6 +100,9 @@ sjp.frq(db0$logseed_q,
         normal.curve = TRUE, 
         normal.curve.alpha = .3)
 
+# Compare extension and extensions2
+xtabs(~db0$extension + db0$extension2)
+
 
 # Infrastructure
 Freq(db0$infra_dummy_finance_ph)

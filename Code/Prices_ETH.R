@@ -2,9 +2,6 @@
 ###### ANALYSIS of ETH price data #####
 #######################################
 
-# CHECK
-# Median of prices
-# Compute community prices!
 # Compare prices with other prices and check if they are realistic!
 
 wdPath <- "D:\\Data\\Projects\\ETHYG"
@@ -30,7 +27,13 @@ options(scipen=999)
 # winsor code
 source("Code/winsor.R")
 
-# read in the base data and select relevant variables
+#######################################
+############## LOAD DATA ##############
+#######################################
+
+# Load data, select maize plots and relevant variables
+dbP <- readRDS("Cache/Pooled_ETH.rds") %>%
+ filter(crop_code %in% 2)
 ETH_2013 <- readRDS("data/ETH_data_2013.rds") %>%
               select(holder_id:field_id, ea_id2, lon, lat, region, district, region_lsms, AEZ)
 

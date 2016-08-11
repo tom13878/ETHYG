@@ -33,6 +33,7 @@ library(tidyr)
 library(openxlsx)
 library(frontier)
 library(moments)
+library(AER)
 
 wdPath <- "D:\\Data\\Projects\\ETHYG"
 setwd(wdPath)
@@ -97,31 +98,39 @@ dbP <- filter(dbP, N < 700)
 
 # Select relevant variables and complete cases
 db0 <- dbP %>% 
-  dplyr::select(hhid, ea_id, DISNAME = ZONENAME, REGNAME, parcel_id, field_id, holder_id,
+  dplyr::select(hhid, ea_id, ZONE = REGNAME, REGNAME = ZONENAME, parcel_id, field_id, holder_id, # ZONE AND REGNAMES reversed to remain consistent with other LSMS
                 AEZ, fs,
                 SOC, SOC2, ph, ph2, RootDepth, 
-                rain_year, rain_wq, SPEI,
-                YA, YW, YP,
+                rain_year, rain_wq, 
+                #SPEI,
+                #YA, YW, YP,
                 slope, elevation,
-                nutr_av,
+                #nutr_av,
                 yld, 
-                crop_qty_harv, sold_qty_kg, sold_qty_gr,
+                crop_qty_harv, 
+                #sold_qty_kg, sold_qty_gr,
                 harv_lab, harv_lab_hire ,
+                oxen,
                 #ae,
                 impr, 
-                fung, herb,
-                N, P, 
-                manure, compost, other_org,
-                crop_stand, cropping,
-                legume, irrig, 
+                #fung, herb, # Many missing, not useful
+                N, 
+                #P, 
+                #manure, compost, other_org, # Many missing, not useful
+                #crop_stand, cropping,
+                #legume, 
+                irrig, 
                 area, area_tot, area_gps,
                 sex, age,
-                literate, cage, ed_any, N1555, family_size, death,
-                dist_hh, dist_road, dist_market, dist_popcenter, dist_regcap,
-                trans_cost,
+                ed_any, family_size, credit,
+                literate, cage, death, N1555,
+                dist_hh, dist_road, dist_market, dist_popcenter, #dist_regcap,
+                #trans_cost,
                 title,
                 popEA,
-                road, cost2small_town, bank, micro_finance, ext_agent, extension, 
+                extension, extension2,
+                fert_source,
+                #road, cost2small_town, bank, micro_finance, ext_agent,
                 crop_count, surveyyear,
                 rural, 
                 lat, lon)
@@ -129,9 +138,12 @@ db0 <- dbP %>%
 
 summary(db0)
 
-#db0 <- db0 %>%
-#  do(filter(., complete.cases(.)))
+#######################################
+###### COMPLETE CASES DATABASE ########
+#######################################
 
+db0 <- db0 %>%
+ do(filter(., complete.cases(.)))
 
 
 ######################################
@@ -168,6 +180,7 @@ db0 <- db0 %>% mutate (logyld=log(yld),
                        logN = log(pmax(N, noN)), # maximum of dummy and N following Battese (1997)
                        lab = harv_lab + harv_lab_hire,
                        hirelab_sh = harv_lab_hire/(harv_lab_hire + harv_lab)*100,
+                       dumoxen = ifelse(oxen>0, 1,oxen),
                        lab=lab/area,
                        #logae = log(ae),
                        #asset = implmt_value + lvstk2_valu,
@@ -176,11 +189,10 @@ db0 <- db0 %>% mutate (logyld=log(yld),
                        loglab = log(lab+1),
                        logarea = log(area_gps), # area_gps not area because we want to add plot size as proxy for economies of scale
                        rain_wq2 = rain_wq*rain_wq,
-                       rain_year2 = rain_year*rain_year,
                        #pestherb = ifelse(herb==1 | pest==1, 1, 0),
                        #ext = ifelse(ext_dummy_pp==1 | ext_dummy_ph ==1, 1, 0),
                        lograin = log(rain_year),
-                       sex = as.numeric(ifelse(sex == "MALE", 0, 1)),
+                       dumfertsource = recode(fert_source, c("'Government' =  1; else = 0")),
                        surveyyear2 = replace(surveyyear==2011, 1, 0))
 
 # Add CRE variables
@@ -193,14 +205,17 @@ db0 <- db0 %>%
          area_bar=mean(area, na.rm=TRUE),
          logarea_bar=mean(logarea, na.rm=TRUE),
          irrig_bar=mean(irrig, na.rm = TRUE),
-         legume_bar=mean(legume, na.rm = TRUE),
-         fung_bar=mean(fung, na.rm = TRUE),
-         herb_bar=mean(herb, na.rm = TRUE),
+         #legume_bar=mean(legume, na.rm = TRUE),
+         #fung_bar=mean(fung, na.rm = TRUE),
+         #herb_bar=mean(herb, na.rm = TRUE),
          impr_bar=mean(impr, na.rm = TRUE),
+         oxen_bar=mean(dumoxen, na.rm = TRUE),
+         credit_bar=mean(credit,na.rm = TRUE),
          crop_count_bar=mean(crop_count2, na.rm=TRUE))
 
 db0 <- droplevels(db0)
 summary(db0)
+
 
 #######################################
 ############## ADD PRICE DATA #########
@@ -218,11 +233,69 @@ db1 <- left_join(db0, Prices)
 db1 <- droplevels(db1)
 
 
+db0 <- db0 %>%
+  do(filter(., complete.cases(.)))
 
 ############################
 ###### INPUT DEMAND ########
 ############################
+# CHECK: Add wealth indicator such as Larson, i.e. type of roof or number of livestock.
+# Add info on type of farm, mixed, livestock, etc. 
+# CHECK OF FARM INCOME
 
+# second stage model - tobit model for adoption
+# of nitrogen using HH chars and plot chars as covariates, along
+# with CRE time averages to control for unobserved
+# household fixed effects
+# include soil variables. And other variables leading to higher demand for fertilizer.
+
+N_dem <- tobit(N ~  dist_hh + dist_market +
+                    irrig + impr +
+                    slope + elevation + 
+                    SOC2 + phdum2 +
+                    extension + credit +
+                    rain_wq + 
+                    #rain_wq2
+                    sex + age + family_size + literate + ed_any +
+                    surveyyear + crop_count2 + dumfertsource
+                    , data = db0)
+
+N_dem_CRE <- tobit(N ~ dist_hh + dist_market + 
+                     irrig +
+                     impr +
+                     slope + elevation +
+                     SOC2 + phdum2 +
+                     extension + credit +
+                     rain_wq +
+                     #rain_wq2+
+                     dumfertsource +
+                     loglab + dumoxen + logarea +
+                     sex + age + family_size + literate + ed_any + 
+                     surveyyear + crop_count2 +
+                     irrig_bar + impr_bar + crop_count_bar + credit_bar + loglab_bar + oxen_bar 
+                     AEZ
+                     , data = db0)
+
+# library(censReg)
+# NX <- censReg(N ~ dist_hh + dist_market + 
+#                 irrig +
+#                 impr +
+#                 slope + elevation +
+#                 SOC2 + phdum2 +
+#                 extension + credit +
+#                 rain_wq +
+#                 #rain_wq2+
+#                 sex + age + family_size + literate + ed_any + fert_source +
+#                 surveyyear + crop_count2 +
+#                 irrig_bar + impr_bar + crop_count_bar + credit_bar
+#               , data = db0)
+stargazer(N_dem, N_dem_CRE, type = "text")
+
+summary(N_dem)
+#Take residuals
+r <- residuals(N_dem_CRE, type="deviance")
+
+require(censReg)
 
 #######################################
 ###### PRODUCTION FUNCTION ############
@@ -231,6 +304,7 @@ db1 <- droplevels(db1)
 
 # Cobb Douglas
 olsCD1 <- lm(logyld ~ noN + logN + loglab + 
+               dumoxen +
                logarea +
                irrig +
                impr +
@@ -243,6 +317,7 @@ olsCD1 <- lm(logyld ~ noN + logN + loglab +
 
 
 olsCD2 <- lm(logyld ~ noN + logN + loglab +
+               dumoxen +
                logarea +
                irrig + 
                impr +
@@ -251,10 +326,11 @@ olsCD2 <- lm(logyld ~ noN + logN + loglab +
                rain_wq + rain_wq2+
                AEZ +
                crop_count2 + surveyyear2 + 
-               noN_bar + logN_bar + loglab_bar +
+               noN_bar + logN_bar + loglab_bar + oxen_bar +
                irrig_bar + 
                impr_bar +
-               crop_count_bar,
+               crop_count_bar +
+               r,
              data = db0)
 
 stargazer(olsCD1, olsCD2, type="text")
@@ -265,10 +341,11 @@ hist( residuals(olsCD2), 15)
 skewness(residuals(olsCD1))
 skewness(residuals(olsCD2))
 
-
+# CHECK: NEED TO DEMEAN THE FUNCTION
 # Frontier estimation
-sfaCD1 <- sfa(logyld ~ noN + logN +
+sfaCD <- sfa(logyld ~ noN + logN +
                 loglab +
+                dumoxen +
                 logarea +
                 irrig +
                 impr +
@@ -279,10 +356,12 @@ sfaCD1 <- sfa(logyld ~ noN + logN +
                 crop_count2 + surveyyear2,
               data = db0, maxit = 1500, restartMax = 20, printIter = 1, tol = 0.000001)
 
-summary(sfaCD1, extraPar = TRUE)
-lrtest(sfaCD1)
+summary(sfaCD, extraPar = TRUE)
+lrtest(sfaCD)
 
-sfaCD2 <- sfa(logyld ~ noN + logN + loglab +
+sfaCD_CRE <- sfa(logyld ~ noN + logN + 
+                loglab +
+                dumoxen +
                 logarea +
                 irrig + 
                 impr +
@@ -294,11 +373,12 @@ sfaCD2 <- sfa(logyld ~ noN + logN + loglab +
                 noN_bar + logN_bar + loglab_bar +
                 irrig_bar + 
                 impr_bar +
-                crop_count_bar,
+                crop_count_bar +
+                r,
                 data = db0, maxit = 1500, restartMax = 20, tol = 0.000001)
 
-summary(sfaCD2, extraPar = TRUE)
-lrtest(sfaCD2)
+summary(sfaCD_CRE, extraPar = TRUE)
+lrtest(sfaCD_CRE)
 
 check <- select(db0, sex, literate, cage, ed_any, N1555, family_size, death, dist_hh, dist_road, dist_market, dist_popcenter, dist_regcap,
 title, popEA,
@@ -306,38 +386,40 @@ road, cost2small_town, bank, micro_finance, ext_agent, extension)
 summary(check)
 
 db0X <- db0 %>% mutate(title = as.numeric(ifelse(title == "YES", 1, ifelse(title == "NO", 0, title))),
-                       literate = as.numeric(ifelse(literate == "YES", 1, ifelse(literate == "NO", 0, literate))),
+                       #literate = as.numeric(ifelse(literate == "YES", 1, ifelse(literate == "NO", 0, literate))),
                        ed_any = as.numeric(ifelse(ed_any == "YES", 1, ifelse(ed_any == "NO", 0, ed_any))),
-                       N1555 = as.factor(N1555),
-                       extension = as.numeric(ifelse(extension == "YES", 1, ifelse(extension == "NO", 0, extension))),
-                       micro_finance = as.numeric(ifelse(micro_finance == "YES", 1, ifelse(micro_finance == "NO", 0, micro_finance))),
-                       bank = as.numeric(ifelse(bank == "YES", 1, ifelse(bank == "NO", 0, bank))),
-                       popEA = log(popEA)
+                       #N1555 = as.factor(N1555),
+                       extension = as.numeric(ifelse(extension == "YES", 1, ifelse(extension == "NO", 0, extension)))
+                       #micro_finance = as.numeric(ifelse(micro_finance == "YES", 1, ifelse(micro_finance == "NO", 0, micro_finance))),
+                       #bank = as.numeric(ifelse(bank == "YES", 1, ifelse(bank == "NO", 0, bank)))
+                       #popEA = log(popEA+1)
                        )
 
-summary(db0X$extension)
+
 table(db0X$extension)
 
 check2 <- select(db0X, sex, literate, cage, ed_any, N1555, family_size, death, dist_hh, dist_road, dist_market, dist_popcenter, dist_regcap,
                 title, popEA,
                 road, cost2small_town, bank, micro_finance, ext_agent, extension)
 
-hist(log(db0$popEA))
 
-sfaCD3 <- sfa(logyld ~ noN + logN + loglab +
+# Appears that including FS leads to distance variables to reduce significancy!
+sfaCD_CRE_Z <- sfa(logyld ~ noN + logN + 
+                loglab +
+                dumoxen +
                 logarea +
                 irrig + 
                 impr +
                 slope + elevation +
                 SOC2 + phdum2 + 
                 rain_wq + rain_wq2+
-                fs +
-                # AEZ
+                #fs +
+                AEZ +
                 crop_count2 + surveyyear2 + 
                 noN_bar + logN_bar + loglab_bar +
                 irrig_bar + 
                 impr_bar +
-                crop_count_bar
+                crop_count_bar + r
               | 
                 sex +
                 age + 
@@ -345,28 +427,27 @@ sfaCD3 <- sfa(logyld ~ noN + logN + loglab +
                 #literate +
                 ed_any +
                 extension +
+                credit +
                 # #N1555
                 dist_hh +
-                dist_market 
-                #hirelab_sh +
+                dist_market +
+                popEA +
+                hirelab_sh 
                 #micro_finance +
-                #popEA
                 #cost2small_town 
                 #trans_cost
-                
-                
-                # hirelab_sh +
+                 # hirelab_sh +
                 
                 
                 # dist_popcenter 
                 # #fs +
                  -1
               ,
-              data = db0X, maxit = 1500, restartMax = 20, tol = 0.000001)
+              data = db0, maxit = 1500, restartMax = 20, tol = 0.000001)
 
-summary(sfaCD3, extraPar = TRUE)
+summary(sfaCD_CRE_Z, extraPar = TRUE)
 lrtest(sfaCD3)
-summary(db0$age)
+summary(db0X$popEA)
 
 # Compute profit maximizing Pn per zone and other summary statistics
 # Select model
