@@ -6,8 +6,8 @@
 ############## READ THE DATA ###############
 ############################################
 
-source("N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code\\ETH\\ETH_2011.r")
-source("N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code\\ETH\\ETH_2013.r")
+source("D:\\Data\\Projects\\ETHYG\\Code\\ETH_2011.r")
+source("D:\\Data\\Projects\\ETHYG\\Code\\ETH_2013.r")
 
 #######################################
 ############## PACKAGES ETC ###########
