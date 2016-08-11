@@ -47,11 +47,17 @@ table(ETH2013$individual_id %in% "")
 ETH2013$individual_id <- zap_empty(ETH2013$individual_id )
 table(is.na(ETH2013$individual_id))
 
+# and the ea_id
+table(ETH2013$ea_id %in% "")
+ETH2013$ea_id <- zap_empty(ETH2013$ea_id)
+table(is.na(ETH2013$ea_id))
+
 # use the first wave household identification
 # number. Where this is missing use the
 # second wave household identification number
 ETH2013$household_id <- ifelse(is.na(ETH2013$household_id), ETH2013$household_id2, ETH2013$household_id)
 ETH2013$individual_id <- ifelse(is.na(ETH2013$individual_id), ETH2013$individual_id2, ETH2013$individual_id)
+ETH2013$ea_id <- ifelse(is.na(ETH2013$ea_id), ETH2013$ea_id2, ETH2013$ea_id)
 
 # -------------------------------------
 # Some waves of the data have variables
