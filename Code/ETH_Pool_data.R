@@ -17,7 +17,6 @@ dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yi
 wdPath <- "D:\\Data\\Projects\\ETHYG"
 setwd(wdPath)
 
-library(plyr)
 library(dplyr)
 library(ggplot2)
 library(stargazer)

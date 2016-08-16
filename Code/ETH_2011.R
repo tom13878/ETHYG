@@ -23,7 +23,7 @@ options(scipen=999)
 # file containing the zone, region and district
 
 location <- read_dta(file.path(dataPath, "/sect1_hh_w1.dta")) %>%
-  select(household_id, REGCODE = saq01, ZONECODE = saq02, ea_id, rural) 
+  select(household_id, REGCODE = saq01, ZONECODE = saq02, WOREDACODE = saq03, KEBELECODE = saq06, ea_id, rural) 
 
 # recode the rural variable to match with wave 2
 location$rural <- ifelse(location$rural %in% 1, 1, 2)
@@ -108,11 +108,11 @@ oput <- remove_all_labels(read_dta(file.path(dataPath, "sect9_ph_w1.dta"))) %>%
   transmute(household_id, holder_id, parcel_id, field_id,
          crop_code, day_cut=ph_s9q02_a, month_cut=ph_s9q02_b,
          crop_qty_harv_fresh_kg=ph_s9q03_a,
-         crop_qty_harv_fresh_g=ph_s9q03_b/100,
+         crop_qty_harv_fresh_g=ph_s9q03_b/1000,
          crop_qty_harv_dry_kg=ph_s9q05_a,
-         crop_qty_harv_dry_g=ph_s9q05_b/100,
+         crop_qty_harv_dry_g=ph_s9q05_b/1000,
          crop_qty_harv_tot_kg=ph_s9q12_a,
-         crop_qty_harv_tot_g=ph_s9q12_b/100,
+         crop_qty_harv_tot_g=ph_s9q12_b/1000,
          harv_month_start=ph_s9q13_a,
          harv_month_end=ph_s9q13_b, crop_name)
 
@@ -158,6 +158,14 @@ oput2 <- read_dta(file.path(dataPath, "sect11_ph_w1.dta")) %>%
          sold=ph_s11q01, sold_qty_kg=ph_s11q03_a, sold_qty_gr=ph_s11q03_b,
          value=ph_s11q04_a, sold_month=ph_s11q06_a, sold_year=ph_s11q06_b,
          trans_cost=ph_s11q09) 
+
+oput2$sold_qty_kg[is.na(oput2$sold_qty_k)] <- 0
+oput2$sold_qty_gr[is.na(oput2$sold_qty_gr)] <- 0
+oput2$sold_qty <- oput2$sold_qty_kg + (oput2$sold_qty_gr/1000)
+oput2$sold_qty[oput2$sold_qty==0] <- NA
+oput2$sold_qty_kg <-NULL
+oput2$sold_qty_gr <-NULL
+oput2$crop_price <- oput2$value/oput2$sold_qty
 oput2$crop_code <- as.integer(oput2$crop_code)
 oput2$sold <- toupper(as_factor(oput2$sold))
 oput2$sold_month <- month(oput2$sold_month, label=TRUE)
@@ -218,7 +226,7 @@ seed <- remove_all_labels(read_dta(file.path(dataPath, "sect5_pp_w1.dta"))) %>%
 
 seed$seed_q_kilo[is.na(seed$seed_q_kilo)] <- 0
 seed$seed_q_gram[is.na(seed$seed_q_gram)] <- 0
-seed$seed_q = seed$seed_q_kilo + seed$seed_q_gram
+seed$seed_q = seed$seed_q_kilo + (seed$seed_q_gram/1000)
 seed$seed_q[seed$seed_q == 0] <- NA
 seed$seed_q_kilo <-NULL
 seed$seed_q_gram <-NULL
@@ -228,7 +236,7 @@ seed$seed_q_gram <-NULL
 
 fert1 <- read_dta(file.path(dataPath, "sect3_pp_w1.dta")) %>%
   transmute(holder_id, household_id, parcel_id, field_id, typ=pp_s3q15,
-            qty1=pp_s3q16_a, qty2=pp_s3q16_b/100)
+            qty1=pp_s3q16_a, qty2=pp_s3q16_b/1000)
 x <- c("qty1", "qty2")
 make0 <- is.na(fert1[, x])
 fert1[, x][make0] <- 0
@@ -238,7 +246,7 @@ fert1$typ <- ifelse(fert1$typ %in% 1, "UREA", NA)
 
 fert2 <- read_dta(file.path(dataPath, "sect3_pp_w1.dta")) %>%
   transmute(holder_id, household_id, parcel_id, field_id, typ=pp_s3q18,
-            qty1=pp_s3q19_a, qty2=pp_s3q19_b/100)
+            qty1=pp_s3q19_a, qty2=pp_s3q19_b/1000)
 x <- c("qty1", "qty2")
 make0 <- is.na(fert2[, x])
 fert2[, x][make0] <- 0
@@ -283,6 +291,7 @@ fert <- group_by(fert, holder_id, household_id, parcel_id, field_id) %>%
 
 fert$parcel_id <- as.integer(fert$parcel_id)
 fert$field_id <- as.integer(fert$field_id)
+fert$WPn <- NA # Empty column to match with 2013
 rm(fert1, fert2, conv)
 
 #######################################

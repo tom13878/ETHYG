@@ -22,7 +22,7 @@ options(scipen=999)
 # file containing the zone, region and district
 
 location <- read_dta(file.path(dataPath, "Household/sect1_hh_w2.dta")) %>%
-  select(household_id2, REGCODE = saq01, ZONECODE = saq02, ea_id2, rural) %>%
+  select(household_id2, REGCODE = saq01, ZONECODE = saq02, WOREDACODE = saq03, KEBELECODE = saq06, ea_id2, rural) %>%
   unique
 location$type <- factor(location$rural, levels=1:3, labels=c("RURAL", "SMALL TOWN", "LARGE TOWN"))
 location$rural <- ifelse(location$rural %in% 1, 1, 0)
@@ -134,6 +134,14 @@ oput2 <- read_dta(file.path(dataPath, "/Post-Harvest/sect11_ph_w2.dta")) %>%
          sold=ph_s11q01, sold_qty_kg=ph_s11q03_a, sold_qty_gr=ph_s11q03_b,
          value=ph_s11q04, sold_month=ph_s11q06_a, sold_year=ph_s11q06_b,
          trans_cost=ph_s11q09)
+
+oput2$sold_qty_kg[is.na(oput2$sold_qty_k)] <- 0
+oput2$sold_qty_gr[is.na(oput2$sold_qty_gr)] <- 0
+oput2$sold_qty <- oput2$sold_qty_kg + (oput2$sold_qty_gr/1000)
+oput2$sold_qty[oput2$sold_qty==0] <- NA
+oput2$sold_qty_kg <-NULL
+oput2$sold_qty_gr <-NULL
+oput2$crop_price <- oput2$value/oput2$sold_qty
 oput2$crop_code <- as.integer(oput2$crop_code)
 oput2$sold_month <- toupper(as_factor(oput2$sold_month))
 oput2$sold <- toupper(as_factor(oput2$sold))
