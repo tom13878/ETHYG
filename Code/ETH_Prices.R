@@ -20,6 +20,7 @@ library(sandwich)
 library(lmtest)
 library(assertive)
 library(sjmisc)
+library(lazyeval)
 
 options(scipen=999)
 
@@ -41,37 +42,20 @@ conv <- read.csv(file.path(dataPath, "Other/Fertilizer/Fert_comp.csv")) %>%
   transmute(typ=Fert_type2, n=N_share/100, p=P_share/100) %>%
   filter(typ %in% c("UREA", "DAP"))
 
-# Select maize fields per survey year
 # Note that we only know on which field fertilizer is used, not if they are maize plots.
 # We decide to calculate the average fertilizer price over maize plots only as it is possible that because of subsidies or other policies 
 # the price of the same type of fertilizer (e.g. UREA) can differ between type of crop, even in the same region
+# There is no information on kg and value of fertilizer purchased for 2011. We will use 2013 data for 2011.
+# There is information  on maize prices for 2011, which we will use at plot level. However due to the small number of observations
+# we will use the regional averages from 2013 but correct for inflation.  
+# Inflation is not a problem if we use relative prices (pmaize/pfert), which are assumed to have same inflation.
 
-ETH2011 <- filter(dbP, surveyyear ==2011) %>% select(-WPn, -crop_price)
-ETH2013 <- filter(dbP, surveyyear ==2013) %>% select(-WPn, -crop_price)
+# Select maize fields per survey year
+ETH2013 <- filter(dbP, surveyyear ==2013) %>% 
+  select(-WPn, -crop_price) %>% 
+  unique # There are four hhid-parcel combinations that have two entries, one with price data, one without => duplicates deleted
 
 # read in the fertilizer data, linkin location data and combine in one file
-
-fert2011_1 <- remove_all_labels(read_dta(file.path(dataPath, "ETH/2011/Data/sect3_pp_w1.dta"))) %>%
-  transmute(holder_id, household_id, parcel_id, field_id, typ=pp_s3q15,
-            qty1=pp_s3q16_a, qty2=pp_s3q16_b/1000) %>%
-  mutate(qty1 = ifelse(is.na(qty1), 0, qty1),
-         qty2 = ifelse(is.na(qty2), 0, qty2),
-         qty=qty1+qty2,
-         typ = ifelse(typ %in% 1, "UREA", NA)) %>%
-  select(-qty1, -qty2)
-
-fert2011_1 <- remove_all_labels(read_dta(file.path(dataPath, "ETH/2011/Data/sect3_pp_w1.dta"))) %>%
-  transmute(holder_id, household_id, parcel_id, field_id, typ=pp_s3q18,
-            qty1=pp_s3q19_a, qty2=pp_s3q19_b/1000) %>%
-  mutate(qty1 = ifelse(is.na(qty1), 0, qty1),
-         qty2 = ifelse(is.na(qty2), 0, qty2),
-         qty=qty1+qty2,
-         typ = ifelse(typ %in% 1, "DAP", NA)) %>%
-  select(-qty1, -qty2)
-
-fert2011 <- bind_rows(fert2011_1, fert2013_1)
-
-
 fert2013_1 <- read_dta(file.path(dataPath, "ETH\\2013\\Data\\Post-Planting\\sect3_pp_w2.dta")) %>%
   dplyr::select(holder_id, household_id, household_id2, parcel_id, field_id, typ=pp_s3q15, purch_kg=pp_s3q16c, valu=pp_s3q16d) %>%
   mutate(household_id = zap_empty(household_id),
@@ -110,11 +94,6 @@ base <- dbP %>%
 fertmar <- fert2013 %>%
   mutate(price = winsor2(price))
 
-df <- fertmar
-level <- "ZONE"
-group <- "ZONE"
-
-library(lazyeval)
 medianPrice_f <- function(df, level, group){
   prices <- df %>% 
     group_by_(.dots = c(group)) %>%
@@ -153,21 +132,38 @@ fertPrice <- bind_rows(fpWoreda, fpKebele, fpRegion, fpZone, fpCountry) %>%
   select(-country, -zone, -region, -woreda, -kebele)
 
 # Maize prices
-# Values are winsored and aggregates are presented for at least 5 values (not a problem here)
-maizemar <- filter(dbP, surveyyear ==2013) %>% 
-  select(ZONE, REGNAME, WOREDACODE, KEBELECODE, price = crop_price) %>%
+# Using inflation rate for 2011 and 2012. These years were selected as the main part of the survey takes place in these years.
+# from world bank:
+# http://data.worldbank.org/indicator/FP.CPI.TOTL.ZG/countries/TZ?display=graph
+# -------------------------------------
+
+inflation <- read.csv(file.path(dataPath,"Other/Inflation/inflation.csv"))
+rate2012 <- inflation$inflation[inflation$code=="ET" & inflation$year==2012]/100
+rate2013 <- inflation$inflation[inflation$code=="ET" & inflation$year==2013]/100
+inflate <- (1 + rate2012)*(1 + rate2013)
+
+# Values are winsored per surveyyear. 2011 values are inflated to 2013 levels and used at hhid level. 
+# Regional values for 2013 are used to impute missing values for 2011 and 2013.
+# Aggregates are presented for at least 5 values.
+maizemar2011 <- filter(dbP, surveyyear ==2011) %>% 
+  select(hhid, holder_id, field_id, parcel_id, ZONE, REGNAME, WOREDACODE, KEBELECODE, surveyyear, price = crop_price) %>%
+  mutate(price = winsor2(price),
+         price = price*inflate)
+
+maizemar2013 <- filter(dbP, surveyyear ==2013) %>% 
+  select(hhid, holder_id, field_id, parcel_id, ZONE, REGNAME, WOREDACODE, KEBELECODE, surveyyear, price = crop_price) %>%
   mutate(price = winsor2(price))
 
-mpCountry <- maizemar %>% 
+mpCountry <- maizemar2013 %>% 
   dplyr::summarize(price = median(price, na.rm=T)) %>%
   mutate(level = "country") 
 mpCountry <- mutate(base, price = mpCountry$price,
                     level = "country")
 
-mpZone <- medianPrice_f(maizemar, "zone", c("ZONE"))
-mpRegion <- medianPrice_f(maizemar, "region", c("ZONE", "REGNAME"))
-mpWoreda <- medianPrice_f(maizemar, "woreda", c("ZONE", "REGNAME", "WOREDACODE"))
-mpKebele <- medianPrice_f(maizemar, "kebele", c("ZONE", "REGNAME", "WOREDACODE", "KEBELECODE"))
+mpZone <- medianPrice_f(maizemar2013, "zone", c("ZONE"))
+mpRegion <- medianPrice_f(maizemar2013, "region", c("ZONE", "REGNAME"))
+mpWoreda <- medianPrice_f(maizemar2013, "woreda", c("ZONE", "REGNAME", "WOREDACODE"))
+mpKebele <- medianPrice_f(maizemar2013, "kebele", c("ZONE", "REGNAME", "WOREDACODE", "KEBELECODE"))
 
 maizePrice <- bind_rows(mpWoreda, mpKebele, mpRegion, mpZone, mpCountry) %>%
   na.omit %>%
@@ -181,7 +177,23 @@ maizePrice <- bind_rows(mpWoreda, mpKebele, mpRegion, mpZone, mpCountry) %>%
          product = "maize") %>%
   select(-country, -zone, -region, -woreda, -kebele)
 
+# Create price file at plot level and substitute regional prices when plot level price is not available.
+# Again, we winsor the prices first
+plotFertPrice <- select(dbP, hhid, holder_id, field_id, parcel_id, ZONE, REGNAME, WOREDACODE, KEBELECODE, surveyyear, WPn) %>%
+    left_join(fertPrice) %>%
+    mutate(WPn = winsor2(WPn),
+           price = ifelse(is.na(WPn), price, WPn)) %>%
+  select(-WPn) 
+ 
+plotMaizePrice <- bind_rows(maizemar2011, maizemar2013) %>%
+  rename(crop_price = price) %>%
+  left_join(maizePrice) %>%
+  mutate(price = ifelse(is.na(crop_price), price, crop_price)) %>%
+  select(-crop_price)  
 
-# combine price data
-Prices <- rbind(fertPrice, maizePrice)
+Prices <- rbind(plotFertPrice, plotMaizePrice) %>% 
+  unique() %>% # There are four hhid-parcel combinations that have two entries, one with price data, one without => duplicates deleted
+  select(-source) %>%
+  spread(product, price)
+
 saveRDS(Prices, file = "Cache\\Prices_ETH.rds")
