@@ -13,9 +13,9 @@ lapply(SpatialPackages, library, character.only = TRUE)
 AdditionalPackages <- c()
 lapply(AdditionalPackages, library, character.only = TRUE)
 
+
 # SET WORKING DIRECTORY
-wdPath<-"D:\\Data\\IPOP\\SPAM\\"
-dataPath <- "D:\\Dropbox\\Michiel_research\\2285000066 Africa Maize Yield Gap\\Analysis\\ETH\\Data"
+wdPath <- "D:\\Data\\IPOP\\SPAM\\"
 setwd(wdPath)
 
 # R SETTINGS
@@ -125,5 +125,5 @@ scalingFactor <- scalingFactor$scalingFactor
 Zone_ETH$TargetProduction <- Zone_ETH$production*scalingFactor
 
 # Write file
-write.csv(Zone_ETH, file=file.path(dataPath, "SPAMdata_ETH.csv"), row.names=F)
+saveRDS(Zone_ETH, file= "D:\\Data\\Projects\\ETHYG\\Cache\\SPAMdata_ETH.rds")
  

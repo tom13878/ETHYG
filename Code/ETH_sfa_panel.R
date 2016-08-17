@@ -3,6 +3,8 @@
 #######################################
 
 # CHECK:
+# GEO AND AREA TO RUN FROM ETHYG FOLDER!!
+
 # Imputation of dummy variables.
 # Mean scale variables (see Henningsen)
 # SFA from other package
@@ -622,7 +624,8 @@ sumzone_sfaCD_CRE_Z<- db_sfaCD_CRE_Z %>% group_by(ZONE) %>%
     Ndif=mean(Ndif, na.rm=T),
     Number=n())
 
-
+# save db for summary tables
+saveRDS(db_sfaCD_CRE_Z, "Cache/db_sfaCD_CRE_Z.rds")
 
 ##############################
 ### Calculate yield levels ###
@@ -643,7 +646,7 @@ model <- sfaCD_CRE_Z
 # Ycor = exp(ln(TEY)) - [-log(TE)]
 
 db3 <- db_sfaCD_CRE_Z %>%
-          dplyr::select(id, hhid, holder_id, parcel_id, field_id, ZONE, REGNAME, area, crop_count2, lat, lon, lnA, lnA2, noN, yesN, loglab, lab, elastfert, Npm, N, Y=yld) %>%
+          dplyr::select(id, hhid, holder_id, parcel_id, field_id, surveyyear, ZONE, REGNAME, area, crop_count2, lat, lon, lnA, lnA2, noN, yesN, loglab, lab, elastfert, Npm, N, Y=yld) %>%
           mutate(
             Ycor = exp(as.numeric(fitted(model))+log(as.numeric(efficiencies(model)))), 
             err = Ycor-Y,
@@ -807,8 +810,8 @@ summary(Overall_check)
 
 
 # Create database with relevant variables for further analysis
-db9 <- dplyr::select(db8, hhid, holder_id, parcel_id, field_id, ZONE, REGNAME, lat, lon, crop_count2, area, Npm, yesN, Y, N, Ycor, TEY, EY, PFY, PY, ERROR_l, ERROR_s, TEYG_l, TEYG_s, EYG_l, EYG_s, 
+db9 <- dplyr::select(db8, hhid, holder_id, parcel_id, field_id, ZONE, REGNAME, surveyyear, lat, lon, crop_count2, area, Npm, yesN, Y, N, Ycor, TEY, EY, PFY, PY, ERROR_l, ERROR_s, TEYG_l, TEYG_s, EYG_l, EYG_s, 
                      EUYG_l, EUYG_s, TYG_l, TYG_s, YG_l, YG_s, YG_l_Ycor, YG_s_Ycor)
 
 saveRDS(db9, "Cache/db9.rds")
-
+summary(db1)

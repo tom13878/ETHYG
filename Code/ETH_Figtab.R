@@ -23,6 +23,7 @@ options(scipen=999)
 db9 <- readRDS("Cache/db9.rds")
 db_sfaCD_CRE_Z <- readRDS("Cache/db_sfaCD_CRE_Z.rds")
 Prices <- readRDS("Cache/Prices_ETH.rds") %>% rename(Pm = maize, Pn = fertilizer)
+source("Code/waterfall_plot.R")
 
 # SUMMARY STATISTICS
 
@@ -266,7 +267,7 @@ GapClose1a <- GapClose1 %>%
 # As the yield in the LSMS is much lower than the FAO/SPAM yield and also that of the LSMS we apply the different yield shares as found above to the base yield of SPAM.
 # We use Ycor as base. This means we assume there was an error (e) and this is corrected for.
 
-SPAMData <- read.csv("./Cache/SPAMData_TZA.csv") %>% filter(zone != "Zanzibar") %>%
+SPAMData <- readRDS("./Cache/SPAMData_ETH.rds")  %>%
   rename(ZONE = zone, Y_SPAM = yield, PROD = TargetProduction) %>%
   mutate(ZONE = toupper(ZONE))
 
@@ -320,9 +321,12 @@ GapClose2a <- GapClose2 %>%
   mutate(check2 = TEYG_close + EYG_close + EUYG_close + TYG_close+PROD)
 
 # Closing of yield gap assuming decomposition of levels.
+
+# something goes wrong here
+
 GapClose3 <- SPAMData %>%
   rename(Zone = ZONE) %>%
-  left_join(ZonalYieldGap_l, .) %>%
+  left_join(ZonalYieldGap_l_sh, .) %>%
   left_join(.,YieldLevels) %>%
   filter(Zone != "Total") %>%
   mutate(POTPROD = PY/Y_SPAM*PROD, # Total production when YG is closed
@@ -333,12 +337,12 @@ GapClose3 <- SPAMData %>%
          check2 = TEYG_close + EYG_close + EUYG_close + TYG_close+PROD)
 
 GapClose3a <- GapClose3 %>% 
-  summarize(PROD = sum(PROD/1000000), # in million tons
-            TEYG_close = sum(TEYG_close/1000000),
-            EYG_close = sum(EYG_close/1000000),
-            TYG_close = sum(TYG_close/1000000),
-            EUYG_close = sum(EUYG_close/1000000), 
-            POTPROD = sum(POTPROD/1000000)) 
+  summarize(PROD = sum(PROD/1000000, na.rm = TRUE), # in million tons
+            TEYG_close = sum(TEYG_close/1000000, na.rm = TRUE),
+            EYG_close = sum(EYG_close/1000000, na.rm = TRUE),
+            TYG_close = sum(TYG_close/1000000, na.rm = TRUE),
+            EUYG_close = sum(EUYG_close/1000000, na.rm = TRUE), 
+            POTPROD = sum(POTPROD/1000000, na.rm = TRUE)) 
 
 # http://www.r-bloggers.com/waterfall-plots-in-r/
 # Create database for waterfall plot
@@ -368,12 +372,12 @@ waterfall <- waterfall_f(wf.df, offset=offset) +
 
 print(waterfall)
 library(Cairo)
-ggsave(plot = waterfall, ".\\FigTab\\TZA_Waterfall.png", height = 150, width = 200, type = "cairo-png", units="mm")
+ggsave(plot = waterfall, ".\\FigTab\\ETH_Waterfall.png", height = 150, width = 200, type = "cairo-png", units="mm")
 
 
 # Distribution of relative yield gaps
 db11 <- db9%>%
-  dplyr::select(ZONE, REGCODE, surveyyear, ERROR_s, TEYG_s, EYG_s, EUYG_s, TYG_s, YG_s_Ycor) %>%
+  dplyr::select(ZONE, REGNAME, surveyyear, ERROR_s, TEYG_s, EYG_s, EUYG_s, TYG_s, YG_s_Ycor) %>%
   gather(yieldgap, value, ERROR_s:YG_s_Ycor) %>%
   filter(yieldgap!="ERROR_s") %>% 
   droplevels() %>%
@@ -402,7 +406,7 @@ boxplot <-ggplot(data=db11, aes(x=yieldgap, y=value)) +
 #sts <- boxplot.stats(db11$value)$stats  # Compute lower and upper whisker limits
 #boxplot = boxplot + coord_cartesian(ylim = c(-5,max(sts)*1.05))
 boxplot
-ggsave(plot = boxplot, ".\\FigTab\\TZA_Distribution.png", height = 150, width = 200, type = "cairo-png", units="mm")
+ggsave(plot = boxplot, ".\\FigTab\\ETH_Distribution.png", height = 150, width = 200, type = "cairo-png", units="mm")
 
 # Distribution of absolute yield gaps
 db12 <- db9%>%
@@ -429,7 +433,7 @@ boxplot2 <-ggplot(data=db12, aes(x=yieldgap, y=value)) +
 
 # Rescale axes.
 boxplot2
-ggsave(plot = boxplot2, ".\\FigTab\\TZA_Distribution2.png", height = 150, width = 200, type = "cairo-png", units="mm")
+ggsave(plot = boxplot2, ".\\FigTab\\ETH_Distribution2.png", height = 150, width = 200, type = "cairo-png", units="mm")
 
 
 # Maps with GYGA yield potential and plot information
@@ -440,122 +444,7 @@ library(sp)
 library(raster)
 library(foreign)
 library(gdata)
-
-# GYGA DATA
-GYGApath <- "D:\\Data\\IPOP\\GYGA\\"
-
-dsn=paste(GYGApath, "\\CZ_SubSaharanAfrica\\CZ_AFRGYGACNTRY.shp", sep="")
-ogrListLayers(dsn)
-ogrInfo(dsn, layer="CZ_AFRGYGACNTRY")
-GYGA.Africa<-readOGR(dsn, layer = "CZ_AFRGYGACNTRY")
-projection(GYGA.Africa) # check projection
-GYGA.Africa <- spTransform(GYGA.Africa, CRS("+proj=longlat +datum=WGS84"))
-
-# Get GYGA
-GYGA.TZA.yield.data <- read.xls(paste(GYGApath, "GygaTanzania.xlsx", sep="\\"), sheet=3)
-
-# Select data for maize
-GYGA.TZA.yield.data <- subset(GYGA.TZA.yield.data, CROP=="Rainfed maize")
-
-# Cut out TZA from GYGA map
-GYGA.TZA<-GYGA.Africa[GYGA.Africa$REG_NAME=="Tanzania",]
-
-# Link yield gap data
-# in order to merge data with spatialpolygondataframe the row.names need to be the same.
-# For this reason I first merge the additionald data and then create a spatialpolygondataframe
-# again ensuring that the rownames are preserved.
-
-GYGA.TZA.data <- as(GYGA.TZA, "data.frame")
-GYGA.TZA.data$id <-row.names(GYGA.TZA.data)
-GYGA.TZA.data <- merge(GYGA.TZA.data, GYGA.TZA.yield.data[,c(1:8)], by.x=c("GRIDCODE"), by.y=c("CLIMATEZONE"), all.x=TRUE, sort=FALSE)
-row.names(GYGA.TZA.data)<-GYGA.TZA.data$id
-GYGA.TZA <- SpatialPolygonsDataFrame(as(GYGA.TZA, "SpatialPolygons"),
-                                     data=GYGA.TZA.data)
-
-# Maps with GYGA yield potential and plot information
-# transform shapefile in dataframe for ggplot. rownames are used as ID for the countries. Using ID gives strange results. 
-# Additional data is linked back again
-GYGA.TZA.fort<- fortify(GYGA.TZA) 
-GYGA.TZA.fort <- merge(GYGA.TZA.fort, GYGA.TZA.data, by="id")
-GYGA.TZA.fort$yieldclass <- cut(GYGA.TZA.fort$YW, breaks=c(1,2,3,4,5,6,7,8,9,10))
-meanYield <- db9 %>%
-  group_by(lon, lat) %>%
-  summarize(n=n(),
-            meanYield = (sum(Y*area)/sum(area))/1000) %>%
-  filter(n>1)
-
-meanYield$meanYield2 <- cut(meanYield$meanYield, breaks=c(0, 1, 2, 7))
-
-library(ggthemes)
-GYGA_LSMS <- ggplot()+
-  geom_polygon(data=GYGA.TZA.fort, aes(x=long, y=lat, group=group, fill=yieldclass), colour="black")+
-  geom_polygon(data=subset(GYGA.TZA.fort, is.na(YW)), aes(x=long, y=lat, group=group), fill="white", colour="black") +
-  scale_fill_discrete(name="Potential water\nlimited yield (tons)") +
-  geom_point(data=meanYield, aes(x=lon, y=lat, size=(meanYield2)), colour="black") +
-  scale_size_manual(name="Average yield (tons)", values=c(1, 3, 5)) +
-  coord_equal()+
-  labs(x="", y="")+
-  theme_classic() +
-  theme(legend.key=element_blank(),
-        line = element_blank(),
-        axis.text = element_blank())
-
-GYGA_LSMS
-ggsave(plot = GYGA_LSMS, ".\\FigTab\\GYGA_LSMS.png", height = 150, width = 200, type = "cairo-png", units="mm")
-
-# Zonal map with community yield levels
-# read in map of tanzania as a SpatialPolygonsDataFrame
-library(raster)
-load("./Basemap/TZA_adm1.RData") # Note that GADM is updated. Use old saved file here
-tanzania <- gadm
-
-# Add a zone variable to the data within the tanzania spatial data frame
-tanzania@data$Zone[tanzania@data$NAME_1 %in% c("Kagera","Mwanza", "Mara")] <- "Lake"
-tanzania@data$Zone[tanzania@data$NAME_1 %in% c("Shinyanga","Kigoma", "Tabora")] <- "Western"
-tanzania@data$Zone[tanzania@data$NAME_1 %in% c("Arusha","Kilimanjaro", "Manyara", "Tanga")] <- "Northern"
-tanzania@data$Zone[tanzania@data$NAME_1 %in% c("Singida","Dodoma")] <- "Central"
-tanzania@data$Zone[tanzania@data$NAME_1 %in% c("Rukwa", "Mbeya","Iringa")] <- "Southern Highlands"
-tanzania@data$Zone[tanzania@data$NAME_1 %in% c("Pwani","Morogoro", "Dar-Es-Salaam")] <- "Eastern"
-tanzania@data$Zone[tanzania@data$NAME_1 %in% c("Lindi","Ruvuma", "Mtwara")] <- "Southern"
-#tanzania@data$Zone[tanzania@data$NAME_1 %in% c("Zanzibar South and Central", "Kaskazini-Unguja", "Zanzibar West", "Kaskazini-Pemba", "Kusini-Pemba")] <- "Zanzibar"
-tanzania@data$Zone <- factor(tanzania@data$Zone)
-
-#  fortify spatial data to use with ggplot and join using join functions from dplyr
-#    The join is on id, make sure all ids are character vectors
-tf <- fortify(tanzania)
-tanzania@data <- rename(tanzania@data, id = ID_1)
-tanzania@data$id <- as.character(tanzania@data$id)
-tf2 <- left_join(tf, tanzania@data)
-
-# Use ggplot to plot map of Tanzania, specifying the labels and choosing nice colours
-#    from the RColorBrewer package
-
-zoneMap <- ggplot()+
-  geom_polygon(data=tf2, aes(x=long, y=lat, group=group, fill=Zone), colour="black")+
-  geom_point(data=meanYield, aes(x=lon, y=lat, size=(meanYield2)), colour="black")+
-  scale_fill_brewer(name = "Zones", palette = "Set1") +
-  scale_size_manual(name="Average yield (tons)", values=c(1, 3, 5)) +
-  coord_equal()+
-  labs(x="", y="")+
-  theme_classic() +
-  theme(legend.key=element_blank(),
-        line = element_blank(),
-        axis.text = element_blank())
-zoneMap 
-
-ggsave(plot = zoneMap, ".\\FigTab\\zoneMap.png", height = 150, width = 200, type = "cairo-png", units="mm")
-
-
-
-
-# Maps with GYGA yield potential and plot information
-# transform shapefile in dataframe for ggplot. rownames are used as ID for the countries. Using ID gives strange results. 
-# Additional data is linked back again
-library(rgdal)
-library(sp)
-library(raster)
-library(foreign)
-library(gdata)
+library(RColorBrewer)
 
 # GYGA DATA
 GYGApath <- "D:\\Data\\IPOP\\GYGA\\"
@@ -611,25 +500,25 @@ GYGA_LSMS <- ggplot()+
         axis.text = element_blank())
 
 GYGA_LSMS
-ggsave(plot = GYGA_LSMS, ".\\Analysis\\ETH\\Graphs\\GYGA_LSMS.png", height = 150, width = 200, type = "cairo-png", units="mm")
+ggsave(plot = GYGA_LSMS, ".\\FigTab\\GYGA_LSMS.png", height = 150, width = 200, type = "cairo-png", units="mm")
 
 # Zonal map with community yield levels
 # read in map of tanzania as a SpatialPolygonsDataFrame
-library(raster)
+
 countryMap <- getData('GADM', country = "ETH", level = 1) 
 
 # Rename zones using LSMS names
-countryMap@data$region_lsms <- countryMap@data$NAME_1
-countryMap@data$region_lsms[countryMap@data$NAME_1 %in% c("Oromia")] <- "Oromiya"
-countryMap@data$region_lsms[countryMap@data$NAME_1 %in% c("Somali")] <- "Somalie"
-countryMap@data$region_lsms[countryMap@data$NAME_1 %in% c("Benshangul-Gumaz")] <- "Benishangul Gumuz"
-countryMap@data$region_lsms[countryMap@data$NAME_1 %in% c("Southern Nations, Nationalities and Peoples")] <- "SNNP"
-countryMap@data$region_lsms[countryMap@data$NAME_1 %in% c("Gambela Peoples")] <- "Gambella"
-countryMap@data$region_lsms[countryMap@data$NAME_1 %in% c("Harari People")] <- "Harari"
-countryMap@data$region_lsms <- factor(countryMap@data$region_lsms)
+countryMap@data$ZONE <- countryMap@data$NAME_1
+countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Oromia")] <- "Oromiya"
+countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Somali")] <- "Somalie"
+countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Benshangul-Gumaz")] <- "Benishangul Gumuz"
+countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Southern Nations, Nationalities and Peoples")] <- "SNNP"
+countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Gambela Peoples")] <- "Gambella"
+countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Harari People")] <- "Harari"
+countryMap@data$ZONE <- factor(countryMap@data$ZONE)
 
 # Remove Addis Ababa and Dire Dawa
-countryMap <- countryMap[!(countryMap@data$region_lsms %in% c("Addis Ababa", "Dire Dawa")),]
+countryMap <- countryMap[!(countryMap@data$ZONE %in% c("Addis Abeba", "Dire Dawa")),]
 plot(countryMap)
 
 #  fortify spatial data to use with ggplot and join using join functions from dplyr
@@ -641,11 +530,11 @@ tf2 <- left_join(tf, countryMap@data)
 
 # Use ggplot to plot map of Tanzania, specifying the labels and choosing nice colours
 #    from the RColorBrewer package
-library(RColorBrewer)
+
 #display.brewer.all()
 
-p4 <- ggplot()+
-  geom_polygon(data=tf2, aes(x=long, y=lat, group=group, fill=region_lsms), colour="black")+
+ZONE_LSMS <- ggplot()+
+  geom_polygon(data=tf2, aes(x=long, y=lat, group=group, fill=ZONE), colour="black")+
   geom_point(data=meanYield, aes(x=lon, y=lat, size=(meanYield2)), colour="black")+
   scale_fill_brewer(name = "Zones", palette = "Set1") +
   scale_size_manual(name="Average yield (tons)", values=c(1.5, 2.5, 3.5, 4,5)) +
@@ -655,10 +544,9 @@ p4 <- ggplot()+
   theme(legend.key=element_blank(),
         line = element_blank(),
         axis.text = element_blank())
-p4 
+ZONE_LSMS 
 
-ggsave(plot = p4, ".\\Analysis\\ETH\\Graphs\\datamap.png", height = 150, width = 200, type = "cairo-png", units="mm")
+ggsave(plot = ZONE_LSMS, ".\\Cache\\ZONE_LSMS.png", height = 150, width = 200, type = "cairo-png", units="mm")
 
-save.image(file=".\\Analysis\\ETH\\Report\\IMAGINE_GHA\\ETH_ws.RData")
 
 
