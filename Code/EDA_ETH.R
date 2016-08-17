@@ -34,6 +34,13 @@ ETH2013 <- filter(db0, surveyyear == 2013)
 summary(ETH2011)
 summary(ETH2013)
 
+# Number of observation per hhid in sample
+plotobs <- db0 %>%
+  group_by(hhid) %>%
+  summarize(n=n())
+table(plotobs$n)
+sum(plotobs$n)
+
 # Check individual variables.
 # Number of plots per hh per year
 plotnumber <- db0 %>%
@@ -118,7 +125,7 @@ names(dbP)
 ggplot(data = filter(db0, N>0), aes(x = N, y = yld)) + geom_point() + geom_smooth() + facet_wrap(~surveyyear)
 ggplot(data = db0, aes(x = logN, y = logyld)) + geom_point() + geom_smooth()
 ggplot(data = filter(db0, surveyyear == 2012), aes(x = seed_q, y = yld)) + geom_point() + geom_smooth()
-
+ggplot(data = filter(db0), aes(x = N, y = rain_wq)) + geom_point() + geom_smooth() + facet_wrap(~surveyyear, scales = "free")
 
 
 # Boxplots

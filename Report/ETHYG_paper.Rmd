@@ -32,13 +32,32 @@ abstract: ETH Maize yield gaps abstract
 ---
 
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.path = 'FigTab/', echo = FALSE, warning = FALSE, message = FALSE)
 ```
 
+```{r}
+# get packages
+library(ggplot2)
+library(dplyr)
+library(stargazer)
+# library(corrplot)
+library(car)
+```
+
+```{r read_data}
+dataPath <- "D:/Data/Projects/ETHYG/"
+db1 <- readRDS(file.path(dataPath, "Cache/db1.rds"))
+```
+
+```{r source_FigTab}
+dataPath <- "D:/Data/Projects/ETHYG/"
+db1 <- readRDS(file.path(dataPath, "Cache/db1.rds"))
+```
 
 ## REFER TO MAIZE REVOLUTOION CHAPTER JAYNE in LARSON.
+## SHEAHAN (2016) EMPHASISES sELECTION ON MAIZE FIELDS => CHECK
+## DISCUSS with tom What to include in CRE, I think all plot and hh variables that can change over time and across HHs so also rain, which is annually observed. Stil puzzled what happens with observations for which T=1 (about a quarter of the sample).
 
 # Introduction
 Ethiopia has great agricultural potential because of its vast areas of fertile land, diverse climate, generally adequate rainfall, and large labour pool. Consequently, agriculture has remained as the foundation of Ethiopia’s economy, accounting for around 40 percent of the national income and around 80 percent of the total employment (EEA, 2015). It also supplies food to the urban areas and raw materials to the manufacturing sector. Many other economic activities depend on agriculture, including marketing, processing, and export of agricultural products. Among the major drivers of GDP growth crop production had been the second most important contributor next to construction . The agricultural sector has, therefore, been crucial for the overall performance of the Ethiopian economy and would continue to be the backbone of the Ethiopian economy for many years to come. The sector is expected to play a central role in decreasing poverty and increasing growth in Ethiopia.
@@ -56,10 +75,10 @@ A limitation is that yield gap measurements offer only limited guidance in expla
 The aim of this paper is the to provide a detailed analysis of the maize yield gap in Ethiopia. We decompose the conventional yield gap into four elements that capture, technical efficiency, economic efficiency, availability of technologies and an ‘unexploitable’ yield gap element.
 
 # Background
+# YIELD GAP CONCEPTUAL MODEL 
 
 
 # Methodology
-
 We use a stochastic frontier production function [@Aigner1977; @Meeusen1977] to estimate the technical efficiency yield gap. The model is specified as follows for our study:
 
 \begin{equation}
@@ -79,34 +98,44 @@ The CRE estimator allows for correlation between the time invariant unobserved h
 
 The yield response function (Equation [X]) includes several endogenous farm inputs (i.e. area, labour, fertilizer and capital). Under perfect markets the demand for inputs only depends on the prices for inputs and outputs and technology XX [REF]. In developing countries, where the assumption of perfect markets is not tenable [REF], input use also depends on household and [XX] factors. To control for endogeneity we implement a control function approach [REF].[ADD]. The advantage of the control function approach in comparison to two stage least squares [CHECK] is that it can be combined with non-linear  functions such as the translog stochastic frontier function [@Amsler2016]. Wooldridge [REF] shows that, with certain assumptions, only one residual is required to instrument the endogenous variable and all its transformations (i.e. the squared and interaction terms in the translog model).
 
-Although all inputs are potentially endogenous in equation X, we only estimate the demand function for the use of fertilizer, which is a key variable in our analysis. [MAYBE add for labour to]. For land and labour we estimate a OLS function as these are continous input variables. Fertilizer is only applied to [X]% of the plots. Following We use a tobit function to take this into account [TERMINOLOGY]. Following other research that estimate input demand functions [REF], we include all exogenous variables from equation [X] as well plot (e.g. soil quality, ...[ADD] and household (e.g. age and sex of the household head, household composition and [ADD] factors that are expected to affect input use. Similarly to the estimation of the stochastic frontier function, we apply the CRE framework to account for time-variant unobserved heterogeneity.
+Although all inputs are potentially endogenous in equation X, we only estimate a separate demand function for the use of fertilizer, which is a key variable in our analysis. [MAYBE add for labour to]. For land and labour we estimate a OLS function as these are continous input variables. We derive the demand function using the agricultural household model Singh, Squire and Straus [ADD].The model shows that only when consumption and production are separable, the first-order conditions for profit maximisation result in a demand function that solely depends on input and output prices. As separability is unlikely to hold in developing countries like Ethiopia, which are characterised by market failures [REF], we add a number of socio-demographic household characteristics as additional controls in the demand function [REF]. 
 
-l exogenous factors in equation [X] as well as household and plot specific factors. For We estimate the following demand functions. For land and labour we  The correction for potential endogeneity is not pursued in this paper, because
-the variables which have the highest potential for endogeneity are of minor importance to the total
-production on the farm.
+Fertilizer is only applied to [X]% of the plots. Due to the large number of zeros in the dependent variable, OLS leads to inconsistent estimates. We therefore use the tobit model that is able to deal with 'corner solutions' [ADD] Following similar research [REF], we include all exogenous variables from equation [X] as well plot (e.g. soil quality, ...[ADD] and household (e.g. age and sex of the household head, household composition and [ADD] factors that are expected to affect input use. Similarly to the estimation of the stochastic frontier function, we apply the CRE framework to account for time-variant unobserved heterogeneity.
 
 # Data
 Data on actual maize yield comes from the second wave of the Ethiopian Socioeconomic Survey (ESS); implemented by the Central Statistics Agency of Ethiopia (CSA) and the World Bank as part of the multi country Living Standards Measurement Study-Integrated Surveys of Agriculture (LSMS-ISA) project. Collected in 2013-14 the second wave of the ESS has a special focus on improving agricultural statistics in Ethiopia and has an extensive coverage of agricultural production, input use and a number of socio-economic characteristics. A previous ESS survey was conducted in 2011-12. However, crucially output values were not properly recorded and for the purposes of this paper it was not possible to use this earlier survey. The ESS covers a wide range of agricultural variables at the plot, household and community level, including crop-specific production, fertilizer use, labour, and input and output prices. The database also contains the GPS recording for the size of the plot, which are essential to obtain accurate yield estimations. As part of the ESS the longitude and latitude of household locations and plot locations was recorded. This makes it possible to link in external data including climate, soil and a selection of other spatial data. The sources of this spatial data include IFPRI, Worlclim, NASA and the Ethiopian Roads Agency amongst others.
 
 
+```{r echo=FALSE}
+#stargazer(as.data.frame(db1), type = "text", digits=2, out=".\\FigTab\\summaryStat.html")
+dataPath <- "D:/Data/Projects/ETHYG/"
+db1 <- readRDS(file.path(dataPath, "Cache/db1.rds"))
+CD1 <- lm(logyld ~ logN, data=db1)
+output <- round(summary(CD1)$coefficients, 3)
+# row.names(output) <- c()
+knitr::kable(output, caption="Cobb Douglas")
+```
+
+
+```{r results='asis'}
+stargazer(CD1)
+```
+
+```{r fig.cap = "figure caption. \\label{figurelabel}", fig.height=12, fig.width=10}
+#plot(iris)
+```
+
 # Results
+
+
+
 
 # Conclusions
 
 
 
-## R Markdown
 
 
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-
-```{r pressure, echo=FALSE}
-plot(pressure)
 ```
 
 # References
