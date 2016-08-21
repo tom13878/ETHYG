@@ -91,6 +91,38 @@ HH13 <- left_join(HH13, education) %>%
   left_join(HH13_x) %>%
   left_join(death); rm(education, HH13_x, death)
 
+# -------------------------------------
+# off-farm income (last 12 months)
+# unfortunately we do not see how many
+# days are worked per week!!!
+# -------------------------------------
+
+off_farm <- read_dta(file.path(dataPath, "Household/sect4_hh_w2.dta")) %>%
+  select(household_id2, individual_id2, ea_id2,
+         off_farm=hh_s4q09, main_job=hh_s4q10_b, industry=hh_s4q11_b,
+         employer=hh_s4q10_a, months=hh_s4q13,
+         weekspm=hh_s4q14, hourspw=hh_s4q15,
+         wage=hh_s4q16, payPeriod=hh_s4q17)
+
+off_farm$payPeriod <- as.numeric(off_farm$payPeriod)
+off_farm$pay <- 0
+off_farm <- transmute(off_farm, household_id2, individual_id2,
+                      ea_id2, main_job, industry, employer,
+                      pay=ifelse(payPeriod %in% 1, months*weekspm*hourspw*wage, pay),
+                      pay=ifelse(payPeriod %in% 3, months*weekspm*wage, pay),
+                      pay=ifelse(payPeriod %in% 4, months*weekspm*wage/2, pay),
+                      pay=ifelse(payPeriod %in% 5, months*wage, pay),
+                      pay=ifelse(payPeriod %in% 6, months*wage/3, pay),
+                      pay=ifelse(payPeriod %in% 7, months*wage/6, pay),
+                      pay=ifelse(payPeriod %in% 8, months*wage/12, pay))
+                      
+off_farm_x <- group_by(off_farm, household_id2) %>%
+  summarise(pay_hh=sum(pay, na.rm=TRUE))
+
+# join off farm income with the household info
+HH13 <- left_join(HH13, off_farm) %>% left_join(off_farm_x)
+rm(off_farm, off_farm_x)
+                      
 #######################################
 ############### OUTPUT ################
 #######################################
