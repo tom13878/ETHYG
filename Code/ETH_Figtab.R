@@ -20,10 +20,12 @@ options(scipen=999)
 
 # LOAD DATA
 # Can be sourced later
+db1 <- readRDS("Cache/db1.rds")
 db9 <- readRDS("Cache/db9.rds")
 db_sfaCD_CRE_Z <- readRDS("Cache/db_sfaCD_CRE_Z.rds")
 Prices <- readRDS("Cache/Prices_ETH.rds") %>% rename(Pm = maize, Pn = fertilizer)
 source("Code/waterfall_plot.R")
+source("Code/sfaTable.R")
 
 # SUMMARY STATISTICS
 
@@ -35,7 +37,7 @@ dbsum <- db_sfaCD_CRE_Z %>% dplyr::select(Yield = yld, ImprovedSeeds = impr, Slo
                                       yesN, Nitrogen = N, Rain = rain_wq, Irrigation = irrig, SOC = SOC2, phdum, 
                                       Labour = lab,  Area = area, crop_count2, AEZ, surveyyear2) 
 
-stargazer(as.data.frame(dbsum), type = "text", digits=2, out=".\\FigTab\\summaryStat.html")
+#stargazer(as.data.frame(dbsum), type = "text", digits=2, out=".\\FigTab\\summaryStat.html")
 
 # Table with key information per zone and subtotals
 Yieldsum <- bind_rows(
@@ -115,17 +117,25 @@ Zonalsum <- xtable(Zonalsum, digits = c(0,0,0,0,0,0,0,0,0))
 print(Zonalsum, type="html", file=".\\FigTab\\Zonal.html")
 
 
-
 # SFA table
-# Easier to cut and paste in Excel
-#sfaTable <- as.data.frame(summary(sfaCD2, extraPar = F)$mleParam)
-#print(xtable(sfaTable), type="html", file=".\\Analysis\\TZA\\Graphs\\Sfa.html", digits=3)
-summary(sfaCD1, extraPar = TRUE)
-lrtest(sfaCD1)
+sfaCD_CRE_Z <- sfa(logyld ~ noN + logN + loglab + dumoxen + 
+                     logarea + irrig + impr + slope + elevation + SOC2 + phdum2 + 
+                     rain_wq + AEZ +
+                     crop_count2 + surveyyear2 + 
+                     noN_bar + logN_bar + loglab_bar + logarea_bar + oxen_bar +
+                     irrig_bar + impr_bar + slope_bar + rain_wq_bar + crop_count_bar + 
+                     r | 
+                     sex + age +  title + literate + ed_any + extension + credit +
+                     dist_hh + dist_market + popEA -1
+                   ,data = db1, maxit = 1500, restartMax = 20, tol = 0.000001)
+summary(sfaCD_CRE_Z, extraPar = TRUE)
+lrtest(sfaCD_CRE_Z)
 
-summary(sfaCD2, extraPar = TRUE)
-lrtest(sfaCD2)
+xtable <- sfaTable_f(sfaCD_CRE_Z)[[1]]
+ztable <- sfaTable_f(sfaCD_CRE_Z)[[2]]
 
+
+# 
 # Table with yield levels
 YieldLevels <- bind_rows(
   db9 %>% 
@@ -322,8 +332,6 @@ GapClose2a <- GapClose2 %>%
 
 # Closing of yield gap assuming decomposition of levels.
 
-# something goes wrong here
-
 GapClose3 <- SPAMData %>%
   rename(Zone = ZONE) %>%
   left_join(ZonalYieldGap_l_sh, .) %>%
@@ -358,7 +366,7 @@ wf.df <- as.data.frame(t(wf.df)) %>%
 
 # Create waterfall plot
 cbPalette <- c("#009E73", "#CC79A7", "#0072B2", "#D55E00", "black", "#999999")
-waterfall_f(wf.df)
+#waterfall_f(wf.df)
 
 ## Determines the spacing between columns in the waterfall chart
 offset <- 0.3
@@ -370,7 +378,7 @@ waterfall <- waterfall_f(wf.df, offset=offset) +
   theme_classic() 
 
 
-print(waterfall)
+#print(waterfall)
 library(Cairo)
 ggsave(plot = waterfall, ".\\FigTab\\ETH_Waterfall.png", height = 150, width = 200, type = "cairo-png", units="mm")
 
@@ -384,57 +392,57 @@ db11 <- db9%>%
   mutate(value = (1-value)*100,
          yieldgap = factor(yieldgap, levels = c("TEYG_s", "EYG_s", "EUYG_s", "TYG_s",  "YG_s_Ycor")))
 
-
-# Note that average error=0 and therefore not interesting to show.
-# Show plot with minimum hinges and no outliers.
-boxplot <-ggplot(data=db11, aes(x=yieldgap, y=value)) +
-  #geom_boxplot(fill=c("#D55E00", "#009E73", "#0072B2", "#CC79A7", "#999999"), outlier.colour = NA) +
-  geom_boxplot(fill=c("#D55E00", "#009E73", "#0072B2", "#CC79A7", "#999999"), outlier.colour = "black") +
-  stat_boxplot(geom ='errorbar') +
-  guides(fill=FALSE) +
-  stat_summary(fun.y=mean, geom="point", shape=5, size=4) +
-  theme_classic() +
-  #geom_jitter(position=position_jitter(width=.1, height=0)) +
-  labs(x="", y="Yield gap (%)")+ 
-  scale_x_discrete(breaks=c("TEYG_s", "EYG_s", "EUYG_s", "TYG_s", "YG_s_Ycor"), 
-                   labels=c("Techical efficiency \n yield gap", "Economic \n yield gap", 
-                            "Feasible \n yield gap", "Technical \n yield gap",  "Total \n yield gap")) 
-#facet_wrap(~zone) +
-#scale_y_continuous(breaks=seq(0, 100, 25)) 
-
-# Rescale axes.
-#sts <- boxplot.stats(db11$value)$stats  # Compute lower and upper whisker limits
-#boxplot = boxplot + coord_cartesian(ylim = c(-5,max(sts)*1.05))
-boxplot
-ggsave(plot = boxplot, ".\\FigTab\\ETH_Distribution.png", height = 150, width = 200, type = "cairo-png", units="mm")
-
-# Distribution of absolute yield gaps
-db12 <- db9%>%
-  dplyr::select(ZONE, REGCODE, surveyyear, ERROR_l, TEYG_l, EYG_l, EUYG_l, TYG_l, YG_l_Ycor) %>%
-  gather(yieldgap, value, ERROR_l:YG_l_Ycor) %>%
-  filter(yieldgap!="ERROR_l") %>% 
-  droplevels() %>%
-  mutate(yieldgap = factor(yieldgap, levels = c("TEYG_l", "EYG_l", "TYG_l", "EUYG_l", "YG_l_Ycor")))
-
-# Note that average error=0 and therefore not interesting to show.
-# Show plot with minimum hinges and no outliers.
-boxplot2 <-ggplot(data=db12, aes(x=yieldgap, y=value)) +
-  geom_boxplot(fill=c("#D55E00", "#009E73", "#0072B2", "#CC79A7", "#999999"), outlier.colour = NA) +
-  #geom_boxplot(fill=c("#D55E00", "#009E73", "#0072B2", "#CC79A7", "#999999"), outlier.colour = "black") +
-  stat_boxplot(geom ='errorbar') +
-  guides(fill=FALSE) +
-  stat_summary(fun.y=mean, geom="point", shape=5, size=4) +
-  theme_classic() +
-  labs(x="", y="Yield gap (%)")+ 
-  scale_x_discrete(breaks=c("TEYG_l", "EYG_l", "TYG_l", "EUYG_l", "YG_l_Ycor"), 
-                   labels=c("Techical efficiency \n yield gap", "Economic \n yield gap", 
-                            "Technical \n yield gap", " Economically \n unexploitable \n yield gap", "Yield gap"))
-#+ scale_y_continuous(breaks=seq(0, 100, 25)) 
-
-# Rescale axes.
-boxplot2
-ggsave(plot = boxplot2, ".\\FigTab\\ETH_Distribution2.png", height = 150, width = 200, type = "cairo-png", units="mm")
-
+# 
+# # Note that average error=0 and therefore not interesting to show.
+# # Show plot with minimum hinges and no outliers.
+# boxplot <-ggplot(data=db11, aes(x=yieldgap, y=value)) +
+#   #geom_boxplot(fill=c("#D55E00", "#009E73", "#0072B2", "#CC79A7", "#999999"), outlier.colour = NA) +
+#   geom_boxplot(fill=c("#D55E00", "#009E73", "#0072B2", "#CC79A7", "#999999"), outlier.colour = "black") +
+#   stat_boxplot(geom ='errorbar') +
+#   guides(fill=FALSE) +
+#   stat_summary(fun.y=mean, geom="point", shape=5, size=4) +
+#   theme_classic() +
+#   #geom_jitter(position=position_jitter(width=.1, height=0)) +
+#   labs(x="", y="Yield gap (%)")+ 
+#   scale_x_discrete(breaks=c("TEYG_s", "EYG_s", "EUYG_s", "TYG_s", "YG_s_Ycor"), 
+#                    labels=c("Techical efficiency \n yield gap", "Economic \n yield gap", 
+#                             "Feasible \n yield gap", "Technical \n yield gap",  "Total \n yield gap")) 
+# #facet_wrap(~zone) +
+# #scale_y_continuous(breaks=seq(0, 100, 25)) 
+# 
+# # Rescale axes.
+# #sts <- boxplot.stats(db11$value)$stats  # Compute lower and upper whisker limits
+# #boxplot = boxplot + coord_cartesian(ylim = c(-5,max(sts)*1.05))
+# boxplot
+# ggsave(plot = boxplot, ".\\FigTab\\ETH_Distribution.png", height = 150, width = 200, type = "cairo-png", units="mm")
+# 
+# # Distribution of absolute yield gaps
+# db12 <- db9%>%
+#   dplyr::select(ZONE, REGCODE, surveyyear, ERROR_l, TEYG_l, EYG_l, EUYG_l, TYG_l, YG_l_Ycor) %>%
+#   gather(yieldgap, value, ERROR_l:YG_l_Ycor) %>%
+#   filter(yieldgap!="ERROR_l") %>% 
+#   droplevels() %>%
+#   mutate(yieldgap = factor(yieldgap, levels = c("TEYG_l", "EYG_l", "TYG_l", "EUYG_l", "YG_l_Ycor")))
+# 
+# # Note that average error=0 and therefore not interesting to show.
+# # Show plot with minimum hinges and no outliers.
+# boxplot2 <-ggplot(data=db12, aes(x=yieldgap, y=value)) +
+#   geom_boxplot(fill=c("#D55E00", "#009E73", "#0072B2", "#CC79A7", "#999999"), outlier.colour = NA) +
+#   #geom_boxplot(fill=c("#D55E00", "#009E73", "#0072B2", "#CC79A7", "#999999"), outlier.colour = "black") +
+#   stat_boxplot(geom ='errorbar') +
+#   guides(fill=FALSE) +
+#   stat_summary(fun.y=mean, geom="point", shape=5, size=4) +
+#   theme_classic() +
+#   labs(x="", y="Yield gap (%)")+ 
+#   scale_x_discrete(breaks=c("TEYG_l", "EYG_l", "TYG_l", "EUYG_l", "YG_l_Ycor"), 
+#                    labels=c("Techical efficiency \n yield gap", "Economic \n yield gap", 
+#                             "Technical \n yield gap", " Economically \n unexploitable \n yield gap", "Yield gap"))
+# #+ scale_y_continuous(breaks=seq(0, 100, 25)) 
+# 
+# # Rescale axes.
+# boxplot2
+# ggsave(plot = boxplot2, ".\\FigTab\\ETH_Distribution2.png", height = 150, width = 200, type = "cairo-png", units="mm")
+# 
 
 # Maps with GYGA yield potential and plot information
 # transform shapefile in dataframe for ggplot. rownames are used as ID for the countries. Using ID gives strange results. 
@@ -499,7 +507,7 @@ GYGA_LSMS <- ggplot()+
         line = element_blank(),
         axis.text = element_blank())
 
-GYGA_LSMS
+#GYGA_LSMS
 ggsave(plot = GYGA_LSMS, ".\\FigTab\\GYGA_LSMS.png", height = 150, width = 200, type = "cairo-png", units="mm")
 
 # Zonal map with community yield levels
@@ -544,9 +552,9 @@ ZONE_LSMS <- ggplot()+
   theme(legend.key=element_blank(),
         line = element_blank(),
         axis.text = element_blank())
-ZONE_LSMS 
+#ZONE_LSMS 
 
 ggsave(plot = ZONE_LSMS, ".\\Cache\\ZONE_LSMS.png", height = 150, width = 200, type = "cairo-png", units="mm")
-
+save.image("Cache/FigTab.Rdata")
 
 

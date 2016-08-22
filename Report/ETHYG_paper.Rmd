@@ -18,7 +18,7 @@ output:
     fig_caption: yes
     keep_tex: yes
     latex_engine: pdflatex
-    number_sections: yes
+    #number_sections: yes
     template: D:\\Dropbox\\Michiel_research\\Templates\\r-markdown-templates\\svm-latex-ms.tex
   html_document: default
   word_document: default
@@ -33,26 +33,13 @@ abstract: ETH Maize yield gaps abstract
 
 
 ```{r global_options, include=FALSE}
+# http://stackoverflow.com/questions/29696172/how-to-hold-figure-position-with-figure-caption-in-pdf-output-of-knitr
 knitr::opts_chunk$set(fig.path = 'FigTab/', echo = FALSE, warning = FALSE, message = FALSE)
 ```
 
-```{r}
-# get packages
-library(ggplot2)
-library(dplyr)
-library(stargazer)
-# library(corrplot)
-library(car)
-```
-
 ```{r read_data}
-dataPath <- "D:/Data/Projects/ETHYG/"
-db1 <- readRDS(file.path(dataPath, "Cache/db1.rds"))
-```
-
-```{r source_FigTab}
-dataPath <- "D:/Data/Projects/ETHYG/"
-db1 <- readRDS(file.path(dataPath, "Cache/db1.rds"))
+library(stargazer)
+load("D:/Data/Projects/ETHYG/Cache/FigTab.Rdata")
 ```
 
 ## REFER TO MAIZE REVOLUTOION CHAPTER JAYNE in LARSON.
@@ -61,17 +48,20 @@ db1 <- readRDS(file.path(dataPath, "Cache/db1.rds"))
 
 # Introduction
 Ethiopia has great agricultural potential because of its vast areas of fertile land, diverse climate, generally adequate rainfall, and large labour pool. Consequently, agriculture has remained as the foundation of Ethiopia’s economy, accounting for around 40 percent of the national income and around 80 percent of the total employment (EEA, 2015). It also supplies food to the urban areas and raw materials to the manufacturing sector. Many other economic activities depend on agriculture, including marketing, processing, and export of agricultural products. Among the major drivers of GDP growth crop production had been the second most important contributor next to construction . The agricultural sector has, therefore, been crucial for the overall performance of the Ethiopian economy and would continue to be the backbone of the Ethiopian economy for many years to come. The sector is expected to play a central role in decreasing poverty and increasing growth in Ethiopia.
+\\vspace{12pt}
+Agricultural production in Ethiopia is overwhelmingly of a subsistence nature where millions of smallholder farmers cultivate on the average less than a hectare of land. About 80 per cent of the smallholders’ production is destined for home consumption and seed. The smallholder sector is the main source of employment, agricultural GDP, export earnings, and food and raw materials supplies to urban areas and food industries. Crop production is by far the most dominant sub-sector, accounting for over 97 per cent of the agricultural output and more than 60% to agricultural GDP (RATES, 2003). It is estimated that crop production and livestock husbandry account for over 86 per cent of the agricultural GDP (WB, 2013).
 
-Agricultural production in Ethiopia is overwhelmingly of a subsistence nature where millions of smallholder farmers cultivate on the average less than a hectare of land. About 80 per cent of the smallholders’ production is destined for home consumption and seed. The smallholder sector is the main source of employment, agricultural GDP, export earnings, and food and raw materials supplies to urban areas and food industries. Crop production is by far the most dominant sub-sector, accounting for over 97 per cent of the agricultural output and more than 60% to agricultural GDP (RATES, 2003). It is estimated that crop production and livestock husbandry account for over 86 per cent of the agricultural GDP (WB, 2013). 
 Despite this potential, agricultural productivity in Ethiopia is very low compared to other Sub-Saharan African countries. Ethiopian agriculture has remained underdeveloped due to periodic drought, soil degradation, deforestation, high population density, poor infrastructure (making it difficult and expensive to get goods to market) and low level of technology use among others. 
 
-Maize is one of the most important staple crops in terms of calorie intake for many millions of Ethiopians and is grown in many parts of the country. Because of its large geographical coverage and the scale of production, it plays a critical role in the food security of the country and particularly the poor. According to the CSA 2004/5 national survey of consumption expenditure, maize accounted for about 17 percent of the national calorie intake followed by sorghum (14 percent) and wheat (13 percent) among the major cereals (Taffesse et al., 2012). Maize is second to teff in terms of area, but it ranks first among cereals in production. According to CSA (2010) maize accounted around 30 percent of all cereals produced in the country and more than 20 percent of the land cultivated by all cereal crops. According to the Agricultural Growth Program (AGP) Ethiopia is the fifth largest producer of maize in Africa in terms of the area devoted to maize but is second, only to South Africa, in yield and third, after South Africa and Nigeria, in production and smallholder farmers and around 9 million smallholder farmers account for more than 95 % of the total maize area and production in the country (http://ethioagp.org/maize-2/). 
+Maize is one of the most important staple crops in terms of calorie intake for many millions of Ethiopians and is grown in many parts of the country. Because of its large geographical coverage and the scale of production, it plays a critical role in the food security of the country and particularly the poor. According to the CSA 2004/5 national survey of consumption expenditure, maize accounted for about 17 percent of the national calorie intake followed by sorghum (14 percent) and wheat (13 percent) among the major cereals (Taffesse et al., 2012). Maize is second to teff in terms of area, but it ranks first among cereals in production. According to CSA (2010) maize accounted around 30 percent of all cereals produced in the country and more than 20 percent of the land cultivated by all cereal crops. According to the Agricultural Growth Program (AGP) Ethiopia is the fifth largest producer of maize in Africa in terms of the area devoted to maize but is second, only to South Africa, in yield and third, after South Africa and Nigeria, in production and smallholder farmers and around 9 million smallholder farmers account for more than 95 % of the total maize area and production in the country (http://ethioagp.org/maize-2/).  
+
 
 It is grown in the mid highland areas of the country and there are huge tracts of land in all regions suitable for maize farming. Maize is grown primarily in the Amhara, Oromia and SNNPR regions of the country from which 5 zones namely West Wellega, Jimma, East Shewa, East Wellega, and West Gojjam produces more than 44 percent of the smallholder production. Marketable surplus is mainly produced in these high potential zones, and the production in the other zones is mainly for subsistence. Maize production has increased in Ethiopia in recent years, due in large part to an improvement in the supply of seeds to farmers. While there have been significant gains made in maize production over the past decade, there is still a significant opportunity to further increase productivity
-Ethiopia can be considered as a success story for maize production as, apart from South Africa, it has been the only country in Sub-Saharan Africa that shows a substantial progress in maize productivity and input use (Abate et al., 2015) After a period of limited growth, yield more than doubled from around 1.5 ton/ha in 2000 to over 3 ton/ha in 2013 (FAOSTAT). The government has worked hard to ensure timely delivery of seeds and fertilizer, as well as to improve agricultural extension services and trainings for farmers. Maize yield levels are also slightly above the regional average. Despite the recent progress in productivity, yield levels in Ethiopia are still very low relative to what could be produced. According to the Central Statistical Agency of Ethiopia (CSA, 2010), the low level of crop productivity in the country is attributed to inefficient farming methods that utilize outdated crop production and protection technologies, and fragmented pieces of land holdings. Estimates indicate that the current maize yield could be doubled if farmers adopt higher quality inputs and proven agronomy best practices. Data from the Global Yield Gap Atlas (GYGA) shows that the average yield gap is on average 82% in Ethiopia. This is in strong contrast with for example Latin American countries which are able to reach around 45% of potential yield. 
+Ethiopia can be considered as a success story for maize production as, apart from South Africa, it has been the only country in Sub-Saharan Africa that shows a substantial progress in maize productivity and input use (Abate et al., 2015) After a period of limited growth, yield more than doubled from around 1.5 ton/ha in 2000 to over 3 ton/ha in 2013 (FAOSTAT). The government has worked hard to ensure timely delivery of seeds and fertilizer, as well as to improve agricultural extension services and trainings for farmers. Maize yield levels are also slightly above the regional average. Despite the recent progress in productivity, yield levels in Ethiopia are still very low relative to what could be produced. According to the Central Statistical Agency of Ethiopia (CSA, 2010), the low level of crop productivity in the country is attributed to inefficient farming methods that utilize outdated crop production and protection technologies, and fragmented pieces of land holdings. Estimates indicate that the current maize yield could be doubled if farmers adopt higher quality inputs and proven agronomy best practices. Data from the Global Yield Gap Atlas (GYGA) shows that the average yield gap is on average 82% in Ethiopia. This is in strong contrast with for example Latin American countries which are able to reach around 45% of potential yield.  
 
 Yield gap measurements are a very powerful metric to determine the absolute potential to increase production and are therefore frequently used in policy studies (Sumberg, 2012). This makes them in particular useful as a basis for forward looking scenario studies to assess future agricultural production and food security. By ‘controlling’ for the biophysical production environment, yield gaps can easily be compared across regions and countries and, therefore, provide a good indicator of relative (potential) performance. 
-A limitation is that yield gap measurements offer only limited guidance in explaining the observed difference between actual and potential yield. It has been argued that it simply not cost-efficient for farmers to use the amount of inputs that are needed to reach potential. This is underscored by Lobell et al. (Lobell et al., 2009), who compared a large number of yield gap studies and find that (best-practice) farmers reach only around 80% of potential yield. The ‘exploitable’ yield gap is therefore lower than the total yield gap because of economic constraints. Other important causes for the existence of yield gaps are differences in farm-level characteristics (e.g. size, education and off farm activities) and the socio-economic context (e.g. subsidies, rural infrastructure and access to finance). 
+A limitation is that yield gap measurements offer only limited guidance in explaining the observed difference between actual and potential yield. It has been argued that it simply not cost-efficient for farmers to use the amount of inputs that are needed to reach potential. This is underscored by Lobell et al. (Lobell et al., 2009), who compared a large number of yield gap studies and find that (best-practice) farmers reach only around 80% of potential yield. The ‘exploitable’ yield gap is therefore lower than the total yield gap because of economic constraints. Other important causes for the existence of yield gaps are differences in farm-level characteristics (e.g. size, education and off farm activities) and the socio-economic context (e.g. subsidies, rural infrastructure and access to finance).
+
 The aim of this paper is the to provide a detailed analysis of the maize yield gap in Ethiopia. We decompose the conventional yield gap into four elements that capture, technical efficiency, economic efficiency, availability of technologies and an ‘unexploitable’ yield gap element.
 
 # Background
@@ -103,30 +93,40 @@ Although all inputs are potentially endogenous in equation X, we only estimate a
 Fertilizer is only applied to [X]% of the plots. Due to the large number of zeros in the dependent variable, OLS leads to inconsistent estimates. We therefore use the tobit model that is able to deal with 'corner solutions' [ADD] Following similar research [REF], we include all exogenous variables from equation [X] as well plot (e.g. soil quality, ...[ADD] and household (e.g. age and sex of the household head, household composition and [ADD] factors that are expected to affect input use. Similarly to the estimation of the stochastic frontier function, we apply the CRE framework to account for time-variant unobserved heterogeneity.
 
 # Data
+
+
+```{r sfa_xtable2, echo = FALSE} 
+#http://stackoverflow.com/questions/16424545/reduce-cell-width-and-font-size-of-table-using-pandoc-table
+options(digits=2)
+# http://stackoverflow.com/questions/30446905/rmarkdown-font-size-and-header
+knitr::kable(xtable, caption = "check")
+``` 
+
+
 Data on actual maize yield comes from the second wave of the Ethiopian Socioeconomic Survey (ESS); implemented by the Central Statistics Agency of Ethiopia (CSA) and the World Bank as part of the multi country Living Standards Measurement Study-Integrated Surveys of Agriculture (LSMS-ISA) project. Collected in 2013-14 the second wave of the ESS has a special focus on improving agricultural statistics in Ethiopia and has an extensive coverage of agricultural production, input use and a number of socio-economic characteristics. A previous ESS survey was conducted in 2011-12. However, crucially output values were not properly recorded and for the purposes of this paper it was not possible to use this earlier survey. The ESS covers a wide range of agricultural variables at the plot, household and community level, including crop-specific production, fertilizer use, labour, and input and output prices. The database also contains the GPS recording for the size of the plot, which are essential to obtain accurate yield estimations. As part of the ESS the longitude and latitude of household locations and plot locations was recorded. This makes it possible to link in external data including climate, soil and a selection of other spatial data. The sources of this spatial data include IFPRI, Worlclim, NASA and the Ethiopian Roads Agency amongst others.
 
 
-```{r echo=FALSE}
-#stargazer(as.data.frame(db1), type = "text", digits=2, out=".\\FigTab\\summaryStat.html")
-dataPath <- "D:/Data/Projects/ETHYG/"
-db1 <- readRDS(file.path(dataPath, "Cache/db1.rds"))
-CD1 <- lm(logyld ~ logN, data=db1)
-output <- round(summary(CD1)$coefficients, 3)
-# row.names(output) <- c()
-knitr::kable(output, caption="Cobb Douglas")
+TESTS
+
+
+```{r summary_stat, results='asis', message=FALSE, echo=FALSE}
+stargazer(db9, header = FALSE)
+```
+
+```{r GYGA_LSMS, fig.cap = "GYGA and LSMS. \\label{figurelabel1}", fig.height=8, fig.width=8, fig.pos="H"}
+GYGA_LSMS
 ```
 
 
-```{r results='asis'}
-stargazer(CD1)
-```
-
-```{r fig.cap = "figure caption. \\label{figurelabel}", fig.height=12, fig.width=10}
-#plot(iris)
+```{r ZONE_LSMS, fig.cap = "ZONE and LSMS. \\label{figurelabel2}", fig.height=8, fig.width=8}
+ZONE_LSMS
 ```
 
 # Results
 
+```{r Waterfall, fig.cap = "Waterfall plot. \\label{figurelabel3}", fig.height=8, fig.width=8, fig.pos="H"}
+waterfall
+```
 
 
 
@@ -135,7 +135,5 @@ stargazer(CD1)
 
 
 
-
-```
 
 # References

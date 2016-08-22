@@ -265,7 +265,7 @@ db1 <- left_join(db0, Prices) %>%
 
 # Drop unused levels (e.g. Zanzibar in zone), which are giving problems with sfa
 db1 <- droplevels(db1)
-saveRDS(db1, "Cache/db1.rds")
+
 
 ############################
 ###### INPUT DEMAND ########
@@ -354,7 +354,8 @@ summary(N_dem_CRE)
 db1 <- db1 %>%
        mutate(r = residuals(N_dem_CRE, type="deviance"))
 
-
+# Save file
+saveRDS(db1, "Cache/db1.rds")
 
 #######################################
 ###### PRODUCTION FUNCTION ############
