@@ -97,31 +97,89 @@ HH13 <- left_join(HH13, education) %>%
 # days are worked per week!!!
 # -------------------------------------
 
-off_farm <- read_dta(file.path(dataPath, "Household/sect4_hh_w2.dta")) %>%
+off_farm_income <- read_dta(file.path(dataPath, "Household/sect4_hh_w2.dta")) %>%
   select(household_id2, individual_id2, ea_id2,
-         off_farm=hh_s4q09, main_job=hh_s4q10_b, industry=hh_s4q11_b,
-         employer=hh_s4q10_a, months=hh_s4q13,
-         weekspm=hh_s4q14, hourspw=hh_s4q15,
-         wage=hh_s4q16, payPeriod=hh_s4q17)
+         main_job=hh_s4q09,
+         mj_industry=hh_s4q11_b, mj_employer=hh_s4q12,
+         mj_months=hh_s4q13, mj_weekspm=hh_s4q14,
+         mj_hourspw=hh_s4q15,mj_wage=hh_s4q16,
+         mj_payPeriod=hh_s4q17, mj_grat=hh_s4q18,
+         mj_gratPeriod=hh_s4q19,second_job=hh_s4q20,
+         sj_industry=hh_s4q22_b, sj_employer=hh_s4q23,
+         sj_months=hh_s4q24, sj_weekspm=hh_s4q25,
+         sj_hourspw=hh_s4q26, sj_wage=hh_s4q27,
+         sj_payPeriod=hh_s4q28, sj_grat=hh_s4q29,
+         sj_gratPeriod=hh_s4q30, PSNP=hh_s4q31,
+         PSNP_days=hh_s4q32, PSNP_wage=hh_s4q33,
+         other_job=hh_s4q34, oj_days=hh_s4q35,
+         oj_wage=hh_s4q36)
 
-off_farm$payPeriod <- as.numeric(off_farm$payPeriod)
-off_farm$pay <- 0
-off_farm <- transmute(off_farm, household_id2, individual_id2,
-                      ea_id2, main_job, industry, employer,
-                      pay=ifelse(payPeriod %in% 1, months*weekspm*hourspw*wage, pay),
-                      pay=ifelse(payPeriod %in% 3, months*weekspm*wage, pay),
-                      pay=ifelse(payPeriod %in% 4, months*weekspm*wage/2, pay),
-                      pay=ifelse(payPeriod %in% 5, months*wage, pay),
-                      pay=ifelse(payPeriod %in% 6, months*wage/3, pay),
-                      pay=ifelse(payPeriod %in% 7, months*wage/6, pay),
-                      pay=ifelse(payPeriod %in% 8, months*wage/12, pay))
+off_farm_income$mj_pay <- NA
+off_farm_income$mj_grat_pay <- NA
+off_farm_income$sj_pay <- NA
+off_farm_income$sj_grat_pay <- NA
+off_farm_income$PSNP_pay <- off_farm_income$PSNP_wage
+off_farm_income$oj_pay <- off_farm_income$oj_wage
+
+off_farm_income <- transmute(off_farm_income, household_id2, individual_id2,
+                      ea_id2, main_job, mj_industry, mj_employer,
+                      mj_pay=ifelse(mj_payPeriod %in% 1, mj_months*mj_weekspm*mj_hourspw*mj_wage, mj_pay),
+                      mj_pay=ifelse(mj_payPeriod %in% 3, mj_months*mj_weekspm*mj_wage, mj_pay),
+                      mj_pay=ifelse(mj_payPeriod %in% 4, mj_months*mj_weekspm*mj_wage/2, mj_pay),
+                      mj_pay=ifelse(mj_payPeriod %in% 5, mj_months*mj_wage, mj_pay),
+                      mj_pay=ifelse(mj_payPeriod %in% 6, mj_months*mj_wage/3, mj_pay),
+                      mj_pay=ifelse(mj_payPeriod %in% 7, mj_months*mj_wage/6, mj_pay),
+                      mj_pay=ifelse(mj_payPeriod %in% 8, mj_months*mj_wage/12, mj_pay),
                       
-off_farm_x <- group_by(off_farm, household_id2) %>%
-  summarise(pay_hh=sum(pay, na.rm=TRUE))
+                      mj_grat_pay=ifelse(mj_gratPeriod %in% 1, mj_months*mj_weekspm*mj_hourspw*mj_grat, mj_grat_pay),
+                      mj_grat_pay=ifelse(mj_gratPeriod %in% 3, mj_months*mj_weekspm*mj_grat, mj_grat_pay),
+                      mj_grat_pay=ifelse(mj_gratPeriod %in% 4, mj_months*mj_weekspm*mj_grat/2, mj_grat_pay),
+                      mj_grat_pay=ifelse(mj_gratPeriod %in% 5, mj_months*mj_grat, mj_grat_pay),
+                      mj_grat_pay=ifelse(mj_gratPeriod %in% 6, mj_months*mj_grat/3, mj_grat_pay),
+                      mj_grat_pay=ifelse(mj_gratPeriod %in% 7, mj_months*mj_grat/6, mj_grat_pay),
+                      mj_grat_pay=ifelse(mj_gratPeriod %in% 8, mj_months*mj_grat/12, mj_grat_pay),
+                      
+                      second_job, sj_industry, sj_employer,
+                      sj_pay=ifelse(sj_payPeriod %in% 1, sj_months*sj_weekspm*sj_hourspw*sj_wage, sj_pay),
+                      sj_pay=ifelse(sj_payPeriod %in% 3, sj_months*sj_weekspm*sj_wage, sj_pay),
+                      sj_pay=ifelse(sj_payPeriod %in% 4, sj_months*sj_weekspm*sj_wage/2, sj_pay),
+                      sj_pay=ifelse(sj_payPeriod %in% 5, sj_months*sj_wage, sj_pay),
+                      sj_pay=ifelse(sj_payPeriod %in% 6, sj_months*sj_wage/3, sj_pay),
+                      sj_pay=ifelse(sj_payPeriod %in% 7, sj_months*sj_wage/6, sj_pay),
+                      sj_pay=ifelse(sj_payPeriod %in% 8, sj_months*sj_wage/12, sj_pay),
+                      
+                      sj_grat_pay=ifelse(sj_gratPeriod %in% 1, sj_months*sj_weekspm*sj_hourspw*sj_grat, sj_grat_pay),
+                      sj_grat_pay=ifelse(sj_gratPeriod %in% 3, sj_months*sj_weekspm*sj_grat, sj_grat_pay),
+                      sj_grat_pay=ifelse(sj_gratPeriod %in% 4, sj_months*sj_weekspm*sj_grat/2, sj_grat_pay),
+                      sj_grat_pay=ifelse(sj_gratPeriod %in% 5, sj_months*sj_grat, sj_grat_pay),
+                      sj_grat_pay=ifelse(sj_gratPeriod %in% 6, sj_months*sj_grat/3, sj_grat_pay),
+                      sj_grat_pay=ifelse(sj_gratPeriod %in% 7, sj_months*sj_grat/6, sj_grat_pay),
+                      sj_grat_pay=ifelse(sj_gratPeriod %in% 8, sj_months*sj_grat/12, sj_grat_pay),
+                      
+                      PSNP_wage, oj_wage)
+
+# variable for total pay received from
+# main job, secondary job, graduities,
+# PSNP and other jobs -> 0s are 
+# returned to NAs if necessary
+
+off_farm_income$off_farm_income <- with(off_farm_income,
+                     rowSums(cbind(mj_pay,mj_grat_pay,sj_pay, sj_grat_pay, PSNP_wage, oj_wage),
+                             na.rm=TRUE))
+miss <- with(off_farm_income,
+             is.na(mj_pay) & is.na(mj_grat_pay & is.na(sj_pay) & is.na(sj_grat_pay) & is.na(PSNP_wage) & is.na(oj_wage)))
+off_farm_income$off_farm_income[miss] <- NA; rm(miss)
+
+# summarise at the household level to get
+# a measure of total household off farm
+# income
+
+off_farm_income_x <- group_by(off_farm_income, household_id2) %>%
+  summarise(off_farm_income_hh=sum(off_farm_income, na.rm=TRUE))
 
 # join off farm income with the household info
-HH13 <- left_join(HH13, off_farm) %>% left_join(off_farm_x)
-rm(off_farm, off_farm_x)
+HH13 <- left_join(HH13, off_farm_income) %>% left_join(off_farm_income_x)
+rm(off_farm_income, off_farm_income_x)
                       
 #######################################
 ############### OUTPUT ################
