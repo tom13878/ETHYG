@@ -241,7 +241,7 @@ db0 <- db0 %>%
          crop_count_bar=mean(crop_count2, na.rm=TRUE),
          slope_bar=mean(slope, na.rm=TRUE),
          family_size_bar=mean(family_size, na.rm=TRUE),
-         elevation_bar=mean(slope, na.rm=TRUE)
+         elevation_bar=mean(elevation, na.rm=TRUE)
          ) %>%
   ungroup
 
