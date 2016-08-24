@@ -239,6 +239,26 @@ oput2$sold <- toupper(as_factor(oput2$sold))
 oput <- left_join(oput, oput2) %>% unique; rm(oput2)
 
 #######################################
+########## on farm income #############
+#######################################
+
+# from crops
+# see output section
+
+# from permanent crops (trees)
+tree <- read_dta(file.path(dataPath, "/Post-Harvest/sect12_ph_w2.dta")) %>%
+  select(holder_id, household_id2, ea_id2, crop_code,
+         sold_tree=ph_s12q06, sold_tree_kg=ph_s12q07, tree_value=ph_s12q08)
+
+# from rented land
+rent <- read_dta(file.path(dataPath, "Post-Planting/sect2_pp_w2.dta")) %>%
+  select(holder_id, household_id2, ea_id2, parcel_id, rented=pp_s2q10, rented12=pp_s2q11,
+         fields_rented=pp_s2q12, rent_cash=pp_s2q13_a, rent_in_kind=pp_s2q13_b)
+
+# from livestock
+# information on value of livestock not forthcoming
+
+#######################################
 ############## CHEMICAL ###############
 #######################################
 
@@ -522,7 +542,9 @@ ETH2013 <- left_join(ETH2013, areaTotal); rm(areaTotal)
 # parcel level joins
 
 ETH2013 <- left_join(ETH2013, parcel); rm(parcel)
+ETH2013 <- left_join(ETH2013, rent); rm(rent)
 ETH2013 <- left_join(ETH2013, misc); rm(misc)
+
 # -------------------------------------
 # field level joins
 
@@ -536,6 +558,7 @@ ETH2013 <- left_join(ETH2013, geo); rm(geo)
 # crop level joins
 ETH2013 <- left_join(ETH2013, oput); rm(oput)
 ETH2013 <- left_join(ETH2013, crop); rm(crop)
+ETH2013 <- left_join(ETH2013, tree); rm(tree)
 ETH2013 <- left_join(ETH2013, ph_lab); rm(ph_lab)
 
 # make a surveyyear variable
