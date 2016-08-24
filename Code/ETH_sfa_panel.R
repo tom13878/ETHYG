@@ -731,9 +731,9 @@ ggplot(data = db6, aes(y = PY, x = PFY)) +
   scale_y_continuous(limits=c(0, 10000)) +
   scale_x_continuous(limits=c(0, 10000))
 
-# Compare error and resid
-# Not clear what resid is? As the following plot shows, TEYG_s = TE :CHECK]
-ggplot(data = db6, aes(y = err, x = resid)) +
+# Compare log(y) and resid
+# Resid is defined as log(Y)-log(TEY) = error(v) - efficiency(u)
+ggplot(data = db6, aes(y = log(Y), x = resid)) +
   geom_point() 
 
 # Compare Sfa TA scores with mannually computed TEYG_s => identical as they should be
