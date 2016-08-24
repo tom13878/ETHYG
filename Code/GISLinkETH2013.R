@@ -377,5 +377,5 @@ geo.total.plot <- geo.total.plot %>%
                                   labels = AEZ_code$AEZ)))
  
  # Write file
- saveRDS(geo.total.plot, file = file.path(dataPath, paste("..\\..\\..\\Other\\Spatial\\ETH\\ETH_geo_2013.rds")))
+ saveRDS(geo.total.plot, file = "D:/Data/Projects/ETHYG/Cache/ETH_geo_2013.rds")
  
