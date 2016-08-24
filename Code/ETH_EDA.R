@@ -23,7 +23,7 @@ options(scipen=999)
 ####### EXPLORATORY ANALYSIS###########
 #######################################
 
-db0 <- dbP
+dbX <- db1
 # summary statistics
 stargazer(as.data.frame(db0), type = "text") # as.data.frame needed because file are tbl format.
 numSummary(db0)
@@ -142,5 +142,26 @@ PercTable(db0$mech, db0$antrac,  margins=c(1,2),  rfrq="110", freq=T)
 PercTable(db0$bank_account_own_pp, db0$infra_dummy_finance_ph,  margins=c(1,2),  rfrq="110", freq=T) 
 PercTable(db0$ZONE, db0$inter_crop,  margins=c(1,2),  rfrq="110", freq=T) 
 PercTable(db0$herb, db0$pest,  margins=c(1,2),  rfrq="110", freq=T) 
+
+# Analyse fit of model
+# Note that, as expected, fitted values or on the frontier (=above).
+# https://www.r-bloggers.com/visualising-residuals/?utm_source=feedburner&utm_medium=email&utm_campaign=Feed%3A+RBloggers+%28R+bloggers%29
+fit <- sfaCD_CRE_Z
+dbX <- db1
+dbX$fitted <- fitted(fit)
+dbX$residuals <- residuals(fit)
+
+dbX <- dbX %>%
+  select(hhid, id, loglab, logN, logyld, fitted, residuals) %>%
+  gather(variable, value, -id, - hhid, -fitted, -residuals, -logyld)
+
+ggplot(dbX, aes(x = value, y = logyld)) +
+  geom_segment(aes(xend = value, yend = fitted), alpha = .2) +
+  geom_point(aes(color = residuals)) +
+  scale_color_gradient2(low = "blue", mid = "white", high = "red") +
+  guides(color = FALSE) +
+  geom_point(aes(y = fitted), shape = 1) +
+  theme_bw() +
+  facet_wrap(~variable, scales = "free")
 
 
