@@ -54,6 +54,7 @@ load("D:\\Data\\Projects\\ETHYG\\Cache/FigTab.Rdata")
 
 \small
 ```{r,  results="asis"}
+# http://tex.stackexchange.com/questions/10863/is-there-a-way-to-slightly-shrink-a-table-including-font-size-to-fit-within-th
 suppressMessages(library(stargazer))
 stargazer(as.data.frame(dbsum),  type = "latex", digits=2, header=FALSE, title = "Summary statistics")
 ```
