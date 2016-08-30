@@ -119,6 +119,8 @@ fpRegion <- medianPrice_f(fertmar, "region", c("ZONE", "REGNAME"))
 fpWoreda <- medianPrice_f(fertmar, "woreda", c("ZONE", "REGNAME", "WOREDACODE"))
 fpKebele <- medianPrice_f(fertmar, "kebele", c("ZONE", "REGNAME", "WOREDACODE", "KEBELECODE"))
 
+
+# CHECK: ADD REGION LEVEL PRICES!!
 fertPrice <- bind_rows(fpWoreda, fpKebele, fpRegion, fpZone, fpCountry) %>%
   na.omit %>%
   spread(level, price) %>%
