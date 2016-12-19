@@ -1,45 +1,36 @@
 ---
-title: "Ethiopia maize yield gap"
-author:
-- affiliation: Wageningen Economic Research & IIASA
-  name: Michiel van Dijk
-- affiliation: Wageningen Economic Research
-  name: Zuzana Smeets Kristkova
-- affiliation: Wageningen Economic Research
-  name: Tom Morley
-- affiliation: Ethiopian Economic Policy Research Institute
-  name: Assefa Admassie
-- affiliation: ADD
-  name: Lenny van Bussel
-  
+title: "Global-to-local GLOBIOM procedure"
+author: "Michiel van Dijk"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
-output:
-  pdf_document:
-    fig_caption: yes
-    keep_tex: yes
-    latex_engine: pdflatex
-    #number_sections: yes
-    template: D:\\Dropbox\\Michiel_research\\Templates\\r-markdown-templates\\svm-latex-ms.tex
-  html_document: default
-  word_document: default
-fontsize: 11pt
-geometry: margin=1in
-keywords: Yield Gap
-bibliography: M:/My Documents/bibTex/library.bib
-subtitle: Check
-thanks: "**Current version**: `r format(Sys.time(), '%B %d, %Y')`; **Corresponding author**: michiel.vandijk@wur.nl."
-abstract: ETH Maize yield gaps abstract
+output: 
+  word_document:
+    reference_docx: ../Common/word_styles_01.docx
+bibliography: ../Common/micro-GLOBIOM.bib
+    
 ---
 
+```{r setup, include=FALSE}
+# Knitr settings
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, fig.height = 10, fig.width = 10)
 
-```{r global_options, include=FALSE}
-# http://stackoverflow.com/questions/29696172/how-to-hold-figure-position-with-figure-caption-in-pdf-output-of-knitr
-knitr::opts_chunk$set(fig.path = 'FigTab/', echo = FALSE, warning = FALSE, message = FALSE)
-```
+# Pander settings
+library(pander)
+panderOptions('table.alignment.default', function(df)
+    ifelse(sapply(df, is.numeric), 'right', 'left'))
+panderOptions('table.split.table', Inf)
+panderOptions('big.mark', ",")
+panderOptions('keep.trailing.zeros', TRUE)
 
-```{r read_data}
-library(stargazer)
-load("D:/Data/Projects/ETHYG/Cache/FigTab.Rdata")
+# Determine root path
+library(rprojroot)
+root <- find_root(is_rstudio_project)
+
+# Source figures, tables and maps
+source(file.path(root, "Code/ETH_fig.R"))
+source(file.path(root, "Code/ETH_tble.R"))
+source(file.path(root, "Code/ETH_map.R"))
 ```
 
 ## REFER TO MAIZE REVOLUTOION CHAPTER JAYNE in LARSON.
@@ -48,7 +39,7 @@ load("D:/Data/Projects/ETHYG/Cache/FigTab.Rdata")
 
 # Introduction
 Ethiopia has great agricultural potential because of its vast areas of fertile land, diverse climate, generally adequate rainfall, and large labour pool. Consequently, agriculture has remained as the foundation of Ethiopia’s economy, accounting for around 40 percent of the national income and around 80 percent of the total employment (EEA, 2015). It also supplies food to the urban areas and raw materials to the manufacturing sector. Many other economic activities depend on agriculture, including marketing, processing, and export of agricultural products. Among the major drivers of GDP growth crop production had been the second most important contributor next to construction . The agricultural sector has, therefore, been crucial for the overall performance of the Ethiopian economy and would continue to be the backbone of the Ethiopian economy for many years to come. The sector is expected to play a central role in decreasing poverty and increasing growth in Ethiopia.
-\\vspace{12pt}
+
 Agricultural production in Ethiopia is overwhelmingly of a subsistence nature where millions of smallholder farmers cultivate on the average less than a hectare of land. About 80 per cent of the smallholders’ production is destined for home consumption and seed. The smallholder sector is the main source of employment, agricultural GDP, export earnings, and food and raw materials supplies to urban areas and food industries. Crop production is by far the most dominant sub-sector, accounting for over 97 per cent of the agricultural output and more than 60% to agricultural GDP (RATES, 2003). It is estimated that crop production and livestock husbandry account for over 86 per cent of the agricultural GDP (WB, 2013).
 
 Despite this potential, agricultural productivity in Ethiopia is very low compared to other Sub-Saharan African countries. Ethiopian agriculture has remained underdeveloped due to periodic drought, soil degradation, deforestation, high population density, poor infrastructure (making it difficult and expensive to get goods to market) and low level of technology use among others. 
@@ -71,10 +62,9 @@ The aim of this paper is the to provide a detailed analysis of the maize yield g
 # Methodology
 We use a stochastic frontier production function [@Aigner1977; @Meeusen1977] to estimate the technical efficiency yield gap. The model is specified as follows for our study:
 
-\begin{equation}
-\label{sfa}
+$$
 y_i=x_i\beta+v_i-u_i
-\end{equation}
+$$
 
 where, $y_i$ is the logarithm of actual yield (ya) for maize plot $i$, $x_i$ is a vector containing growth defining, growth limiting and growth reducing factors a set of control variables, $\beta$ is a vector of parameters, $v_i$  is a symmetric random error and $u_i$ is non-negative random variable with a half normal distribution that measures technical inefficiency. 
 
@@ -95,11 +85,8 @@ Fertilizer is only applied to [X]% of the plots. Due to the large number of zero
 # Data
 
 
-```{r sfa_xtable2, echo = FALSE} 
-#http://stackoverflow.com/questions/16424545/reduce-cell-width-and-font-size-of-table-using-pandoc-table
-options(digits=2)
-# http://stackoverflow.com/questions/30446905/rmarkdown-font-size-and-header
-knitr::kable(xtable, caption = "check")
+```{r tbl_sfa} 
+
 ``` 
 
 
