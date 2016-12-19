@@ -181,6 +181,7 @@ maizePrice <- bind_rows(mpWoreda, mpKebele, mpRegion, mpZone, mpCountry) %>%
 
 # Create price file at plot level and substitute regional prices when plot level price is not available.
 # Again, we winsor the prices first
+# CHECK IF there are still extreme prices!!
 plotFertPrice <- select(dbP, hhid, holder_id, field_id, parcel_id, ZONE, REGNAME, WOREDACODE, KEBELECODE, surveyyear, WPn) %>%
     left_join(fertPrice) %>%
     mutate(WPn = winsor2(WPn),

@@ -33,8 +33,6 @@ library(frontier)
 library(moments)
 library(tidyr)
 library(openxlsx)
-library(frontier)
-library(moments)
 library(AER)
 
 wdPath <- "D:\\Data\\Projects\\ETHYG"

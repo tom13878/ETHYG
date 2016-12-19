@@ -1,0 +1,137 @@
+---
+title: "ETH Yield Gap Analysis"
+author: "Michiel van Dijk & Tom Morley"
+date: "30 August 2016"
+output: beamer_presentation
+#output:
+#  revealjs::revealjs_presentation:
+#    incremental: true
+#    theme: moon
+#    highlight: zenburn
+#    center: true
+#    transition: convex
+#    reveal_options:
+#      slideNumber: true
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r get_data}
+# Get workspace with all info
+dataPath <- "D:\\Data\\IPOP\\SurveyData\\"
+load("D:\\Data\\Projects\\ETHYG\\Cache/FigTab.Rdata")
+```
+
+
+## What has been done
+
+- Data cleaned
+- Some econometric issues solved
+- New estimation of sfa model and yield gaps
+
+
+## Yield gap framework
+
+![](D:/Data/Projects/ETHYG/FigTab/Yield_gap_framework.png)
+
+
+## Methodology
+
+- Stochastic frontier analysis
+    + Controlling for time-constant unobserved heterogeneity (e.g. management skills on yield) by means of correlated random effects framework 
+    + Controlling for time-varying unobserved heterogeneity  (e.g. income on use of fertilizer) by means of instrumental variable control function 
+
+
+## Data
+
+- LSMS-ISA surveys 2011 and 2013
+    + Biased (unbalanced) sample for 2011 due to mistake in the survey
+    + Yield defined as production/plot size => different from FAOSTAT/GYGA 
+
+
+## Summary statistics
+
+\small
+```{r,  results="asis"}
+# http://tex.stackexchange.com/questions/10863/is-there-a-way-to-slightly-shrink-a-table-including-font-size-to-fit-within-th
+suppressMessages(library(stargazer))
+stargazer(as.data.frame(dbsum),  type = "latex", digits=2, header=FALSE, title = "Summary statistics")
+```
+\normalsize
+
+
+## LSMS-ISA and GYGA
+
+```{r GYGA_map}
+GYGA_LSMS
+```
+
+
+## Data issues
+
+- How to solve missing yield potential data?
+    + Average values are too low, maximum is too high.
+- To calculate feasible yield gap information is needed on the use of inputs when costs are zero:
+    + Level of nitrogen when yield diminishes (per region)
+    + Use of labour and capital at this point
+- Information on nitrogen/fertilizer use can be taken from experimental plot data => literature survey.
+- Use of labour and capital demands assumptions (e.g. 10% increase)
+
+
+## Stochastic frontier analysis
+\tiny
+```{r sfa}
+xtable_m <- xtable[c(1:20),]
+knitr::kable(xtable_m, caption = "Frontier yield response model", digits = 2)
+```
+\normalsize
+
+
+## Yield gap estimations
+\small 
+```{r relative_YG}
+knitr::kable(ZonalYieldGap_l_sh, caption = "Relative yield gap", digits = 0)
+```
+\normalsize
+
+
+## Yield gap estimations
+\small  
+```{r absolute_YG}
+knitr::kable(ZonalYieldGap_s, caption = "Relative yield gap", digits = 0)
+```
+\normalsize
+
+
+## Closing the yield gap
+
+```{r Gap}
+waterfall
+```
+
+
+## Policies to close the yield gap
+
+![](D:/Data/Projects/ETHYG/FigTab/YG_policy_framework.png)
+
+
+## Explaining the TEYG
+\tiny
+```{r z_table}
+knitr::kable(ztable, caption = "Second stage analysis", digits = 2)
+```
+\normalsize
+
+
+
+## Next steps
+
+- Expand sfa model (i.e. translog function and climate variables)
+- Solve data issues
+- Add additional variables that explain the yield gap
+- Calculate elasticities of second stage variables
+- Think about how to link policies to yield gaps
+- Write paper and policy briefs
+
+
