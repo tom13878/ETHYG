@@ -1,22 +1,42 @@
-#######################################
-###### ANALYSIS of ETH panel data #####
-#######################################
+#'========================================================================================================================================
+#' Project:  IMAGINE ETH
+#' Subject:  Estimation of yield gaps using ETH LSMS-ISA panel
+#' Author:   Michiel van Dijk & Tom Morley
+#' Contact:  michiel.vandijk@wur.nl, Tomas.morley@wur.nl
+#'========================================================================================================================================
+
+### PACKAGES
+if(!require(pacman)) install.packages("pacman")
+# Key packages
+p_load("tidyverse", "readxl", "stringr", "scales", "RColorBrewer", "rprojroot")
+# Spatial packages
+#p_load("rgdal", "ggmap", "raster", "rasterVis", "rgeos", "sp", "mapproj", "maptools", "proj4", "gdalUtils")
+# Additional packages
+p_load("frontier", "moments", "stargazer", "AER")
+
+
+### SET WORKING DIRECTORY
+wdPath<-"~/ETHYG"
+setwd(wdPath)
+
+### SET DATAPATH
+
+### R SETTINGS
+options(scipen=999) # surpress scientific notation
+options("stringsAsFactors"=FALSE) # ensures that characterdata that is loaded (e.g. csv) is not turned into factors
+options(digits=4)
+
 
 # CHECK:
 # GEO AND AREA TO RUN FROM ETHYG FOLDER!!
 
 # Imputation of dummy variables.
 # Mean scale variables (see Henningsen)
-# SFA from other package
 # Panel estimator
 # Including CRE
-# relation between residuals and error computed below
 # Translog estimation
-# Do grubbs test for outliers on N?
 # Add texture to soil variables
 
-# From the BID: Addis Ababa, Amhara, Oromiya, SNNP, Tigray, and "other regions" (including Dire Dawa). 
-# In those regions with the greatest urban populations, Addis Ababa and Oromiya, 20 EAs were selected; while in all other strata, 15 EAs were selected.
 
 #######################################
 ############## PACKAGES ETC ###########
@@ -35,11 +55,9 @@ library(tidyr)
 library(openxlsx)
 library(AER)
 
-wdPath <- "D:\\Data\\Projects\\ETHYG"
-setwd(wdPath)
-
+### SOURCE
 source("Code/winsor.r")
-options(scipen=999)
+
 
 #######################################
 ############## LOAD DATA ##############
@@ -200,7 +218,7 @@ db0 <- db0 %>% mutate (logyld=log(yld),
                        #pestherb = ifelse(herb==1 | pest==1, 1, 0),
                        #ext = ifelse(ext_dummy_pp==1 | ext_dummy_ph ==1, 1, 0),
                        lograin = log(rain_year),
-                       dumfertsource = recode(fert_source, c("'Government' =  1; else = 0")),
+                       dumfertsource = recode(as.character(fert_source), "Government" = 1L, .default = 0L),
                        surveyyear2 = replace(surveyyear==2011, 1, 0))
 
 # Add Translog variables
@@ -368,8 +386,8 @@ olsCD <- lm(logyld ~ noN + logN + loglab +
                slope + elevation +
                SOC2 + phdum2 + 
                rain_wq + 
-               AEZ +
                crop_count2 + surveyyear2 +
+               AEZ +
                r,
              data = db1)
 
@@ -380,7 +398,6 @@ olsCD_CRE <- lm(logyld ~ noN + logN + loglab + dumoxen + logarea +
                slope + elevation +
                SOC2 + phdum2 + 
                rain_wq + 
-               AEZ +
                crop_count2 + surveyyear2 + 
                noN_bar + logN_bar + loglab_bar + logarea_bar + oxen_bar +
                irrig_bar + 
@@ -388,11 +405,12 @@ olsCD_CRE <- lm(logyld ~ noN + logN + loglab + dumoxen + logarea +
                slope_bar + 
                rain_wq_bar +
                crop_count_bar +
+               + AEZ +
                r,
              data = db1)
 
 # Translog function
-olsTL2 <- lm(logyld ~ noN + 
+olsTL <- lm(logyld ~ noN + 
                logN + loglab +
                logN2 + loglab2 + logNlab + logNimpr + loglabimpr + logNoxen + loglaboxen +
                #logNirrig +  logNrain + loglabirrig +
@@ -403,23 +421,25 @@ olsTL2 <- lm(logyld ~ noN +
                slope + elevation +
                SOC2 + phdum2 + 
                rain_wq + 
-               AEZ +
                crop_count2 + surveyyear2 + 
                noN_bar + logN_bar + loglab_bar + logarea_bar + oxen_bar +
                irrig_bar + 
                impr_bar +
                slope_bar + elevation_bar +
                crop_count_bar+
+               AEZ +
                r,
              data = db1)
 
-stargazer(olsCD1, olsCD2, olsTL2, type="text")
+stargazer(olsCD, olsCD_CRE, olsTL, type="text")
 
 # Assess skewness of OLS - should be left skewed which is confirmed.
-hist( residuals(olsCD1), 15)
-hist( residuals(olsCD2), 15)
-skewness(residuals(olsCD1))
-skewness(residuals(olsCD2))
+hist( residuals(olsCD), 15)
+hist( residuals(olsCD_CRE), 15)
+hist( residuals(olsTL), 15)
+skewness(residuals(olsCD))
+skewness(residuals(olsCD_CRE))
+skewness(residuals(olsTL))
 
 # CHECK: NEED TO DEMEAN THE FUNCTION
 # Frontier estimation
@@ -446,7 +466,6 @@ sfaCD_CRE <- sfa(logyld ~ noN + logN + loglab + logarea + dumoxen +
                 slope + elevation +
                 SOC2 + phdum2 + 
                 rain_wq + 
-                AEZ +
                 crop_count2 + surveyyear2 + 
                 noN_bar + logN_bar + loglab_bar + logarea_bar + oxen_bar +
                 irrig_bar + 
@@ -454,8 +473,11 @@ sfaCD_CRE <- sfa(logyld ~ noN + logN + loglab + logarea + dumoxen +
                 slope_bar + 
                 #elevation_bar non included because constant over time and plot
                 crop_count_bar +
+                AEZ +
                 r,
-                data = db1, maxit = 1500, restartMax = 20, tol = 0.000001)
+                data = db1, maxit = 1500, restartMax = 20, printIter = 1, tol = 0.000001)
+
+summary(sfaCD_CRE, extraPar = TRUE)
 
 # Translog
 sfaTL_CRE <- sfa(logyld ~ noN + logN + loglab + dumoxen +
@@ -466,21 +488,20 @@ sfaTL_CRE <- sfa(logyld ~ noN + logN + loglab + dumoxen +
                    slope + 
                    SOC2 + phdum2 + 
                    rain_wq + 
-                   AEZ +
                    crop_count2 + surveyyear2 + 
                    noN_bar + logN_bar + loglab_bar + logarea_bar + oxen_bar +
                    irrig_bar + 
                    impr_bar +
                    slope_bar + 
                    crop_count_bar +
+                   AEZ +
                    r
-                 ,data = db1, maxit = 1500, restartMax = 20, tol = 0.000001)
+                 ,data = db1, maxit = 1500, restartMax = 20, printIter = 1, tol = 0.000001)
 
 summary(sfaTL_CRE, extraPar = TRUE)
 lrtest(sfaCD_CRE)
 
 
-# Appears that including FS leads to distance variables to reduce significancy!
 sfaCD_CRE_Z <- sfa(logyld ~ noN + logN + loglab + dumoxen + 
                 logarea +
                 irrig + 
@@ -488,7 +509,6 @@ sfaCD_CRE_Z <- sfa(logyld ~ noN + logN + loglab + dumoxen +
                 slope + elevation +
                 SOC2 + phdum2 + 
                 rain_wq + 
-                #fs +
                 AEZ +
                 crop_count2 + surveyyear2 + 
                 noN_bar + logN_bar + loglab_bar + logarea_bar + oxen_bar +
@@ -514,8 +534,6 @@ sfaCD_CRE_Z <- sfa(logyld ~ noN + logN + loglab + dumoxen +
               ,data = db1, maxit = 1500, restartMax = 20, tol = 0.000001)
 
 summary(sfaCD_CRE_Z, extraPar = TRUE)
-
-summary(db1)
 lrtest(sfaCD_CRE_Z)
 
 
@@ -656,7 +674,7 @@ db3 <- db_sfaCD_CRE_Z %>%
 
 # A number of plots have yld higher than the estimated frontier (Y-TEY>0) caused by the random error. 
 # A large number of these are plots that do not use fertilizer. They probably have high yield because of measurement error, better soil properties or unknown factors.
-above_frontier_check <- filter(db3, Y-TEY>0)
+X_above_frontier_check <- filter(db3, Y-TEY>0)
 mean(db3$Y-db3$TEY)
 
 
@@ -668,6 +686,7 @@ mean(db3$Y-db3$TEY)
 
 # Based on experimental plot data (see Excel), we set Npy to 120. CHECK CHANGE FOR ETHIOPIA
 Npy <- 120
+
 # Cap Npm
 db3 <- mutate(db3, Npm = ifelse(Npm>Npy, Npy, Npm))
 
@@ -711,12 +730,12 @@ db6 <- mutate(db6, PY = ifelse(is.na(PY), GYGA_YW, PY))
 # Because of imputation of TY or measurement error, Yield (Y and Ycor), Technical efficiency yield (TEY), Economic yield (EY) and Feasible yield (UY) 
 # can be higher than Potential yield (PYcor). We check for this.
 
-Y_Ycor_check <- filter(db6, Ycor-Y<0)
-PY_Y_check <- filter(db6, PY-Y<0)
-PY_Y_cor_check <- filter(db6, PY-Ycor<0)
-PY_TE_check <- filter(db6, PY-TEY<0)
-PY_EY_check <- filter(db6, PY-EY<0)
-PY_PFY_check <- filter(db6, PY-PFY<0)
+X_Y_Ycor_check <- filter(db6, Ycor-Y<0)
+X_PY_Y_check <- filter(db6, PY-Y<0)
+X_PY_Y_cor_check <- filter(db6, PY-Ycor<0)
+X_PY_TE_check <- filter(db6, PY-TEY<0)
+X_PY_EY_check <- filter(db6, PY-EY<0)
+X_PY_PFY_check <- filter(db6, PY-PFY<0)
 
 # Compare different yield levels
 # Picture shows that PFY is much to high for plots with the lowest PY. This is probably due to the uniform use of Npf of 120 N/ha.
@@ -770,33 +789,33 @@ db8 <- db7 %>%
 
 # Consistency check of yield gaps.
 # ERROR
-ERROR_check <- filter(db8, ERROR_l<0) # Half of observation has a negative error which is what would be expected
+X_ERROR_check <- filter(db8, ERROR_l<0) # Half of observation has a negative error which is what would be expected
 mean(db8$ERROR_l)
 mean(db8$ERROR_s)
 
 # TEYG
-TEYG_check <- filter(db8, TEYG_l<0) # Should be zero
+X_TEYG_check <- filter(db8, TEYG_l<0) # Should be zero
 mean(db8$TEYG_s)
 
 # EYG
 # A number of plots will have to decrease N use Npm < N. In several cases also plots that do no use N
 # will have lower Y when they start using N. This is because there yield can be located above the frontier (based on fertilizer users) because of the positive effect of noN.
 # If we believe that these plots are structurally different and do not use fertilizer because of better soils, they will in fact use too much N and have to decrease.
-EYG_check <- filter(db8, EYG_l<0)        
+X_EYG_check <- filter(db8, EYG_l<0)        
 mean(db8$EYG_s)
 
 # EUYG
 # A number of plots have negative EUYG_l because Npm is larger than Nyw, the nitrogen that is required to achieve Potential yield (Yw).
 # We have corrected this so check should be 0.
-EUYG_check <- filter(db8, EUYG_l<0)        
+X_EUYG_check <- filter(db8, EUYG_l<0)        
 mean(db8$EUYG_s)
 
 # TYG
-TYG_check <- filter(db8, TYG_l<0)        
+X_TYG_check <- filter(db8, TYG_l<0)        
 mean(db8$TYG_s)
 
 #YG
-YG_check <- filter(db8, YG_l<0)        
+X_YG_check <- filter(db8, YG_l<0)        
 YG_check2 <- filter(db8, YG_l_Ycor<0)        
 
 # Check if separate yield gaps add up to total yield gap
@@ -813,4 +832,4 @@ db9 <- dplyr::select(db8, hhid, holder_id, parcel_id, field_id, ZONE, REGNAME, s
                      EUYG_l, EUYG_s, TYG_l, TYG_s, YG_l, YG_s, YG_l_Ycor, YG_s_Ycor)
 
 saveRDS(db9, "Cache/db9.rds")
-summary(db1)
+
