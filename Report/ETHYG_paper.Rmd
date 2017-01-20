@@ -1,21 +1,29 @@
 ---
-title: "Global-to-local GLOBIOM procedure"
-author: "Michiel van Dijk"
+title: "ETH yield gap analysis"
+author: "Michiel van Dijk and Tom Morley"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: 
   word_document:
     reference_docx: ../Common/word_styles_01.docx
-bibliography: ../Common/micro-GLOBIOM.bib
+bibliography: ../Common/ETHYG.bib
     
 ---
 
 ```{r setup, include=FALSE}
 # Knitr settings
-library(knitr)
-knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(echo = FALSE, fig.height = 10, fig.width = 10)
+library(rprojroot)
+root <- find_root(is_rstudio_project)
 
-# Pander settings
+library(knitr)
+knitr::opts_chunk$set(
+  fig.width=12, fig.height=8,
+  dpi = 300,
+  echo=FALSE, warning=FALSE, message=FALSE,
+  fig.path = file.path(root,"FigTabMap/out-"),
+  dev = "CairoPNG",
+  dev.args = list(CairoPNG = list(bg = "transparent"))
+  )
+
 library(pander)
 panderOptions('table.alignment.default', function(df)
     ifelse(sapply(df, is.numeric), 'right', 'left'))
@@ -23,19 +31,15 @@ panderOptions('table.split.table', Inf)
 panderOptions('big.mark', ",")
 panderOptions('keep.trailing.zeros', TRUE)
 
-# Determine root path
-library(rprojroot)
-root <- find_root(is_rstudio_project)
-
 # Source figures, tables and maps
 source(file.path(root, "Code/ETH_fig.R"))
-source(file.path(root, "Code/ETH_tble.R"))
+source(file.path(root, "Code/ETH_tab.R"))
 source(file.path(root, "Code/ETH_map.R"))
 ```
 
-## REFER TO MAIZE REVOLUTOION CHAPTER JAYNE in LARSON.
-## SHEAHAN (2016) EMPHASISES sELECTION ON MAIZE FIELDS => CHECK
-## DISCUSS with tom What to include in CRE, I think all plot and hh variables that can change over time and across HHs so also rain, which is annually observed. Stil puzzled what happens with observations for which T=1 (about a quarter of the sample).
+REFER TO MAIZE REVOLUTOION CHAPTER JAYNE in LARSON.
+SHEAHAN (2016) EMPHASISES sELECTION ON MAIZE FIELDS => CHECK
+DISCUSS with tom What to include in CRE, I think all plot and hh variables that can change over time and across HHs so also rain, which is annually observed. Stil puzzled what happens with observations for which T=1 (about a quarter of the sample).
 
 # Introduction
 Ethiopia has great agricultural potential because of its vast areas of fertile land, diverse climate, generally adequate rainfall, and large labour pool. Consequently, agriculture has remained as the foundation of Ethiopia’s economy, accounting for around 40 percent of the national income and around 80 percent of the total employment (EEA, 2015). It also supplies food to the urban areas and raw materials to the manufacturing sector. Many other economic activities depend on agriculture, including marketing, processing, and export of agricultural products. Among the major drivers of GDP growth crop production had been the second most important contributor next to construction . The agricultural sector has, therefore, been crucial for the overall performance of the Ethiopian economy and would continue to be the backbone of the Ethiopian economy for many years to come. The sector is expected to play a central role in decreasing poverty and increasing growth in Ethiopia.
@@ -45,7 +49,6 @@ Agricultural production in Ethiopia is overwhelmingly of a subsistence nature wh
 Despite this potential, agricultural productivity in Ethiopia is very low compared to other Sub-Saharan African countries. Ethiopian agriculture has remained underdeveloped due to periodic drought, soil degradation, deforestation, high population density, poor infrastructure (making it difficult and expensive to get goods to market) and low level of technology use among others. 
 
 Maize is one of the most important staple crops in terms of calorie intake for many millions of Ethiopians and is grown in many parts of the country. Because of its large geographical coverage and the scale of production, it plays a critical role in the food security of the country and particularly the poor. According to the CSA 2004/5 national survey of consumption expenditure, maize accounted for about 17 percent of the national calorie intake followed by sorghum (14 percent) and wheat (13 percent) among the major cereals (Taffesse et al., 2012). Maize is second to teff in terms of area, but it ranks first among cereals in production. According to CSA (2010) maize accounted around 30 percent of all cereals produced in the country and more than 20 percent of the land cultivated by all cereal crops. According to the Agricultural Growth Program (AGP) Ethiopia is the fifth largest producer of maize in Africa in terms of the area devoted to maize but is second, only to South Africa, in yield and third, after South Africa and Nigeria, in production and smallholder farmers and around 9 million smallholder farmers account for more than 95 % of the total maize area and production in the country (http://ethioagp.org/maize-2/).  
-
 
 It is grown in the mid highland areas of the country and there are huge tracts of land in all regions suitable for maize farming. Maize is grown primarily in the Amhara, Oromia and SNNPR regions of the country from which 5 zones namely West Wellega, Jimma, East Shewa, East Wellega, and West Gojjam produces more than 44 percent of the smallholder production. Marketable surplus is mainly produced in these high potential zones, and the production in the other zones is mainly for subsistence. Maize production has increased in Ethiopia in recent years, due in large part to an improvement in the supply of seeds to farmers. While there have been significant gains made in maize production over the past decade, there is still a significant opportunity to further increase productivity
 Ethiopia can be considered as a success story for maize production as, apart from South Africa, it has been the only country in Sub-Saharan Africa that shows a substantial progress in maize productivity and input use (Abate et al., 2015) After a period of limited growth, yield more than doubled from around 1.5 ton/ha in 2000 to over 3 ton/ha in 2013 (FAOSTAT). The government has worked hard to ensure timely delivery of seeds and fertilizer, as well as to improve agricultural extension services and trainings for farmers. Maize yield levels are also slightly above the regional average. Despite the recent progress in productivity, yield levels in Ethiopia are still very low relative to what could be produced. According to the Central Statistical Agency of Ethiopia (CSA, 2010), the low level of crop productivity in the country is attributed to inefficient farming methods that utilize outdated crop production and protection technologies, and fragmented pieces of land holdings. Estimates indicate that the current maize yield could be doubled if farmers adopt higher quality inputs and proven agronomy best practices. Data from the Global Yield Gap Atlas (GYGA) shows that the average yield gap is on average 82% in Ethiopia. This is in strong contrast with for example Latin American countries which are able to reach around 45% of potential yield.  
@@ -84,35 +87,41 @@ Fertilizer is only applied to [X]% of the plots. Due to the large number of zero
 
 # Data
 
+__Table 1: Summary statistics__
 
-```{r tbl_sfa} 
-
+```{r Tab_1} 
+# pander(Tab_sumstat)
 ``` 
 
 
 Data on actual maize yield comes from the second wave of the Ethiopian Socioeconomic Survey (ESS); implemented by the Central Statistics Agency of Ethiopia (CSA) and the World Bank as part of the multi country Living Standards Measurement Study-Integrated Surveys of Agriculture (LSMS-ISA) project. Collected in 2013-14 the second wave of the ESS has a special focus on improving agricultural statistics in Ethiopia and has an extensive coverage of agricultural production, input use and a number of socio-economic characteristics. A previous ESS survey was conducted in 2011-12. However, crucially output values were not properly recorded and for the purposes of this paper it was not possible to use this earlier survey. The ESS covers a wide range of agricultural variables at the plot, household and community level, including crop-specific production, fertilizer use, labour, and input and output prices. The database also contains the GPS recording for the size of the plot, which are essential to obtain accurate yield estimations. As part of the ESS the longitude and latitude of household locations and plot locations was recorded. This makes it possible to link in external data including climate, soil and a selection of other spatial data. The sources of this spatial data include IFPRI, Worlclim, NASA and the Ethiopian Roads Agency amongst others.
 
+__Figure 1: LSMS-GYGA__
 
-TESTS
-
-
-```{r summary_stat, results='asis', message=FALSE, echo=FALSE}
-stargazer(db9, header = FALSE)
+```{r Fig_1}
+Map_GYGA_LSMS
 ```
 
-```{r GYGA_LSMS, fig.cap = "GYGA and LSMS. \\label{figurelabel1}", fig.height=8, fig.width=8, fig.pos="H"}
-GYGA_LSMS
-```
-
-
-```{r ZONE_LSMS, fig.cap = "ZONE and LSMS. \\label{figurelabel2}", fig.height=8, fig.width=8}
-ZONE_LSMS
-```
+##### Source: LSMS & GYGA
 
 # Results
 
-```{r Waterfall, fig.cap = "Waterfall plot. \\label{figurelabel3}", fig.height=8, fig.width=8, fig.pos="H"}
-waterfall
+
+__Table 2: Stochastic frontier__
+```{r Tab_2}
+pander(xtable)
+```
+
+
+__Table 2: Stochastic frontier2__
+```{r Tab_3}
+pander(ztable)
+```
+
+
+__Figure 3: Potential yield__
+```{r Fig_2}
+Fig_waterfall
 ```
 
 
