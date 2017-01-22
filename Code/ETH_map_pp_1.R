@@ -77,9 +77,9 @@ Map_GYGA_YG <- ggplot()+
   scale_fill_distiller(palette = "Spectral", name = "%") +
   coord_equal() +
   labs(
-    title = "Water-limited yield gap in Ethiopia (%)",
+    #title = "Water-limited yield gap in Ethiopia (%)",
     #subtitle = "check",
-    caption = "Source: Global Yield Gap Atlas (www.yieldgap.org)",
+    #caption = "Source: Global Yield Gap Atlas (www.yieldgap.org)",
     x="", y="") +
   theme_classic() +
   theme(legend.key=element_blank(),
@@ -87,5 +87,23 @@ Map_GYGA_YG <- ggplot()+
         axis.text = element_blank())
 #GYGA_YG
 
+### GYGA potential yield
+# Draw map
+Map_GYGA_PY <- ggplot()+
+  geom_polygon(data=GYGA_df_f, aes(x=long, y=lat, group=group, fill=YW), colour="black")+
+  geom_polygon(data=subset(GYGA_df_f, is.na(YG)), aes(x=long, y=lat, group=group), fill="white", colour="black") +
+  #scale_fill_gradientn(colours = terrain.colors(10)) +
+  #scale_fill_gradient(low = "light green", high = "dark green") +
+  scale_fill_distiller(palette = "Spectral", name = "tons/ha") +
+  coord_equal() +
+  labs(
+    #title = "Water-limited maize yield potential in Ethiopia (tons/ha)",
+    #subtitle = "check",
+    #caption = "Source: Global Yield Gap Atlas (www.yieldgap.org)",
+    x="", y="") +
+  theme_classic() +
+  theme(legend.key=element_blank(),
+        line = element_blank(),
+        axis.text = element_blank())
 
-
+#Map_GYGA_PY

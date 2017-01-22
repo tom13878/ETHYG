@@ -38,11 +38,13 @@ p_ss = ggplot() +
   geom_bar(data = filter(ss_ratio_raw, type == "Bar"), aes(x = type, y = ss_ratio, fill = scenario), colour = "black", stat = "identity", position = "dodge", alpha = 1) +
   scale_y_continuous(limits = c(0,2), expand=c(0,0), breaks = c(seq(0, 2, 0.5), 1, ss2010)) +
   scale_fill_manual(values = col) +
-  labs(x = "", y = "Self-sufficiency ratio") +
+  labs(x = "", y = "Self-sufficiency ratio",
+       title = "Self-sufficiency ratios in 2050") +
   theme(axis.title.x=element_blank(),
       axis.text.x=element_blank(),
       axis.ticks.x=element_blank(),
-      axis.text.y=element_text(colour="black")) +
+      axis.text.y=element_text(colour="black"),
+      plot.title=element_text(size=14, hjust = 0.5)) +
   geom_hline(aes(yintercept = 1), linetype = "dashed") +
   geom_hline(aes(yintercept = ss2010), linetype = "dashed") +
   annotate("text", 0.55, ss2010+0.02, label = "Self-sufficiency ratio 2010", hjust = 0, size = 4) +
@@ -66,11 +68,13 @@ p_area = ggplot() +
   geom_bar(data = filter(ss_area_raw, type == "Bar"), aes(x = type, y = area, fill = scenario), colour = "black", stat = "identity", position = "dodge", alpha = 1) +
   scale_y_continuous(limits = c(0, 15), expand=c(0,0), breaks = c(seq(0, 15, 5), a2010, aPotential)) +
   scale_fill_manual(values = col) +
-  labs(x = "", y = "Cereal area (Mha)") +
+  labs(x = "", y = "Cereal area (Mha)",
+       title = "Cereal area for self-sufficiency of 1 in 2050") +
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank(),
-        axis.text.y=element_text(colour="black")) +
+        axis.text.y=element_text(colour="black"),
+        plot.title=element_text(size=14, hjust = 0.5)) +
   geom_hline(aes(yintercept = a2010), linetype = "dashed") +
   geom_hline(aes(yintercept = aPotential), linetype = "dashed") +
     annotate("text", 1.45, aPotential+0.25, label = "Potential available cereal area", hjust = 1, size = 4) +
@@ -78,7 +82,7 @@ p_area = ggplot() +
 
 ### COMBINE GRAPHS
 p_tot <- plot_grid(p_ss + theme(legend.position="none"), 
-                   p_area + theme(legend.position="none"), labels = c("A", "B"), align = "h")
+                   p_area + theme(legend.position="none"), align = "h")
 legend <- get_legend(p_area + theme(legend.position="bottom") + 
                         guides(fill= guide_legend("", ncol=2)))
 
