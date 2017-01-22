@@ -37,63 +37,59 @@ source(file.path(root, "Code/ETH_Map_pp_1.R"))
 ```
 
 # Maize in Ethiopia
-This document contains some information and data that can be used to compose the first policy paper to raise interest for the yield gap analysis in Ghana as part of the DFID funded IMAGINE project. In my view we could interest people for our project using the following reasoning:
+This section should provie an overview why maize is an important food crop in Ethiopia/Ghana. Tom will prepare a table with key data from FAOSTAO and maize yield trends in comparison with other countries. We also might add some references to past/current policies to improve maize production. 
 
-- We argue that maize is an import food crop in Ghana as well as a source of income for small-scale farmers. We would need data to back this up, for instance share of maize in agricultural production and share of maize in food consumption. 
-
-- We might add that this project uses local (X and X region) and national (micro-household survey analysis) to: (1) better map maize yield gaps, (2) identifies causes, (3) collaborates with farmers to improve crop management by means of demonstrations and (4) provides policy recommendations to improve maize yield.
-_ where possible we refer to some ongoing policies or goverment documents on agricultural policy and support (for the maize sector) such as FASDEP II to which we like to contribute => imput Felix required.
-
+__Table 1: Key data on the maize sector in Ethiopia/Ghana__
 To support this reasoning we can use the following information:
-
-- GYGA yield gap map for maize in GHA (see below).
-- Comparison of maize yield levels across countries (I asked a colleague to make graphs etc on the basis of FAO data and hope to get this data soon).
-- Share of maize consumption (idem, FAO data) 
-- Some data/information on yield increase needed for food security from Martin
-- Optionally, I also added a graph that illustrates the HH data, which might be used to illustrate the analysis we want to do. A picture of farmers in the field or demonstration plots can also be added. If we would like to add this, a better figure should be added using ArcGIS with enlargements of case study areas. But perhaps this is not needed as this is more the information we would put in the flyere or use when we actually have resuls available from the studies.
-
-Table: 
-Area % of total crop area
-Share of hybrid seeds
-Average yield
-Fertilizer use per ha
-Share of calories
-% of import/export
+- Area % of total crop area
+- Share of hybrid seeds
+- Average yield
+- Fertilizer use per ha
+- Share of calories
+- % of import/export
 
 ```{r Tab_1}
 #Tab_maize_stat
 ```
 
+##### Source: FAOSTAT [accessed XX-XX-2017]
 
 __Figure 1: Yield development in Ethiopia compared to other regions__
 ```{r Fig_1}
 #Fig_maize_yield
 ```
 
+##### Source: FAOSTAT [accessed XX-XX-2017]
 
 # What are yield gaps and why are they important?
 The notion of yield gap originates from agronomy and production ecology. It is the difference between the potential yield and the actually observed yield at the farm, field or plot level [@VanIttersum1997, @Fischer2015]. It can be either expressed as a difference (in tonnes per hectare) or as a fraction. Potential yield is defined as *"the yield of a cultivar when grown in environments to which it is adapted, with nutrients and water non-limiting and with pests, diseases, weeds, lodging, and other stresses effectively controlled”* [@Evans1999]. It refers to the biophysical maximum production level of a crop with growth only constrained by so-called *growth defining factors*, which including atmospheric CO2 emissions, solar radiation, temperature and plant characteristics. In large parts of Africa, crop systems (including maize cultivation in @Ethiopia/Ghana) are rainfed. As water is structurally limitated for these systems, water-limited potential yield, which assumes water is limited by natural rainfall is the suitable benchmark. The preferred approach to estimate potential yield is by means of crop models that simulate all details of the plant growth process [@VanIttersum2013]. 
 
-In practice, actual farmers’ yield  is lower than potential yield due to a wide number of interrelated agronomic and socio-economic factors that differ by region [@Fischer2014]. According to a survey of expert opinions [@Gibbon2007], the main agronomic factors that constrain maize yield in Sub-Saharan Africa are soil constraints, weeds and drought. These are largely technical problems, which are caused by deeper socio-economic and institutional factor. It is well known that a key reason for low yields in Africa is the low use of fertilizer, which, in turn, is caused by a combination of high fertilizer prices, limited information and, weak distribution and marking systems [@Morris2007]. Similarly, other studies found strong relationships between yield (and yield gaps) and the quality of infrastructure, provision of credit and avaiability of extension services [@Neumann2010, @Dorosh2012, @Bravo-Ureta2007, @Ogundari2014]. 
+In practice, actual farmers’ yield  is lower than potential yield due to a wide number of interrelated agronomic and socio-economic factors that differ by region [@Fischer2014]. According to a survey of expert opinions [@Gibbon2007], the main agronomic factors that constrain maize yield in Sub-Saharan Africa are soil constraints, weeds and drought. These are largely technical problems, which are caused by deeper socio-economic and institutional factors. It is well known that a key reason for low yields in Africa is the low use of fertilizer, which, in turn, is caused by a combination of high fertilizer prices and low crop prices, limited information and, weak distribution and marking systems [@Morris2007]. Similarly, other studies found strong relationships between yield (and yield gaps) and the quality of infrastructure, provision of credit and avaiability of extension services [@Neumann2010, @Dorosh2012, @Bravo-Ureta2007, @Ogundari2014]. 
 
-According to the latest FAO projections, agricultural production in Sub-Saharan Africa (SSA) will have to triple to fulfil demand by 2050 [@Alexandratos2012]. Around 80 % of the projected growth will have to come from intensification, predominantly an increase in yields through better use of inputs. Yield gap estimations and explanations provide important information on the scope for production increases on existing agricultural land through better farming systems, farm management and enabling policies [@Mueller2012, @Laborte2012]. To identify the required changes in systems, management and policy that allow for narrowing yield gaps, the analysis of agricultural productivity and its determinants is crucial. Such analysis should incorporate both information on economic efficiency (e.g. Coelli and Rao, 2005; Bravo-Ureta et al., 2006; Fuglie, 2008) and the biophysical processes, i.e., crop, environment and management interactions (Zhengfei et al., 2006).
+According to the latest FAO projections, agricultural production in Sub-Saharan Africa (SSA) will have to triple to fulfil demand by 2050 [@Alexandratos2012]. Around 80 % of the projected growth will have to come from intensification, predominantly an increase in yields through better use of inputs. Yield gap estimations and explanations provide important information on the scope for production increases on existing agricultural land through better farming systems, farm management and enabling policies [@Mueller2012, @Laborte2012]. 
 
 # Maize yield gaps in Ethiopia
-GYGA aims to present consistent estimates of potential yield and yield gaps using a standard protocol combined with a bottom-up approach based on field- data and robust crop simulation models (van Bussel et al. 2015; Grassini et al. 2015). We derived data on potential water-limited yield for maize in Tanzania from GYGA.  The map in Figure 2 depicts average actual yield per enumeration area from the LSMS-ISA and water-limited potential yield from GYGA. Clusters of households with high yield can be observed in the Northern and Southern Highlands zones, which constitute the key maize producing regions in Tanzania, while potential yield is highest in parts of the Lake, Southern and Western zones (also see Figure 1 in Annex A).
+The Global Yield Gap Atlas (GYGA) is an international project that presents consistent estimates of potential yield and yield gaps for nine major food crops in a large number of countries, including maize in Ethiopia/Ghana [@VanIttersum2013, @Grassini2015a]. Potentiel yield is calculates using robust crop simulation models using local weather station data and [@ADD] as imput. Information on actual yield has been collected from local and national statistical sources and input from country agonomists and experts. Figure 2 and 3 present a map of the water-limited maize yield potential and the corresponind yield gap in Ethiopia. Potential maize yield ranges from over 18 tons/ha in the West to below 9 tons/ha in the East of Ethiopia. Actual farmers' yield lies below 1.7 and 2.5 tons/ha resulting in yield gaps of between 88 and 63 percent. Hence, there is large scope to increase maize yield in the future.
 
-__Figure 2: Maize yield gap in Ethiopia__
+__Figure 2: Water-limited Maize yield potential in Ethiopia__
+
+```{r Fig-3}
+Map_GYGA_PY
+```
+
+__Figure 3: Maize yield gap in Ethiopia__
 
 ```{r Fig-2}
 Map_GYGA_YG
 ```
 
-
 # Improving future food security by closing the yield gap
+The results from GYGA can be used to answer the question if Africa (including Ethiopia/Ghana) can feed itself in the future. 
 
 
-__Figure 3: Maize yield gap in Ethiopia__
+__Figure 4: Maize yield gap in Ethiopia__
 
-```{r Fig-3, fig.width=10, fig.height=6}
+```{r Fig-4, fig.width=10, fig.height=6}
 Fig_ss_a
 ```
 
