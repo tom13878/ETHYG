@@ -5,6 +5,7 @@
 # Compare prices with other prices and check if they are realistic!
 
 wdPath <- "D:\\Data\\Projects\\ETHYG"
+wdPath <- "M:/ETHYG"
 setwd(wdPath)
 
 dataPath <- "N:\\Internationaal Beleid  (IB)\\Projecten\\2285000066 Africa Maize Yield Gap\\SurveyData"

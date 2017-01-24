@@ -8,6 +8,9 @@
 
 source("D:\\Data\\Projects\\ETHYG\\Code\\ETH_2011.r")
 source("D:\\Data\\Projects\\ETHYG\\Code\\ETH_2013.r")
+source("M:/ETHYG/Code/ETH_2011.r")
+source("M:/ETHYG/Code/ETH_2013.r")
+
 
 #######################################
 ############## PACKAGES ETC ###########
@@ -15,6 +18,7 @@ source("D:\\Data\\Projects\\ETHYG\\Code\\ETH_2013.r")
 
 dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/"
 wdPath <- "D:\\Data\\Projects\\ETHYG"
+wdPath <- "M:/ETHYG"
 setwd(wdPath)
 
 library(dplyr)

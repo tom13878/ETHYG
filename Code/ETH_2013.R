@@ -225,7 +225,7 @@ oput2 <- read_dta(file.path(dataPath, "/Post-Harvest/sect11_ph_w2.dta")) %>%
          value=ph_s11q04, sold_month=ph_s11q06_a, sold_year=ph_s11q06_b,
          trans_cost=ph_s11q09)
 
-oput2$sold_qty_kg[is.na(oput2$sold_qty_k)] <- 0
+oput2$sold_qty_kg[is.na(oput2$sold_qty_kg)] <- 0
 oput2$sold_qty_gr[is.na(oput2$sold_qty_gr)] <- 0
 oput2$sold_qty <- oput2$sold_qty_kg + (oput2$sold_qty_gr/1000)
 oput2$sold_qty[oput2$sold_qty==0] <- NA
@@ -254,6 +254,7 @@ tree <- read_dta(file.path(dataPath, "/Post-Harvest/sect12_ph_w2.dta")) %>%
 rent <- read_dta(file.path(dataPath, "Post-Planting/sect2_pp_w2.dta")) %>%
   select(holder_id, household_id2, ea_id2, parcel_id, rented=pp_s2q10, rented12=pp_s2q11,
          fields_rented=pp_s2q12, rent_cash=pp_s2q13_a, rent_in_kind=pp_s2q13_b)
+rent$parcel_id <- as.integer(rent$parcel_id)
 
 # from livestock
 # information on value of livestock not forthcoming
@@ -274,6 +275,7 @@ parcel <- read_dta(file.path(dataPath, "Post-Planting/sect2_pp_w2.dta")) %>%
 parcel$soil_type <- toupper(as_factor(parcel$soil_type))
 parcel$soil_qlty <- toupper(as_factor(parcel$soil_qlty))
 parcel$title <- ifelse(parcel$title %in% 2, 0, parcel$title)
+parcel$parcel_id <- as.integer(parcel$parcel_id)
 
 # field level variables
 # WDswitch
@@ -379,6 +381,7 @@ fert <- group_by(fert, holder_id, household_id2, parcel_id, field_id) %>%
   summarise(N=sum(Qn, na.rm=TRUE), P=sum(Qp, na.rm=TRUE),
             WPn=sum((Qn/N)*Pn, na.rm=TRUE)) %>%
   mutate(WPn = replace(WPn, WPn==0, NA))
+fert$parcel_id <- as.integer(fert$parcel_id)
 
 rm(fert1, fert2, conv)
 
@@ -412,6 +415,7 @@ pp_lab[is.na(pp_lab)] <- 0
 pp_lab <- transmute(pp_lab, holder_id, household_id2, parcel_id, field_id,
                   plant_lab=lab1 + lab2 + lab3 + lab4 + lab5 + lab6 + lab7,
                   plant_lab_hire = hirM + hirF + hirC + OHHlabM + OHHlabF + OHHlabC)
+pp_lab$parcel_id <- as.integer(pp_lab$parcel_id)
 
 # presumably if crop was planted then some labour
 # was used. Therefore set all 0's for plant_lab
@@ -475,6 +479,8 @@ areas$area_gps_mi50 <- ifelse(areas$area_gps_mi50 %in% 0, NA, areas$area_gps_mi5
 
 areaTotal <- group_by(areas, household_id2) %>%
   summarise(area_tot = sum(area_gps_mi50, na.rm=TRUE))
+
+areas$parcel_id <- as.integer(areas$parcel_id)
 
 #######################################
 ########### MISCELLANEOUS #############
@@ -558,6 +564,15 @@ ETH2013 <- left_join(ETH2013, geo); rm(geo)
 # crop level joins
 ETH2013 <- left_join(ETH2013, oput); rm(oput)
 ETH2013 <- left_join(ETH2013, crop); rm(crop)
+
+# joining with areas causes an attribute error.
+# Use Michiel's function to strip attributes from
+# areas
+stripAttributes <- function(df){
+  df[] <- lapply(df, as.vector)
+  return(df)
+}
+tree <- stripAttributes(tree)
 ETH2013 <- left_join(ETH2013, tree); rm(tree)
 ETH2013 <- left_join(ETH2013, ph_lab); rm(ph_lab)
 

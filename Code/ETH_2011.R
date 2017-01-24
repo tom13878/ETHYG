@@ -159,7 +159,7 @@ oput2 <- read_dta(file.path(dataPath, "sect11_ph_w1.dta")) %>%
          value=ph_s11q04_a, sold_month=ph_s11q06_a, sold_year=ph_s11q06_b,
          trans_cost=ph_s11q09) 
 
-oput2$sold_qty_kg[is.na(oput2$sold_qty_k)] <- 0
+oput2$sold_qty_kg[is.na(oput2$sold_qty_kg)] <- 0
 oput2$sold_qty_gr[is.na(oput2$sold_qty_gr)] <- 0
 oput2$sold_qty <- oput2$sold_qty_kg + (oput2$sold_qty_gr/1000)
 oput2$sold_qty[oput2$sold_qty==0] <- NA
@@ -429,6 +429,15 @@ ETH2011 <- left_join(ETH2011, misc); rm(misc)
 # field level joins
 
 ETH2011 <- left_join(ETH2011, fert); rm(fert) 
+
+# joining with areas causes an attribute error.
+# Use Michiel's function to strip attributes from
+# areas
+stripAttributes <- function(df){
+  df[] <- lapply(df, as.vector)
+  return(df)
+}
+areas <- stripAttributes(areas)
 ETH2011 <- left_join(ETH2011, areas); rm(areas)
 ETH2011 <- left_join(ETH2011, field); rm(field)
 ETH2011 <- left_join(ETH2011, geo); rm(geo)
@@ -438,6 +447,8 @@ ETH2011 <- left_join(ETH2011, geo); rm(geo)
 ETH2011 <- left_join(ETH2011, oput); rm(oput)
 ETH2011 <- left_join(ETH2011, crop); rm(crop)
 ETH2011 <- left_join(ETH2011, ph_lab); rm(ph_lab)
+# attributes also a problem with seed
+seed <- stripAttributes(seed)
 ETH2011 <- left_join(ETH2011, seed); rm(seed)
 
 # make a surveyyear variable
