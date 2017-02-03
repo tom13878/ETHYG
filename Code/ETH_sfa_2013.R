@@ -94,13 +94,13 @@ dbP <- filter(dbP, N < 700)
 db0 <- dbP %>% 
   dplyr::select(hhid, ea_id, DISNAME = ZONENAME, REGNAME, parcel_id, field_id, holder_id,
                 AEZ, fs,
-                SOC, SOC2, ph, ph2, RootDepth, 
+                #SOC, SOC2, ph, ph2, RootDepth, 
                 rain_year, rain_wq, SPEI,
                 YA, YW, YP,
                 slope, elevation,
                 nutr_av,
                 yld, 
-                crop_qty_harv, sold_qty_kg, sold_qty_gr,
+                #crop_qty_harv, sold_qty_kg, sold_qty_gr,
                 harv_lab, harv_lab_hire ,
                 #ae,
                 impr, 
@@ -222,7 +222,7 @@ olsCD1 <- lm(logyld ~ noN + logN + loglab +
                irrig +
                impr +
                slope + elevation +
-               SOC2 + phdum2 + 
+               #SOC2 + phdum2 + 
                rain_wq + rain_wq2+
                AEZ +
                crop_count2 + surveyyear2,
@@ -234,7 +234,7 @@ olsCD2 <- lm(logyld ~ noN + logN + loglab +
                irrig + 
                impr +
                slope + elevation +
-               SOC2 + phdum2 + 
+               #SOC2 + phdum2 + 
                rain_wq + rain_wq2+
                AEZ +
                crop_count2 + surveyyear2 + 
