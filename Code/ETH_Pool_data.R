@@ -6,21 +6,15 @@
 ############## READ THE DATA ###############
 ############################################
 
-source("D:\\Data\\Projects\\ETHYG\\Code\\ETH_2011.r")
-source("D:\\Data\\Projects\\ETHYG\\Code\\ETH_2013.r")
-source("M:/ETHYG/Code/ETH_2011.r")
-source("M:/ETHYG/Code/ETH_2013.r")
+# set to project directory
+library(rprojroot)
+root <- find_root(is_rstudio_project)
 
+# source in data from preparation files
+source(file.path(root, "Code/ETH_2011.r"))
+source(file.path(root, "Code/ETH_2013.r"))
 
-#######################################
-############## PACKAGES ETC ###########
-#######################################
-
-dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/"
-wdPath <- "D:\\Data\\Projects\\ETHYG"
-wdPath <- "M:/ETHYG"
-setwd(wdPath)
-
+# load packages
 library(dplyr)
 library(ggplot2)
 library(stargazer)
@@ -81,5 +75,5 @@ dbP <- rbind(ETH2011_2,ETH2013_2) %>%
 rm(good, ETH2011, ETH2011_2, ETH2013, ETH2013_2)
 
 # Write file
-saveRDS(dbP, "Cache/Pooled_ETH.rds")
+saveRDS(dbP, file.path(root, "Cache/Pooled_ETH.rds"))
 

@@ -2,18 +2,19 @@
 # Ethiopia data 2011 - 2012 survey
 # -------------------------------------
 
-if(Sys.info()["user"] == "Tomas"){
-  dataPath <- "C:/Users/Tomas/Documents/LEI/data/ETH/2011/Data"
-} else {
-  dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/ETH/2011/Data"
-}
+# get the dataPath
+library(rprojroot)
+root <- find_root(is_rstudio_project)
+source(file.path(root, "Code/get_dataPath_ETH.R"))
 
+# load packages
 library(haven)
 library(lubridate)
 library(dplyr)
 library(sjmisc)
 library(car)
 
+# set options
 options(scipen=999)
 
 #######################################
@@ -21,8 +22,7 @@ options(scipen=999)
 #######################################
 
 # file containing the zone, region and district
-
-location <- read_dta(file.path(dataPath, "/sect1_hh_w1.dta")) %>%
+location <- read_dta(file.path(dataPath, "/2011/Data/sect1_hh_w1.dta")) %>%
   select(household_id, REGCODE = saq01, ZONECODE = saq02, WOREDACODE = saq03, KEBELECODE = saq06, ea_id, rural) 
 
 # recode the rural variable to match with wave 2
@@ -34,7 +34,7 @@ location <- unique(location)
 
 # match up with the names from the survey (prepared in a seperate file)
 
-REGZONE <- read.csv(file.path(paste0(dataPath,"/../../.."), "Other/Spatial/ETH/REGZONEETH.csv"))
+REGZONE <- read.csv(file.path(paste0(dataPath,"/../"), "Other/Spatial/ETH/REGZONEETH.csv"))
 
 # join with household identifications
 location <- left_join(location, REGZONE)
@@ -45,7 +45,7 @@ rm(REGZONE)
 ########### SOCIO/ECONOMIC ############
 #######################################
 
-HH11 <- read_dta(file.path(dataPath, "sect1_hh_w1.dta")) %>%
+HH11 <- read_dta(file.path(dataPath, "/2011/Data/sect1_hh_w1.dta")) %>%
   select(household_id, individual_id,
          ea_id, status=hh_s1q02, sex=hh_s1q03, age=hh_s1q04_a,
          religion=hh_s1q07, marital=hh_s1q08)
@@ -66,7 +66,7 @@ HH11$cage <- cut(HH11$age, breaks = c(0, 15, 55, max(HH11$age, na.rm=TRUE)),
 # of education of all household members
 # between the ages of 15 and 55
 
-education <- read_dta(file.path(dataPath, "sect2_hh_w1.dta")) %>%
+education <- read_dta(file.path(dataPath, "/2011/Data/sect2_hh_w1.dta")) %>%
   select(household_id, individual_id, ea_id,
          literate=hh_s2q02, ed_any=hh_s2q03)
 
@@ -85,7 +85,7 @@ HH11_x <- group_by(HH11, household_id) %>%
 # death in the family
 # -------------------------------------
 
-death <- read_dta(file.path(dataPath, "sect8_hh_w1.dta")) %>%
+death <- read_dta(file.path(dataPath, "/2011/Data/sect8_hh_w1.dta")) %>%
   select(household_id, code=hh_s8q00, death=hh_s8q01) %>% 
   filter(code %in% c("101", "102")) %>% select(-code) %>%
   group_by(household_id) %>%
@@ -104,7 +104,7 @@ HH11 <- left_join(HH11, education) %>%
 # area. They were also asked how much the total field
 # produced.
 
-oput <- remove_all_labels(read_dta(file.path(dataPath, "sect9_ph_w1.dta"))) %>%
+oput <- remove_all_labels(read_dta(file.path(dataPath, "/2011/Data/sect9_ph_w1.dta"))) %>%
   transmute(household_id, holder_id, parcel_id, field_id,
          crop_code, day_cut=ph_s9q02_a, month_cut=ph_s9q02_b,
          crop_qty_harv_fresh_kg=ph_s9q03_a,
@@ -153,7 +153,7 @@ rm("legumes")
 # sold is stored in a seperate section of 
 # the household (section 11)
 
-oput2 <- read_dta(file.path(dataPath, "sect11_ph_w1.dta")) %>%
+oput2 <- read_dta(file.path(dataPath, "/2011/Data/sect11_ph_w1.dta")) %>%
   select(holder_id, household_id, crop_code,
          sold=ph_s11q01, sold_qty_kg=ph_s11q03_a, sold_qty_gr=ph_s11q03_b,
          value=ph_s11q04_a, sold_month=ph_s11q06_a, sold_year=ph_s11q06_b,
@@ -181,7 +181,7 @@ oput <- left_join(oput, oput2) %>% unique; rm(oput2)
 # and crop level
 
 # parcel level
-parcel <- remove_all_labels(read_dta(file.path(dataPath, "sect2_pp_w1.dta"))) %>%
+parcel <- remove_all_labels(read_dta(file.path(dataPath, "/2011/Data/sect2_pp_w1.dta"))) %>%
   select(household_id, holder_id, parcel_id, fields=pp_s2q02,
                 title=pp_s2q04)
 
@@ -190,7 +190,7 @@ parcel$parcel_id <- as.integer(parcel$parcel_id)
 
 # field level variables
 
-field <- read_dta(file.path(dataPath, "sect3_pp_w1.dta")) %>%
+field <- read_dta(file.path(dataPath, "/2011/Data/sect3_pp_w1.dta")) %>%
   select(holder_id, household_id, parcel_id, field_id,
                 crop_stand=pp_s3q10,
                 extension=pp_s3q11, irrig=pp_s3q12, fert_any=pp_s3q14,
@@ -205,7 +205,7 @@ field$field_id <- as.integer(field$field_id)
 
 # crop level variables
 
-crop <- read_dta(file.path(dataPath, "sect4_pp_w1.dta")) %>%
+crop <- read_dta(file.path(dataPath, "/2011/Data/sect4_pp_w1.dta")) %>%
   select(household_id, holder_id, parcel_id, field_id, crop_code,
          cropping=pp_s4q02, month=pp_s4q12_a, crop_area=pp_s4q03,
          pest=pp_s4q05, herb=pp_s4q06, fung=pp_s4q07, impr=pp_s4q11,
@@ -220,7 +220,7 @@ crop$month <- toupper(as_factor(crop$month))
 crop$crop_code <- as.integer(crop$crop_code)
 crop <- remove_all_labels(crop)
 
-seed <- remove_all_labels(read_dta(file.path(dataPath, "sect5_pp_w1.dta"))) %>%
+seed <- remove_all_labels(read_dta(file.path(dataPath, "/2011/Data/sect5_pp_w1.dta"))) %>%
   select(household_id, holder_id, parcel_id, field_id, crop_code,
          impr2 = pp_s5q01, seed_q_kilo = pp_s5q19_a, seed_q_gram = pp_s5q19_b) 
 
@@ -234,7 +234,7 @@ seed$seed_q_gram <-NULL
 # -------------------------------------
 # unit of observation is not fertilizer
 
-fert1 <- read_dta(file.path(dataPath, "sect3_pp_w1.dta")) %>%
+fert1 <- read_dta(file.path(dataPath, "/2011/Data/sect3_pp_w1.dta")) %>%
   transmute(holder_id, household_id, parcel_id, field_id, typ=pp_s3q15,
             qty1=pp_s3q16_a, qty2=pp_s3q16_b/1000)
 x <- c("qty1", "qty2")
@@ -244,7 +244,7 @@ fert1 <- transmute(fert1, holder_id, household_id, parcel_id, field_id, typ,
                    qty=qty1+qty2)
 fert1$typ <- ifelse(fert1$typ %in% 1, "UREA", NA)
 
-fert2 <- read_dta(file.path(dataPath, "sect3_pp_w1.dta")) %>%
+fert2 <- read_dta(file.path(dataPath, "/2011/Data/sect3_pp_w1.dta")) %>%
   transmute(holder_id, household_id, parcel_id, field_id, typ=pp_s3q18,
             qty1=pp_s3q19_a, qty2=pp_s3q19_b/1000)
 x <- c("qty1", "qty2")
@@ -257,7 +257,7 @@ fert2$typ <- ifelse(fert2$typ %in% 1, "DAP", NA)
 # -------------------------------------
 # read in nitrogen conversion file
 
-conv <- read.csv(file.path(paste0(dataPath,"/../../.."), "Other/Fertilizer/Fert_comp.csv")) %>%
+conv <- read.csv(file.path(paste0(dataPath,"/.."), "Other/Fertilizer/Fert_comp.csv")) %>%
   transmute(typ=Fert_type2, n=N_share/100, p=P_share/100) %>%
   filter(typ %in% c("UREA", "DAP"))
 
@@ -300,7 +300,7 @@ rm(fert1, fert2, conv)
 
 # POST HARVEST - unlike 2012-13 survey, there is no
 # post planting labour recorded.
-ph_lab <- read_dta(file.path(dataPath, "sect10_ph_w1.dta")) %>%
+ph_lab <- read_dta(file.path(dataPath, "/2011/Data/sect10_ph_w1.dta")) %>%
   select(holder_id, household_id, parcel_id, field_id,
                 crop_code, ph_s10q01_a:ph_s10q03_f) %>%
   transmute(holder_id, household_id, parcel_id, field_id, crop_code,
@@ -334,7 +334,7 @@ ph_lab <- transmute(ph_lab, holder_id, household_id, parcel_id, field_id,
 ############### GEO ###################
 #######################################
 
-geo <- readRDS(file.path(dataPath, "../../../Other/Spatial/ETH/ETH_geo_2011.rds")) 
+geo <- readRDS(file.path(dataPath, "../Other/Spatial/ETH/ETH_geo_2011.rds")) 
 
 #######################################
 ############### AREAs #################
@@ -344,7 +344,7 @@ geo <- readRDS(file.path(dataPath, "../../../Other/Spatial/ETH/ETH_geo_2011.rds"
 # imputed and original gps measurements
 # included
 
-areas <- read_dta(paste(dataPath, "../../../Other/Plot_size/areas_eth_y1_imputed.dta", sep="/"))
+areas <- read_dta(paste(dataPath, "../Other/Plot_size/areas_eth_y1_imputed.dta", sep="/"))
 areas <- select(areas, holder_id, household_id=case_id, parcel_id,
                 field_id, area_gps, area_gps_mi_50,
                 area_farmer=area_sr)
@@ -361,7 +361,7 @@ areas$parcel_id <- as.integer(areas$parcel_id)
 ########### MISCELLANEOUS #############
 #######################################
 
-misc <- remove_all_labels(read_dta(file.path(dataPath, "sect7_pp_w1.dta"))) %>%
+misc <- remove_all_labels(read_dta(file.path(dataPath, "/2011/Data/sect7_pp_w1.dta"))) %>%
   select(household_id, holder_id, rotation = pp_s7q01, credit = pp_s7q06, extension2 = pp_s7q08, oxen = pp_s7q11)
 
 misc$rotation <- ifelse(misc$rotation %in% 2, 0, misc$rotation)
@@ -372,10 +372,10 @@ misc$extension2 <- ifelse(misc$extension2 %in% 2, 0, misc$extension2)
 ############## COMMUNITY ##############
 #######################################
 
-com3 <- read_dta(file.path(dataPath, "sect3_com_w1.dta")) %>%
+com3 <- read_dta(file.path(dataPath, "/2011/Data/sect3_com_w1.dta")) %>%
   select(ea_id, popEA=cs3q02, HHEA=cs3q03)
 
-com4 <- read_dta(file.path(dataPath, "sect4_com_w1.dta")) %>%
+com4 <- read_dta(file.path(dataPath, "/2011/Data/sect4_com_w1.dta")) %>%
   select(ea_id, road=cs4q01, cost2small_town=cs4q10,
          cost2large_town1=cs4q13_1, cost2large_town2=cs4q13_2,
          bank=cs4q45, micro_finance=cs4q47)
@@ -384,7 +384,7 @@ com4$road <- toupper(as_factor(com4$road))
 com4$bank <- toupper(as_factor(com4$bank))
 com4$micro_finance <- toupper(as_factor(com4$micro_finance))
 
-com6 <- read_dta(file.path(dataPath, "sect6_com_w1.dta")) %>%
+com6 <- read_dta(file.path(dataPath, "/2011/Data/sect6_com_w1.dta")) %>%
   select(ea_id, plant_month1=cs6q03_a, plant_month2=cs6q03_b, plant_month3=cs6q03_c,
          harv_month1=cs6q04_a, harv_month2=cs6q04_b, harv_month3=cs6q04_c,
          ext_agent=cs6q08, dist2ext_agent1=cs6q09_1, dist2ext_agent2=cs6q09_2, fert_source=cs6q12,
@@ -454,5 +454,5 @@ ETH2011 <- left_join(ETH2011, seed); rm(seed)
 # make a surveyyear variable
 ETH2011$surveyyear <- 2011
 
-rm(dataPath, make0, x)
+rm(dataPath, make0, x, stripAttributes)
 ETH2011 <- remove_all_labels(ETH2011)
