@@ -69,7 +69,7 @@ maize_con <- maize_yield %>%
   group_by(continent, year) %>%
   summarize (value = mean(value, na.rm=T)) %>%
   rename(region = continent) %>%
-  filter(region %in% c("Asia", "Africa", "Americas"))
+  filter(region %in% c("Asia", "Africa"))
 
 maize_iso <- maize_yield %>%
   filter(country %in% c("Ethiopia")) %>%
@@ -77,21 +77,28 @@ maize_iso <- maize_yield %>%
 
 Fig_maize_yield_df <- bind_rows(maize_reg, maize_con, maize_iso) 
 
-Fig_maize_yield <- ggplot(data = Fig_maize_yield_df, aes(x = year, y = value, colour = region)) +
-  geom_line() +
-  #geom_smooth(se = F, size = 2) +
+Fig_maize_yield <- ggplot(data = Fig_maize_yield_df, aes(x = year, y = value, colour = region, linetype = region)) +
+  geom_line(size = 1.2) +
   #theme_bw() +
   labs(x = "",
-       y = "tons/ha",
-       title = "Maize yield by region",
-       caption = "Source: FAOSTAT") +
+       y = "kg/ha",
+       title = "") +
   theme(
     panel.grid.major.x = element_blank() ,
-    panel.grid.major.y = element_line( size=.1, color="grey" ),
+    panel.grid.major.y = element_blank(),
     panel.background = element_blank(),
-    axis.line = element_line(colour = "black")) 
+    axis.line = element_line(colour = "black"),
+    legend.position="bottom") +
+  scale_y_continuous(labels = comma) +
+  scale_x_continuous(breaks = seq(1960, 2015, 10)) +
+  scale_colour_brewer("", palette="Set1") +
+  scale_linetype_manual("", values = c("solid", "dotted", "dashed", "dotdash")) +
+  theme(legend.justification=c(0,1), legend.position=c(0.1,0.9)) 
 
-Fig_maize_yield
+# Fig_maize_yield + 
+#   guides(colour = guide_legend(keywidth = 3, keyheight = 1))
+
+
 #     geom_line() +
 #     scale_colour_identity() +
 #     scale_x_date(breaks=date_breaks("2 year"), labels=date_format("%Y")) +
@@ -99,39 +106,7 @@ Fig_maize_yield
 #     ylab("Maize Yield (kg/ha)") +
 
 Fig_maize_yield
-
-### SELF SUFFICIENCY FIGURE
-target_scen <- c("Actual farmers' yield 2010", 
-                 "Actual yield increase maintained to 2050",
-                 "Yield gaps closed to 80% of water-limited potential")
-
-# Load data
-ss_ratio_raw <- read_excel(file.path(root, "Data/PNAS_ETH_processed.xlsx"), sheet = "ss_ratio") %>%
-  mutate(scenario = factor(scenario))
-
-ss_ratio <- filter(ss_ratio_raw, scenario %in% target_scen)
-
-# Graph
-col = rev(brewer.pal(9,"PuBuGn")[c(3,5,7,9)])
-ss2010 <- round(ss_ratio_raw$ss_ratio[ss_ratio_raw$type == "Line"], 2)
-
-p_ss = ggplot() +
-  theme_classic(16) +
-  geom_bar(data = filter(ss_ratio, type == "Bar"), aes(x = type, y = ss_ratio, fill = scenario), colour = "black", stat = "identity", position = "dodge", alpha = 1) +
-  scale_y_continuous(limits = c(0,2), expand=c(0,0), breaks = c(seq(0, 2, 0.5), 1, ss2010)) +
-  scale_fill_manual(values = col) +
-  labs(x = "", y = "Self-sufficiency ratio",
-       title = "Self-sufficiency ratios in 2050") +
-  theme(axis.title.x=element_blank(),
-      axis.text.x=element_blank(),
-      axis.ticks.x=element_blank(),
-      axis.text.y=element_text(colour="black"),
-      plot.title=element_text(size=14, hjust = 0.5)) +
-  geom_hline(aes(yintercept = 1), linetype = "dashed") +
-  geom_hline(aes(yintercept = ss2010), linetype = "dashed") +
-  annotate("text", 0.55, ss2010+0.02, label = "Self-sufficiency ratio 2010", hjust = 0, size = 4) +
-  annotate("text", 0.55, 1.02, label = "Self-suffient", hjust = 0, size = 4) 
-
+ggsave("FigTabMap/Fig_maize_yield.png")
 
 ### AREA FIGURE
 # Load data
@@ -157,8 +132,44 @@ p_area = ggplot() +
         plot.title=element_text(size=14, hjust = 0.5)) +
   geom_hline(aes(yintercept = a2010), linetype = "dashed") +
   geom_hline(aes(yintercept = aPotential), linetype = "dashed") +
-    annotate("text", 1.45, aPotential+0.25, label = "Potential available cereal area", hjust = 1, size = 4) +
-    annotate("text", 1.45, a2010+0.25, label = "Current cereal area", hjust = 1, size = 4)  
+  annotate("text", 1.45, aPotential+0.25, label = "Potential available cereal area", hjust = 1, size = 4) +
+  annotate("text", 1.45, a2010+0.25, label = "Current cereal area", hjust = 1, size = 4)  
+
+
+### SELF SUFFICIENCY FIGURE
+target_scen <- c("Actual farmers' yield 2010", 
+                 "Actual yield increase maintained to 2050",
+                 "Yield gaps closed to 80% of water-limited potential")
+
+# Load data
+ss_ratio_raw <- read_excel(file.path(root, "Data/PNAS_ETH_processed.xlsx"), sheet = "ss_ratio") %>%
+  mutate(scenario = factor(scenario))
+
+ss_ratio <- filter(ss_ratio_raw, scenario %in% target_scen)
+
+# Graph
+col = rev(brewer.pal(9,"PuBuGn")[c(3,5,7,9)])
+ss2010 <- round(ss_ratio_raw$ss_ratio[ss_ratio_raw$type == "Line"], 2)
+
+p_ss = ggplot() +
+  theme_classic(10) +
+  geom_bar(data = filter(ss_ratio, type == "Bar"), aes(x = type, y = ss_ratio, fill = scenario), colour = "black", stat = "identity", position = "dodge", alpha = 1) +
+  scale_y_continuous(limits = c(0,2), expand=c(0,0), breaks = c(seq(0, 2, 0.5), 1, ss2010)) +
+  #scale_fill_manual(values = col) +
+  scale_fill_brewer(palette="Set1") +
+  labs(x = "", y = "Self-sufficiency ratio",
+       title = "Self-sufficiency ratios in 2050") +
+  theme(axis.title.x=element_blank(),
+      axis.text.x=element_blank(),
+      axis.ticks.x=element_blank(),
+      axis.text.y=element_text(colour="black"),
+      plot.title=element_text(size=10, hjust = 0.5)) +
+  #geom_hline(aes(yintercept = 1), linetype = "dashed") +
+  geom_hline(aes(yintercept = ss2010), linetype = "longdash") +
+annotate("text", 0.55, ss2010+0.05, label = "Self-sufficiency ratio 2010", hjust = 0, size = 3)
+#  annotate("text", 0.55, 1.02, label = "Self-suffient", hjust = 0, size = 4) 
+
+p_ss 
 
 
 
@@ -179,21 +190,22 @@ ss_yield <- ss_yield_raw %>%
   
 # Create plot
 p_yield_proj <- ggplot() +
-  theme_classic(16) +
-  scale_colour_manual(values = col) +
-  labs(x = "", y = "Maize yield (tons/ha)",
+  theme_classic(10) +
+  #scale_colour_manual(values = col) +
+  scale_colour_brewer(palette="Set1") +
+  labs(x = "", y = "Maize yield (kg/ha)",
        title = "Historical maize yield and scenarios") +
   theme(axis.title.x=element_blank(),
-        #axis.text.x=element_blank(),
+        axis.text.x=element_text(colour="black"),
         #axis.ticks.x=element_blank(),
         axis.text.y=element_text(colour="black"),
-        plot.title=element_text(size=14, hjust = 0.5)) +
+        plot.title=element_text(size=10, hjust = 0.5)) +
   scale_y_continuous(labels = comma) +
-  geom_line(data = yield_eth, aes(x = year, y = value), size = 1.5) + 
-  geom_point(data = ss_yield, aes(x = year, y = yield, colour = scenario)) +
+  geom_line(data = yield_eth, aes(x = year, y = value), size = 1.2) + 
+  #geom_point(data = ss_yield, aes(x = year, y = yield, colour = scenario)) +
   geom_segment(data = ss_yield, aes(x = 2010, y = yield2010, 
-                                    xend = year, yend = yield, linetype = scenario,
-                                    colour = scenario), size = 1.5) +
+                                    xend = year, yend = yield, colour = scenario,
+                                    linetype = scenario), size = 1.2) +
   theme(legend.justification = c(0,1), legend.position = c(0,1))
 
 p_yield_proj
@@ -208,5 +220,5 @@ legend <- get_legend(p_ss + theme(legend.position="bottom") +
 
 Fig_ss_a <- plot_grid(p_tot, legend, ncol = 1, rel_heights = c(1, .2))
 Fig_ss_a
-
+ggsave("FigTabMap/Fig_ss_a.png", Fig_ss_a, dpi = 600)
 

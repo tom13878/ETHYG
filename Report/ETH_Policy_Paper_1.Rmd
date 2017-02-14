@@ -55,7 +55,7 @@ pander(eth_table)
 ##### Source: FAOSTAT [accessed XX-XX-2017]
 
 __Figure 1: Yield development in Ethiopia compared to other regions__
-```{r Fig_1}
+```{r Fig_1, dpi = 300, fig.width=15, fig.height=8}
 Fig_maize_yield
 ```
 
@@ -73,13 +73,13 @@ The Global Yield Gap Atlas (GYGA) is an international project that presents cons
 
 __Figure 2: Water-limited Maize yield potential in Ethiopia__
 
-```{r Fig-3}
+```{r Fig-3, fig.width=10, fig.height=10}
 Map_GYGA_PY
 ```
 
 __Figure 3: Maize yield gap in Ethiopia__
 
-```{r Fig-2}
+```{r Fig-2, fig.width=10, fig.height=10}
 Map_GYGA_YG
 ```
 
@@ -89,7 +89,7 @@ The results from GYGA can be used to answer the question if Africa (including Et
 
 __Figure 4: Maize yield gap in Ethiopia__
 
-```{r Fig-4, fig.width=10, fig.height=6}
+```{r Fig-4, fig.width=10, fig.height=5}
 Fig_ss_a
 ```
 
