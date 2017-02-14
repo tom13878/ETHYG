@@ -1,0 +1,30 @@
+#'=================================================================================================
+#' Project:  IMAGINE ETH
+#' Subject:  get data path 
+#' Author:   Tom Morley
+#' Contact:  tomas.morley@wur.nl
+#' Output:   correct datapath for user
+#'=================================================================================================
+
+# Use this file to set your path to the data
+# used for the Ethiopia LSMS-ISA projects
+# check your computer username using
+# Sys.info()["user"] and use this in the if
+# statement. Then add your dataPath within 
+# the {} brackets
+
+# Tom
+if(Sys.info()["user"] == "morle001") {
+  dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/ETH"}
+
+# Michiel WEcR
+if(Sys.info()["user"] == "") {
+  dataPath <- ""}
+
+# Michiel IIASA
+if(Sys.info()["user"] == "") {
+  dataPath <- ""}
+
+# Anybody else:
+if(Sys.info()["user"] == "") {
+  dataPath <- ""}

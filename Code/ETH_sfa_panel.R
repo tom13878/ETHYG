@@ -16,7 +16,7 @@ p_load("frontier", "moments", "stargazer", "AER")
 
 
 ### SET WORKING DIRECTORY
-wdPath<-"~/ETHYG"
+wdPath<-"M:/ETHYG"
 setwd(wdPath)
 
 ### SET DATAPATH
@@ -126,7 +126,8 @@ dbP <- dbP %>%
 db0 <- dbP %>% 
   dplyr::select(hhid, ea_id, id, ZONE = REGNAME, REGNAME = ZONENAME, WOREDACODE, KEBELECODE, parcel_id, field_id, holder_id, # ZONE AND REGNAMES reversed to remain consistent with other LSMS
                 AEZ, fs,
-                SOC, SOC2, ph, ph2, RootDepth, 
+                #SOC, SOC2,
+                ph, ph2, RootDepth, 
                 rain_year, rain_wq, 
                 #SPEI,
                 #YA, YW, YP,
