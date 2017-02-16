@@ -11,7 +11,7 @@ translog_form <- function(output="logyld", inputs=c("logN")){
   level_terms <- paste(inputs, collapse=" + ")
   
   # get the squared terms
-  sqrd_terms <- paste(paste0("I(0.5*",inputs, "^2", ")"), collapse=" + ")
+  sqrd_terms <- paste(paste0("I(0.5 * ",inputs, "^2", ")"), collapse=" + ")
   
   # get the interactions
   int_terms <- t(combn(inputs, 2))

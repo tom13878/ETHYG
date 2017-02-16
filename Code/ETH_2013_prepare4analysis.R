@@ -13,7 +13,7 @@ library(dplyr)
 root <- find_root(is_rstudio_project)
 
 # Load pooled data
-dbP <- readRDS("Cache/Pooled_ETH.rds")
+dbP <- readRDS(file.path(root, "Cache/Pooled_ETH.rds"))
 
 # Select maize plots and head of household
 dbP <- filter(dbP, status %in% "HEAD", crop_code %in% 2)
@@ -78,8 +78,11 @@ db0$crop_count2[db0$crop_count>1] <- 0
 db0 <- db0 %>% mutate (logyld=log(yld),
                        yesN = ifelse(N>0, 1,0), # Dummy when plot does not use fertilizer, following approach of Battese (1997)
                        noN = ifelse(N<=0, 1,0), # Dummy when plot does use fertilizer, following approach of Battese (1997)
+                       noP = ifelse(P<=0, 1,0), # Dummy when plot does use fertilizer, following approach of Battese (1997)
                        logN = log(pmax(N, noN)), # maximum of dummy and N following Battese (1997)
+                       logP = log(pmax(P, noP)), # maximum of dummy and N following Battese (1997)
                        lab = harv_lab + harv_lab_hire,
+                       logslope = log(slope+1), # log transformation is more suitable for slope
                        hirelab_sh = harv_lab_hire/(harv_lab_hire + harv_lab)*100,
                        lab=lab/area,
                        loglab = log(lab+1),
@@ -93,7 +96,7 @@ db0 <- db0 %>% mutate (logyld=log(yld),
 db0 <- droplevels(db0)
 
 # Load price data 
-Prices <- readRDS("cache/Prices_ETH.rds")
+Prices <- readRDS(file.path(root, "cache/Prices_ETH.rds")) %>% select(hhid, fertilizer, maize)
 
 # Merge with panel data
 db1 <- left_join(db0, Prices) %>%
@@ -102,6 +105,10 @@ db1 <- left_join(db0, Prices) %>%
 
 # Drop unused levels (e.g. Zanzibar in zone), which are giving problems with sfa
 db1 <- droplevels(db1)
+
+# the crop stand variable has problems
+db1$crop_stand <- ifelse(db1$crop_stand %in% c("NAN", "OTHER LAND USE (SPECIFY)"), NA, db1$crop_stand)
+db1$crop_stand <- ifelse(db1$crop_stand %in% c("PURESTAND"), "PURE STAND", db1$crop_stand)
 
 # remove everything but the cleaned data
 rm(db0, dbP, Prices)
