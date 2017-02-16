@@ -15,6 +15,9 @@ root <- find_root(is_rstudio_project)
 # Load pooled data
 dbP <- readRDS(file.path(root, "Cache/Pooled_ETH.rds"))
 
+# Select surveyyear 2013
+dbP <- filter(dbP, surveyyear == 2013)
+
 # Select maize plots and head of household
 dbP <- filter(dbP, status %in% "HEAD", crop_code %in% 2)
 
@@ -44,7 +47,7 @@ dbP <- filter(dbP, N < 700)
 
 # Select relevant variables and complete cases
 db0 <- dbP %>% 
-  dplyr::select(hhid, ea_id, DISNAME = ZONENAME, REGNAME, parcel_id, field_id, holder_id,
+  dplyr::select(hhid, ea_id, ZONE = REGNAME, REGNAME = ZONENAME, parcel_id, field_id, holder_id,
                 AEZ, fs,
                 rain_year, rain_wq, SPEI,
                 YA, YW, YP,
@@ -96,7 +99,8 @@ db0 <- db0 %>% mutate (logyld=log(yld),
 db0 <- droplevels(db0)
 
 # Load price data 
-Prices <- readRDS(file.path(root, "cache/Prices_ETH.rds")) %>% select(hhid, fertilizer, maize)
+Prices <- readRDS(file.path(root, "cache/Prices_ETH.rds"))
+#%>% select(hhid, fertilizer, maize)
 
 # Merge with panel data
 db1 <- left_join(db0, Prices) %>%
@@ -112,3 +116,4 @@ db1$crop_stand <- ifelse(db1$crop_stand %in% c("PURESTAND"), "PURE STAND", db1$c
 
 # remove everything but the cleaned data
 rm(db0, dbP, Prices)
+

@@ -38,6 +38,10 @@ other_inputs <- c("noN", "logP", "logN*logP", "logslope",
                    "rain_year", "SPEI",
                    "crop_count2")
 
+other_inputs <- c("elevation", "impr",
+                  "rain_year", "crop_count2")
+
+
 # variables explaining technical inefficiency.
 # Note the sex is not included as virtually all
 # households are headed by a male
