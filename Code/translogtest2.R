@@ -144,6 +144,18 @@ sumzone_sfaTL <- db_sfaTL %>% group_by(ZONE) %>%
     MPPmean=mean(ifelse(N>0, MPP, NA), na.rm = T),
     Number=n())
 
+# Removing extreme values, might apply winsoring..
+db_sfaTL2 <- db_sfaTL %>% filter(N>0, MPP>0 & MPP <100)
+hist(db_sfaTL2$MPP, breaks = 50)
+
+sumzone_sfaTL2 <- db_sfaTL2 %>%
+  group_by(ZONE) %>%
+  summarize(
+    Ncon=mean(ifelse(N>0, N, NA), na.rm = T),
+    N=mean(N, na.rm=T),
+    #Npm=mean(Npm, na.rm=T),
+    MPPmean=mean(ifelse(N>0, MPP, NA), na.rm = T),
+    Number=n())
 
 
 # olsTL
