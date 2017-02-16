@@ -21,6 +21,7 @@ TRA <- lm(logY ~logN + logN2, data = df)
 summary(TRA)
 
 # Funtion with linearlised translog and MPP (first derivative)
+
 MPP_f <- function(N){
   logY <-coef(TRA)[1]+coef(TRA)[2]*log(N) + coef(TRA)[3]*log(N)*log(N)
   Y = exp(logY)
