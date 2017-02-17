@@ -18,14 +18,14 @@ library(dplyr)
 # source in prepared data and functions
 source(file.path(root, "Code/ETH_2013_prepare4analysis.R"))
 source(file.path(root, "Code/translog_formula.R"))
-
+cor(db1$N, db1$P) # maybe OK
 # define inputs for translog
 # define inputs for environmental variables
 # define z inputs for regressing against technical
 # efficiency
 
 # core translog inputs
-translog_inputs <- c("logN", "logarea", "loglab")
+translog_inputs <- c("logN", "loglab")
 
 # environmental inputs affecting production
 # some variables are in log form because they
@@ -36,11 +36,7 @@ translog_inputs <- c("logN", "logarea", "loglab")
 other_inputs <- c("noN", "logP", "logN*logP", "logslope",
                   "elevation", "irrig", "impr",
                    "rain_year", "SPEI",
-                   "crop_count2")
-
-other_inputs <- c("elevation", "impr",
-                  "rain_year", "crop_count2")
-
+                   "crop_count2", "logarea")
 
 # variables explaining technical inefficiency.
 # Note the sex is not included as virtually all
@@ -147,7 +143,7 @@ summary(sfa(TL_form_fullz, data=db1))
 # probably still need to look for a better fit
 
 library(AER)
-m <- tobit(log(N) ~  log(dist_hh + 1) + log(dist_market + 1) +
+m <- tobit(log(N) ~ log(dist_hh + 1) + log(dist_market + 1) +
                  irrig + impr + SPEI + manure + compost +legume +
                  log(slope+1) + elevation + 
                  extension + 
@@ -190,17 +186,22 @@ sfa_TL_full_r <- sfa(TL_form_full_r,
 # But this would be required if we looked at
 # a panel model.
 
-# B <- 100
-# coefM <- matrix(ncol=length(coef(sfa_TL_full_r)), nrow=B)
-# system.time({
-# for(i in 1:B){
-#   indx <- sample(1:nrow(db1.1), nrow(db1.1), replace=TRUE)
-#   modl <- sfa(formula(sfa_TL_full_r), data=db1.1[indx, ])
-#   coefM[i, ] <- coef(modl)
-# }
-# })
-# coef <- apply(coefM, 2, mean)
-# se <- apply(coefM, 2, sd)
+B <- 100
+coefM <- matrix(ncol=length(coef(sfa_TL_full_r)), nrow=B)
+system.time({
+for(i in 1:B){
+  indx <- sample(1:nrow(db1.1), nrow(db1.1), replace=TRUE)
+  modl <- sfa(formula(sfa_TL_full_r), data=db1.1[indx, ])
+  coefM[i, ] <- coef(modl)
+}
+})
+coef <- apply(coefM, 2, mean)
+se <- apply(coefM, 2, sd)
+
+N <- nrow(sfa_TL_full_r$dataTable)
+df <- N - length(coef)
+t <- coef/se
+p.value = 2*pt(abs(t), df=df, lower=FALSE)
 
 # Note that MPP cannot be calculated for plots with N=0 and are therefore set to 0.
 
@@ -309,7 +310,7 @@ MPP_f <- function(N){
 # of them will be zero
 
 
-# boostrapping here because tobit is non-linear,
+# bootstrapping here because tobit is non-linear,
 # but we do not need to worry about the households effects
 # because we are using a cross section and have not
 # assumed any structure in the data. This will
@@ -324,12 +325,3 @@ MPP_f <- function(N){
 # into different terms. Need to get elasticities
 # but these will be evaluated with other terms
 
-
-
-
-
-
-
-# 6. Attempt panel analysis
-
-# 7. write up results
