@@ -132,7 +132,7 @@ coef(model)
 
 # MPP sfaTL
 db_sfaTL <- db1 %>% mutate(part1 = coef(model)["logN"] +
-                             2*coef(model)["I(0.5 * logN^2)"]*logN +
+                             coef(model)["I(0.5 * logN^2)"]*logN +
                              coef(model)["logN:loglab"]*loglab,
                           part2 = exp(logyld)/exp(logN),
                           MPP = part1*part2)
@@ -215,7 +215,7 @@ Nopt_f <- function(N, modl){
   loglab <- mean(db1$loglab)
   relprice <- mean(db1$relprice)
   MPP = ((coef(modl)["logN"] + 
-          2*coef(modl)["I(0.5 * logN^2)"]*log(N) +
+          coef(modl)["I(0.5 * logN^2)"]*log(N) +
           coef(model)["logN:loglab"]*loglab)*
           (Y/N)) -  relprice
   return(MPP)
@@ -226,7 +226,7 @@ uniroot(function(x){Nopt_f(x, sfaTL)}, interval=c(10, 1000))
 
 N <- seq(1, 1000, length.out=100)
 plot(N, Nopt_f(N, sfaTL))
-abline(h=0, v = 94)
+abline(h=0, v = 37)
 
 ##############################  
 
