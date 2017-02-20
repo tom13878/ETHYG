@@ -28,13 +28,13 @@ options(digits=4)
 source(file.path(root, "Code/waterfall_plot.r"))
 
 ### LOAD DATA
-db9 <- readRDS(file.path(root, "Cache/db9.rds"))
+db1.5 <- readRDS(file.path(root, "Cache/db1.5.rds"))
 db_sfaCD_CRE_Z <- readRDS(file.path(root, "Cache/db_sfaCD_CRE_Z.rds"))
 
 
 # Table with yield levels
 YieldLevels <- bind_rows(
-  db9 %>% 
+  db1.5 %>% 
     dplyr::select(Zone = ZONE, Y, Ycor, TEY, EY, PFY, PY, area) %>%
     group_by(Zone) %>%
     summarize(Y =(sum((Y)*area)/sum(area)),
@@ -44,7 +44,7 @@ YieldLevels <- bind_rows(
               PFY = (sum((PFY)*area)/sum(area)),
               PY = (sum((PY)*area)/sum(area))
     ),
-  db9 %>% 
+  db1.5 %>% 
     dplyr::select(Zone = ZONE, Y, Ycor, TEY, EY, PFY, PY, area) %>%
     summarize(Zone = "Total", 
               Y =(sum((Y)*area)/sum(area)),
