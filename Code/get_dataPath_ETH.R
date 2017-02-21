@@ -18,8 +18,8 @@ if(Sys.info()["user"] == "morle001") {
   dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/ETH"}
 
 # Michiel WEcR
-if(Sys.info()["user"] == "") {
-  dataPath <- ""}
+if(Sys.info()["user"] == "dijk158") {
+  dataPath <- "C:\\Users\\dijk158\\OneDrive - IIASA\\SurveyData\\ETH"}
 
 # Michiel IIASA
 if(Sys.info()["user"] == "") {
