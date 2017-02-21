@@ -18,8 +18,7 @@ p_load("WDI", "countrycode", "stargazer")
 root <- find_root(is_rstudio_project)
 
 ### DATAPATH
-dataPath <- "C:\\Users\\dijk158\\OneDrive - IIASA\\SurveyData"
-
+source("Code/get_dataPath_ETH.R")
 ### R SETTINGS
 options(scipen=999) # surpress scientific notation
 options("stringsAsFactors"=FALSE) # ensures that characterdata that is loaded (e.g. csv) is not turned into factors
@@ -30,7 +29,7 @@ source(file.path(root, "Code/sfaTable.R"))
 
 ### LOAD DATA
 db9 <- readRDS(file.path(root, "Cache/db9.rds"))
-db_sfaCD_CRE_Z <- readRDS(file.path(root, "Cache/db_sfaCD_CRE_Z.rds"))
+#db_sfaCD_CRE_Z <- readRDS(file.path(root, "Cache/db_sfaCD_CRE_Z.rds"))
 db1 <- readRDS(file.path(root, "Cache/db1.rds"))
 
 # SUMMARY STATISTICS
@@ -38,9 +37,9 @@ db1 <- readRDS(file.path(root, "Cache/db1.rds"))
 length(unique(db9$hhid))
 
 # summary statistics
-dbsum <- db_sfaCD_CRE_Z %>% dplyr::select(Yield = yld, ImprovedSeeds = impr, Slope = slope, 
-                                          yesN, Nitrogen = N, Rain = rain_wq, Irrigation = irrig, SOC = SOC2, phdum, 
-                                          Labour = lab,  Area = area, crop_count2, AEZ, surveyyear2) 
+# dbsum <- db_sfaCD_CRE_Z %>% dplyr::select(Yield = yld, ImprovedSeeds = impr, Slope = slope, 
+#                                           yesN, Nitrogen = N, Rain = rain_wq, Irrigation = irrig, SOC = SOC2, phdum, 
+#                                           Labour = lab,  Area = area, crop_count2, AEZ, surveyyear2) 
 
 # Stargazer does not work with rmarkdown when pushed to word
 # Need to create a function or code that creates a dataframe with summary statistics.
@@ -122,21 +121,21 @@ Zonalsum <- left_join(Yieldsum, Nitrogensum) %>%
 
 
 # SFA table
-sfaCD_CRE_Z <- sfa(logyld ~ noN + logN + loglab + dumoxen + 
-                     logarea + irrig + impr + slope + elevation + SOC2 + phdum2 + 
-                     rain_wq + AEZ +
-                     crop_count2 + surveyyear2 + 
-                     noN_bar + logN_bar + loglab_bar + logarea_bar + oxen_bar +
-                     irrig_bar + impr_bar + slope_bar + rain_wq_bar + crop_count_bar + 
-                     r | 
-                     sex + age +  title + literate + ed_any + extension + credit +
-                     dist_hh + dist_market + popEA -1
-                   ,data = db1, maxit = 1500, restartMax = 20, tol = 0.000001)
-summary(sfaCD_CRE_Z, extraPar = TRUE)
-lrtest(sfaCD_CRE_Z)
-
-xtable <- sfaTable_f(sfaCD_CRE_Z)[[1]]
-ztable <- sfaTable_f(sfaCD_CRE_Z)[[2]]
+# sfaCD_CRE_Z <- sfa(logyld ~ noN + logN + loglab + dumoxen + 
+#                      logarea + irrig + impr + slope + elevation + SOC2 + phdum2 + 
+#                      rain_wq + AEZ +
+#                      crop_count2 + surveyyear2 + 
+#                      noN_bar + logN_bar + loglab_bar + logarea_bar + oxen_bar +
+#                      irrig_bar + impr_bar + slope_bar + rain_wq_bar + crop_count_bar + 
+#                      r | 
+#                      sex + age +  title + literate + ed_any + extension + credit +
+#                      dist_hh + dist_market + popEA -1
+#                    ,data = db1, maxit = 1500, restartMax = 20, tol = 0.000001)
+# summary(sfaCD_CRE_Z, extraPar = TRUE)
+# lrtest(sfaCD_CRE_Z)
+# 
+# xtable <- sfaTable_f(sfaCD_CRE_Z)[[1]]
+# ztable <- sfaTable_f(sfaCD_CRE_Z)[[2]]
 
 
 # Table with yield levels
