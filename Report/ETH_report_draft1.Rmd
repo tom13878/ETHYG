@@ -58,4 +58,5 @@ We consider a stochastic frontiers model using data from the Ghana LSMS-ISA surv
 
 # Discussion
 
+Use a flexible translog function for labour and nitrogen in the frontier proudction analysis. 
 

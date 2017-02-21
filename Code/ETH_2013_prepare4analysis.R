@@ -12,11 +12,19 @@ library(dplyr)
 # set working directory for cached files
 root <- find_root(is_rstudio_project)
 
-# Load pooled data
-dbP <- readRDS(file.path(root, "Cache/Pooled_ETH.rds"))
+# Load 2013 data
+source(file.path(root, "Code/ETH_2013.r"))
 
-# Select surveyyear 2013
-dbP <- filter(dbP, surveyyear == 2013)
+# prices won't join properly without
+# this because prices use year 1 hhid
+ETH2013$household_id <- ifelse(is.na(ETH2013$household_id), ETH2013$household_id2, ETH2013$household_id)
+ETH2013$individual_id <- ifelse(is.na(ETH2013$individual_id), ETH2013$individual_id2, ETH2013$individual_id)
+ETH2013$ea_id <- ifelse(is.na(ETH2013$ea_id), ETH2013$ea_id2, ETH2013$ea_id)
+
+# continue with dbP
+dbP <- ETH2013
+dbP <- select(dbP, hhid=household_id, indidy=individual_id, everything())
+
 
 # Select maize plots and head of household
 dbP <- filter(dbP, status %in% "HEAD", crop_code %in% 2)
@@ -46,32 +54,33 @@ dbP <- filter(dbP, yld <= 18592.85714)
 dbP <- filter(dbP, N < 700)
 
 # Select relevant variables and complete cases
-db0 <- dbP %>% 
+db0 <- dbP %>%
   dplyr::select(hhid, ea_id, ZONE = REGNAME, REGNAME = ZONENAME, parcel_id, field_id, holder_id,
                 AEZ, fs,
-                rain_year, rain_wq, SPEI,
-                YA, YW, YP,
+                rain_year, rain_wq,
+                ph, ph2, SOC, SOC2, rain_CRU, RootDepth,
+                fs, YA, YW, YP, AI, TS, GGD, twi,
                 slope, elevation,
                 nutr_av,
-                yld, 
+                yld,
                 harv_lab, harv_lab_hire ,
-                impr, 
+                impr,
                 fung, herb,
-                N, P, 
+                N, P,
+                off_farm_income,
                 manure, compost, other_org,
                 crop_stand, cropping,
-                legume, irrig, 
+                legume, irrig,
                 area, area_tot, area_gps,
                 sex, age,
                 literate, cage, ed_any, N1555, family_size, death,
                 dist_hh, dist_road, dist_market, dist_popcenter, dist_regcap,
                 title,
-                popEA,
-                road, cost2small_town, bank, micro_finance, ext_agent, extension, 
+                popEA, HHEA, oxen, fallow10, fallow_year,
+                road, cost2small_town, cost2large_town, bank, micro_finance, ext_agent, extension,
                 crop_count, surveyyear,
-                rural, 
+                rural,
                 lat, lon)
-
 
 # Crop count > 1
 db0$crop_count2[db0$crop_count==1] <- 1
@@ -93,7 +102,7 @@ db0 <- db0 %>% mutate (logyld=log(yld),
                        rain_wq2 = rain_wq*rain_wq,
                        rain_year2 = rain_year*rain_year,
                        lograin = log(rain_year),
-                       sex = as.numeric(ifelse(sex == "MALE", 0, 1)),
+                       #sex = as.numeric(ifelse(sex == "MALE", 0, 1)),
                        surveyyear2 = replace(surveyyear==2011, 1, 0))
 
 db0 <- droplevels(db0)
@@ -113,7 +122,16 @@ db1 <- droplevels(db1)
 # the crop stand variable has problems
 db1$crop_stand <- ifelse(db1$crop_stand %in% c("NAN", "OTHER LAND USE (SPECIFY)"), NA, db1$crop_stand)
 db1$crop_stand <- ifelse(db1$crop_stand %in% c("PURESTAND"), "PURE STAND", db1$crop_stand)
+db1$crop_stand <- ifelse(db1$crop_stand %in% c("PURE STAND"), 1,
+                         ifelse(db1$crop_stand %in% c("MIXED CROP"), 0, NA))
+db1$micro_finance <- ifelse(db1$micro_finance %in% c("YES"), 1,
+                         ifelse(db1$micro_finance %in% c("NO"), 0, NA))
+db1$manure <- ifelse(db1$manure %in% 2, 1,
+                            ifelse(db1$manure %in% 1, 0, NA))
+db1$compost <- ifelse(db1$compost %in% 2, 1,
+                     ifelse(db1$compost %in% 1, 0, NA))
 
 # remove everything but the cleaned data
 rm(db0, dbP, Prices)
 
+saveRDS(db1, "Cache/db1.rds")
