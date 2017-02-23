@@ -82,6 +82,17 @@ db0 <- dbP %>%
                 rural,
                 lat, lon)
 
+#db0$phduml55 <- ifelse(db0$ph < 55, 1, 0)
+db0$phdum55_2_70 <- ifelse(db0$ph >= 55 & db0$ph <=70, 1, 0) # Neutral and best suited for crops
+db0$phdum_gt70 <- ifelse(db0$ph > 70, 1, 0)  
+#db0$phdum <- factor(db0$phdum)
+
+
+# db0$phdum2[db0$ph2 < 55] <- 1
+# db0$phdum2[db0$ph2 >= 55 & db0$ph2 <=70] <- 2
+# db0$phdum2[db0$ph2 > 70] <- 3
+# db0$phdum2 <- factor(db0$phdum2)
+
 # Crop count > 1
 db0$crop_count2[db0$crop_count==1] <- 1
 db0$crop_count2[db0$crop_count>1] <- 0
