@@ -29,7 +29,7 @@ options(digits=4)
 
 ### LOAD DATA
 db9 <- readRDS(file.path(root, "Cache/db9.rds"))
-db_sfaCD_CRE_Z <- readRDS(file.path(root, "Cache/db_sfaCD_CRE_Z.rds"))
+# db_sfaCD_CRE_Z <- readRDS(file.path(root, "Cache/db_sfaCD_CRE_Z.rds"))
 db1 <- readRDS(file.path(root, "Cache/db1.rds"))
 
 ### LOAD GYGA MAP
