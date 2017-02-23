@@ -21,6 +21,7 @@ library(AER)
 # source in prepared data and functions
 # source(file.path(root, "Code/ETH_2013_prepare4analysis.R"))
 db1 <- readRDS("Cache/db1.rds")
+db1 <- unique(db1)
 source(file.path(root, "Code/translog_formula.R"))
 source(file.path(root, "Code/sfaFormEval.R"))
 source(file.path(root, "Code/sfa_tab.R"))
@@ -37,8 +38,8 @@ environmental <- c("log(slope)",
                   "elevation",
                   "log(area)",
                   "ph", "SOC",
-                  "GGD", "AI",
-                  "TS", "log(rain_wq)")
+                  #"GGD", "AI", "TS",
+                  "log(rain_wq)")
 
 # environmental and all dummy variables
 dummies <- c("noN", "irrig", "impr", "crop_count2")
@@ -206,14 +207,15 @@ sfa_TL_full_r <- sfa(TL_form_full_r,
 # work out the optimum
 db1 <- db1[!is.na(db1$relprice),] # remove NA from relprice
 
-# model that we want to find optimum for
+#model that we want to find optimum for
 TL_form_basic <- translog_form("log(yld)", translog_inputs)
 
 # full specification including environmental inputs
 TL_form_full <- paste(TL_form_basic,
                       paste(environmental, collapse=" + "),
-                      paste(dummies[!dummies %in% "noN"], collapse=" + "), "rd", sep=" + ") # leave noN variable out for now - uncleaer whether to include or not
+                      paste(dummies, collapse=" + "), "rd", sep=" + ") # leave noN variable out for now - uncleaer whether to include or not
 modl <- sfa(TL_form_full, data=db1)
+
 
 # function to evalute optimum
 Nopt_f <- function(N, modl, row){
@@ -235,6 +237,28 @@ db1.1 <- db1[modl$validObs, ] # removes NA, and NaN values that cannot be used i
 Nobs <- db1.1$N # save N observed values for later
 db1.1$N <- NULL # remove N values until after optimum is found
 
+par(mfrow=c(1, 1))
+
+# nice example 
+row <- db1.1[2, ]
+N <- seq(1, 1000, by=0.1)
+plot(N, Nopt_f(N, modl, row), type="l")
+abline(h=0)
+
+# not so nice example in which the function
+# is never below zero -> no root!!
+row <- db1.1[597, ]
+N <- seq(-10, 1000, by=0.1)
+plot(N, Nopt_f(N, modl, row), type="l", ylim=c(10, -100))
+abline(h=0)
+
+# have a look at fit to see if this can
+# explain why sometimes there is no optimal solution
+# clearly there are some large ish outliers
+par(mfrow=c(1, 2))
+plot(fitted(modl), residuals(modl))
+plot(modl$dataTable[, 3], fitted(modl))
+text(modl$dataTable[, 3], fitted(modl), 1:nrow(db1))
 
 # function to iterate over. Finds optimal N 
 # for each plot in the data. However, in order
@@ -243,29 +267,44 @@ db1.1$N <- NULL # remove N values until after optimum is found
 # limit of the interval argument evaluate to
 # values with opposite signs. Hence the while 
 # and if statements in the following function
+
 f <- function(i){
-  row <- db1.1[i, ]
-  x <- 10
-  print(i)
-  while(x > 1){
-    if(Nopt_f(x, modl, row) < 0){
-      x <- x - 1
-    }else{
-      break}
-  }
+  print(i) # print iteration
+  row <- db1.1[i, ] # select row
   
-  if(x == 1){
-    return(NA)
-    }else{
-  root <- uniroot(function(x) {Nopt_f(x, modl, row)}, interval=c(x, 10000))$root
-  return(root)
-  }
+  # first find maximum (should be above zero in most cases)
+  # this is used as the lower (positive) limit in the
+  # uniroot interval
+  res <- optimize(function(x) Nopt_f(x, modl, row), interval=c(0, 1000), maximum =TRUE)
+  lower <- res$maximum
+  if(res$objective < 0) return(NA)
+  
+  # choose a really large upper limit
+  upper <- 20000
+  ures <- uniroot(function(x) Nopt_f(x, modl, row), lower=lower, upper=upper)
+  return(ures$root)
 }
 
 # iterate over each plot
 db1.1$Npm <- sapply(1:nrow(db1.1), f)
+
+# a few exploratory plots
+hist(db1.1$Npm, xlim=c(0, 500), breaks=500)
+par(mfrow=c(1,2))
+hist(db1.1$Npm[db1.1$noN==1], xlim=c(0, 500), breaks=500, main="no N")
+hist(db1.1$Npm[db1.1$noN==0], xlim=c(0, 500), breaks=500, main="yes N")
+mean(db1.1$Npm[db1.1$noN==1], na.rm=TRUE); mean(db1.1$Npm[db1.1$noN==0], na.rm=TRUE)
+table(is.na(db1.1$Npm)) # 8 bad ones
+
 db1.1$N <- Nobs # get the actual observed values back -> needed for MPP calculation
-db1.1$Ndif = db1.1$N - db1.1$Npm
+db1.1$Ndif <- ifelse(db1.1$noN == 0, db1.1$N - db1.1$Npm, NA)
+hist(db1.1$Ndif, breaks=100)
+
+# have a look at rows with no solution and
+# see if they have anything in common
+badrows <- db1.1[is.na(db1.1$Npm), ]
+
+# fairly high relprice in badrows
 
 
 #' ------------------------------------------------------------------------------------------------
@@ -297,6 +336,17 @@ f2 <- function(i){
 # get MPP values
 db1.1$MPP <- sapply(1:nrow(db1.1), f2)
 
+# histogram of MPP values
+hist(db1.1$MPP, breaks=40)
+
+# plot against actual nitrogen use
+# indicates that the higher users of
+# nitrogen have lower MPP -> in accordance
+# with theory
+par(mfrow=c(1, 1))
+with(db1.1, plot(N, MPP,  main="N vs. MPP"))
+
+
 #' ------------------------------------------------------------------------------------------------
 #' summarise at the zone level the MPP, optimal N
 #' and actual N with number of observations
@@ -305,10 +355,10 @@ db1.1$MPP <- sapply(1:nrow(db1.1), f2)
 by_zone <- group_by(db1.1, ZONE) %>% summarise(
   n = n(),
   `N plots`  = n - sum(noN),
-  N = mean(N, na.rm=TRUE),
-  Nopt = mean(Npm, na.rm=TRUE),
-  MPP = mean(MPP, na.rm=TRUE)
-)
+  N = round(mean(N[noN ==0], na.rm=TRUE),0),
+  Nopt = round(mean(Npm, na.rm=TRUE), 0),
+  MPP = round(mean(MPP, na.rm=TRUE), 0))
+
 
 #' ------------------------------------------------------------------------------------------------
 #' calculate the four types of yield
@@ -319,7 +369,7 @@ by_zone <- group_by(db1.1, ZONE) %>% summarise(
 #' ------------------------------------------------------------------------------------------------
 
 # frontier translog model
-model <- sfa(TL_form_full, data=db1.1)
+model <- modl
 
 # 1. Technical efficiency yield is found using the
 # output of the sfa model
@@ -333,13 +383,13 @@ db3 <- db1.1 %>%
     resid = as.numeric(resid(model))
   )
 
-table((db3$Y - db3$TEY) > 0) # 334
+table((db3$Y - db3$TEY) > 0) # 340
 
 # 2. Economic yield is found by evaluating the frontier 
 # function at the economically optimal nitrogen rate (Npm)
 
 # introduce a cap on nitrogen
-Npy <- 120
+Npy <- 120 # check this
 
 # Cap Npm
 db3 <- mutate(db3, Npm = ifelse(Npm>Npy, Npy, Npm))
