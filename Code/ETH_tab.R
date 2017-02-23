@@ -18,7 +18,7 @@ p_load("WDI", "countrycode", "stargazer")
 root <- find_root(is_rstudio_project)
 
 ### DATAPATH
-source("Code/get_dataPath_ETH.R")
+source(file.path(root, "Code/get_dataPath_ETH.R"))
 ### R SETTINGS
 options(scipen=999) # surpress scientific notation
 options("stringsAsFactors"=FALSE) # ensures that characterdata that is loaded (e.g. csv) is not turned into factors

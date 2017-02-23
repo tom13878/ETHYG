@@ -26,6 +26,9 @@ source(file.path(root, "Code/translog_formula.R"))
 source(file.path(root, "Code/sfaFormEval.R"))
 source(file.path(root, "Code/sfa_tab.R"))
 
+# labour values this high are ridiculous
+db1 <- db1[db1$lab < 3000, ]
+
 #' ------------------------------------------------------------------------------------------------
 #' Define inputs for use in translog functions
 #' ------------------------------------------------------------------------------------------------
@@ -37,12 +40,14 @@ translog_inputs <- c("log(N)", "log(lab)")
 environmental <- c("log(slope)",
                   "elevation",
                   "log(area)",
-                  "ph", "SOC",
-                  #"GGD", "AI", "TS",
+                  "SOC",
                   "log(rain_wq)")
 
+# GYGA variables
+GYGA <- c("GGD", "AI", "TS")
+
 # environmental and all dummy variables
-dummies <- c("noN", "irrig", "impr", "crop_count2")
+dummies <- c("noN", "irrig", "impr", "crop_count2", "phdum_gt70", "phdum55_2_70")
 
 # variables explaining technical inefficiency.
 zvars <- c("-1", "extension", "age",
@@ -68,13 +73,31 @@ db1$off_farm_income <- db1$off_farm_income + 1
 TL_form_basic <- translog_form("log(yld)", translog_inputs)
 
 # full specification including environmental inputs
-TL_form_full <- paste(TL_form_basic,
+TL_form_environ <- paste(TL_form_basic,
                       paste(environmental, collapse=" + "),
                       paste(dummies, collapse=" + "), sep=" + ")
 
+# spec with GYGA variables
+TL_form_environ_GYGA <- paste(TL_form_environ,
+                              paste(GYGA, collapse=" + "),
+                               sep=" + ")
+
 # full specification including z variables
-TL_form_fullz <- paste(deparse(formula(TL_form_full), width.cutoff = 500),
+TL_form_fullz <- paste(deparse(formula(TL_form_environ_GYGA), width.cutoff = 500),
                        paste(zvars, collapse=" + "), sep=" | ")
+
+TL_form_fullzr <- paste(paste(deparse(formula(TL_form_environ_GYGA), width.cutoff = 500), "rd - noN", sep=" + "),
+                       paste(zvars, collapse=" + "), sep=" | ")
+
+#' ------------------------------------------------------------------------------------------------
+#' Summary statistics
+#' ------------------------------------------------------------------------------------------------
+
+# summary stats of some of the important variables
+vars <- c("N", "lab", "area", "slope", "elevation",
+          "SOC", "rain_wq", "GGD", "AI", "TS",
+          "yesN", "irrig", "impr", "extension", "title")
+dbsum <- db1[, vars]
 
 #' ------------------------------------------------------------------------------------------------
 #' Estimate OLS models and check for skewness
@@ -114,8 +137,8 @@ hist(residuals(CD1), main="residuals CD core model")
 hist(residuals(CD2), main="residuals CD full model")
 
 # Translog
-sfaTL1 <- sfa(TL_form_basic, data=db1)
-sfaTL2 <- sfa(TL_form_full, data=db1)
+sfaTLenviron <- sfa(TL_form_environ, data=db1)
+sfaTLGYGA <- sfa(TL_form_environ_GYGA, data=db1)
 
 # lrtest to determine what is a better fit
 
@@ -128,14 +151,6 @@ sfaTL_z <- sfa(TL_form_fullz, data=db1)
 
 
 #' ------------------------------------------------------------------------------------------------
-#' table of results
-#' ------------------------------------------------------------------------------------------------
-
-results <- full_join(sfa_table(sfaTL1, "mod1"), sfa_table(sfaTL2, "mod2"))
-move <- which(results$parameter %in% c("gamma", "sigmaSq") )
-results <- rbind(results[-move, ], results[move,])
-
-#' ------------------------------------------------------------------------------------------------
 #' Endogeneity
 #' ------------------------------------------------------------------------------------------------
 
@@ -145,7 +160,7 @@ db1$Nout <- ifelse(db1$Nout < 0, 0, db1$logN)
 # estimate tobit model
 m <- tobit(Nout ~ dist_market + age + sex +
              ed_any + SOC + Pn + elevation +
-             log(slope + 1) + rain_wq +
+             log(slope + 1) + rain_wq + phdum55_2_70 + phdum_gt70 + 
              extension, data=db1, left=0)
 
 # get residuals
@@ -161,11 +176,18 @@ indx <- m$na.action
 
 db1 <- cbind(db1[-indx, ], rd)
 
-# now run the translog again
-TL_form_full_r <- paste(paste(deparse(formula(TL_form_full), width.cutoff = 500),
+# now run the translog again with only the environ vars
+TL_form_environr <- paste(paste(deparse(formula(TL_form_environ), width.cutoff = 500),
                               "rd", sep=" + "), "-noN", sep=" ")
 
-sfa_TL_full_r <- sfa(TL_form_full_r,
+sfaTLenvironr <- sfa(TL_form_environr,
+                     data = db1)
+
+# run translog again with environ + GYGA variables
+TL_form_environ_GYGAr <- paste(paste(deparse(formula(TL_form_environ_GYGA), width.cutoff = 500),
+                                "rd", sep=" + "), "-noN", sep=" ")
+
+sfaTLenvironGYGAr <- sfa(TL_form_environ_GYGAr,
                      data = db1)
 
 # bootstrap SE - 500 runs ideally (takes 10 mins)
@@ -193,8 +215,24 @@ sfa_TL_full_r <- sfa(TL_form_full_r,
 
 
 #' ------------------------------------------------------------------------------------------------
+#' table of results
+#' ------------------------------------------------------------------------------------------------
+
+# results from 4 models to compare
+# 1. translog model without endogeneity or environmental variables
+
+results <- full_join(sfa_table(sfaTLenviron, "Basic"),
+                     sfa_table(sfaTLGYGA, "GYGA")) %>%
+  full_join(., sfa_table(sfaTLenvironr, "Basic + r")) %>%
+  full_join(., sfa_table(sfaTLenvironGYGAr, "GYGA + r"))
+move <- which(results$parameter %in% c("gamma", "sigmaSq") )
+results <- rbind(results[-move, ], results[move,])
+
+
+#' ------------------------------------------------------------------------------------------------
 #' z variable analysis - now with the residuals included
 #' ------------------------------------------------------------------------------------------------
+
 
 
 
@@ -213,7 +251,8 @@ TL_form_basic <- translog_form("log(yld)", translog_inputs)
 # full specification including environmental inputs
 TL_form_full <- paste(TL_form_basic,
                       paste(environmental, collapse=" + "),
-                      paste(dummies, collapse=" + "), "rd", sep=" + ") # leave noN variable out for now - uncleaer whether to include or not
+                      paste(GYGA, collapse=" + "),
+                      paste(dummies[!dummies %in% "noN"], collapse=" + "), "rd", sep=" + ") # leave noN variable out for now - uncleaer whether to include or not
 modl <- sfa(TL_form_full, data=db1)
 
 
@@ -257,8 +296,8 @@ abline(h=0)
 # clearly there are some large ish outliers
 par(mfrow=c(1, 2))
 plot(fitted(modl), residuals(modl))
-plot(modl$dataTable[, 3], fitted(modl))
-text(modl$dataTable[, 3], fitted(modl), 1:nrow(db1))
+plot(exp(modl$dataTable[, 3]), exp(fitted(modl)))
+text(exp(modl$dataTable[, 3]), exp(fitted(modl)), 1:nrow(db1))
 
 # function to iterate over. Finds optimal N 
 # for each plot in the data. However, in order
@@ -289,7 +328,8 @@ f <- function(i){
 db1.1$Npm <- sapply(1:nrow(db1.1), f)
 
 # a few exploratory plots
-hist(db1.1$Npm, xlim=c(0, 500), breaks=500)
+par(mfrow=c(1, 1))
+hist(db1.1$Npm, xlim=c(0, 700), breaks=500)
 par(mfrow=c(1,2))
 hist(db1.1$Npm[db1.1$noN==1], xlim=c(0, 500), breaks=500, main="no N")
 hist(db1.1$Npm[db1.1$noN==0], xlim=c(0, 500), breaks=500, main="yes N")
@@ -297,7 +337,7 @@ mean(db1.1$Npm[db1.1$noN==1], na.rm=TRUE); mean(db1.1$Npm[db1.1$noN==0], na.rm=T
 table(is.na(db1.1$Npm)) # 8 bad ones
 
 db1.1$N <- Nobs # get the actual observed values back -> needed for MPP calculation
-db1.1$Ndif <- ifelse(db1.1$noN == 0, db1.1$N - db1.1$Npm, NA)
+db1.1$Ndif <- db1.1$N - db1.1$Npm
 hist(db1.1$Ndif, breaks=100)
 
 # have a look at rows with no solution and
@@ -338,6 +378,7 @@ db1.1$MPP <- sapply(1:nrow(db1.1), f2)
 
 # histogram of MPP values
 hist(db1.1$MPP, breaks=40)
+mean(db1.1$MPP, na.rm=TRUE)
 
 # plot against actual nitrogen use
 # indicates that the higher users of
@@ -383,13 +424,13 @@ db3 <- db1.1 %>%
     resid = as.numeric(resid(model))
   )
 
-table((db3$Y - db3$TEY) > 0) # 340
+table((db3$Y - db3$TEY) > 0) # number of plots where actual yield bigger than frontier yield
 
 # 2. Economic yield is found by evaluating the frontier 
 # function at the economically optimal nitrogen rate (Npm)
 
 # introduce a cap on nitrogen
-Npy <- 120 # check this
+Npy <- 700 # check this
 
 # Cap Npm
 db3 <- mutate(db3, Npm = ifelse(Npm>Npy, Npy, Npm))
@@ -401,6 +442,14 @@ ysum <- mgsub("log(N)", "log(Npm)", ysum)
 db4 <- db3 %>% 
   mutate(EY = exp(with(., eval(parse(text=ysum)))))
 
+# compare histograms of people who do
+# and do not use nitrogen -> much the same
+hist(db4$EY[db4$noN==1], col=rgb(1,0,0,0.5),
+     main="EY of those using and not using N",
+     xlab="N",
+     breaks=40)
+hist(db4$EY[db4$noN==0], col=rgb(0,0,1,0.5), add=T, breaks=40)
+
 
 # 3. PFY: Feasible yield
 # To improve this part, we could also argue that: (1) hybrid seeds are used, (2) pestices are used, (3) higher levels of capital and labour are used.
@@ -411,8 +460,10 @@ db4 <- db3 %>%
 # Also note that N is evaluated at the cap of 120
 library(qdap)
 ysum <- sfaFormEval(modl)
-ysum <- mgsub(dummies,"1",ysum)
-ysum <- mgsub(c("lab"), paste0(c("lab"), "*1.1"), ysum)
+ysum <- mgsub(dummies[-1],"1",ysum)
+ysum <- mgsub(c("lab"), paste0(c("lab"), "*1.5"), ysum)
+#ysum <- mgsub(c("log(lab)"), paste0("(", c("log(lab)"), "*1.5", ")"), ysum)
+
 ysum <- mgsub("log(N)", "log(Npy)", ysum)
 
 db5 <- db4 %>%
@@ -542,3 +593,6 @@ db9 <- dplyr::select(db8, hhid, holder_id, parcel_id, field_id, ZONE, REGNAME, s
                      EUYG_l, EUYG_s, TYG_l, TYG_s, YG_l, YG_s, YG_l_Ycor, YG_s_Ycor)
 
 saveRDS(db9, "Cache/db9.rds")
+saveRDS(results, "Cache/results_table.rds")
+saveRDS(dbsum, "Cache/dbsum.rds")
+saveRDS(by_zone, "Cache/by_zone.rds")
