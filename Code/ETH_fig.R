@@ -92,7 +92,7 @@ ZonalYieldGap_l_sh <- ZonalYieldGap_l %>%
     EUYG = 100*EUYG_l/YG_l_Ycor,
     TYG = 100*TYG_l/YG_l_Ycor,
     YG = 100*(TEYG_l + EYG_l + EUYG_l + TYG_l)/YG_l_Ycor) %>%
-  dplyr::select(-TEYG_l:-YG_l_Ycor)
+  dplyr::select(-TEYG_l:-YG_l_Ycor) 
 
 
 
@@ -217,9 +217,9 @@ offset <- 0.3
 Fig_waterfall <- waterfall_f(wf.df, offset=offset) +
   scale_fill_manual(guide="none", values=cbPalette)+
   labs(x="", y="Maize production (million tons)") +
-  scale_y_continuous(breaks=seq(0, 40, 5), labels = comma) +
+  scale_y_continuous(breaks=seq(0, 45, 5), labels = comma) +
   theme_classic() 
 
-#waterfall
+
 
 
