@@ -49,7 +49,7 @@ environmental <- c("log(slope)",
 GYGA <- c("GGD", "AI", "TS")
 
 # environmental and all dummy variables
-dummies <- c("noN", "irrig", "impr", "crop_count2", "phdum_gt70", "phdum55_2_70")
+dummies <- c("noN", "impr", "crop_count2", "phdum_gt70", "phdum55_2_70")
 
 # variables explaining technical inefficiency.
 zvars <- c("-1", "extension", "age",
@@ -98,7 +98,7 @@ TL_form_fullzr <- paste(paste(deparse(formula(TL_form_environ_GYGA), width.cutof
 # summary stats of some of the important variables
 vars <- c("N", "lab", "area", "slope", "elevation",
           "SOC", "rain_wq", "GGD", "AI", "TS",
-          "yesN", "irrig", "impr", "extension", "title")
+          "yesN", "impr", "extension", "title")
 dbsum <- db1[, vars]
 
 #' ------------------------------------------------------------------------------------------------
@@ -158,6 +158,9 @@ hist(residuals(sfaTLGYGA), main="residuals sfaCD full model")
 
 sfaTL_z <- sfa(TL_form_fullz, data=db1)
 hist(residuals(sfaTL_z), main="residuals sfaTL_z core model")
+z_res <- summary(sfaTL_z)$mleParam
+z_res <- z_res[grep("Z_", row.names(z_res)), ]
+z_res <- as.data.frame(round(z_res, 3))
 
 
 #' ------------------------------------------------------------------------------------------------
@@ -359,7 +362,6 @@ hist(db1.1$Ndif, breaks=500, xlim=c(-700, 500))
 badrows <- db1.1[is.na(db1.1$Npm), ]
 
 # fairly high relprice in badrows
-
 
 #' ------------------------------------------------------------------------------------------------
 #' MPP
@@ -619,3 +621,4 @@ saveRDS(db9, "Cache/db9.rds")
 saveRDS(results, "Cache/results_table.rds")
 saveRDS(dbsum, "Cache/dbsum.rds")
 saveRDS(by_zone, "Cache/by_zone.rds")
+saveRDS(z_res, "Cache/z_res.rds")
