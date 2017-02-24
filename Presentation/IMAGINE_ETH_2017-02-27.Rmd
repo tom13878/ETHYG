@@ -1,5 +1,5 @@
 ---
-title: "ETH Yield Gap Analysis"
+title: "Ethiopia Yield Gap Analysis"
 author: "Michiel van Dijk & Tom Morley"
 date: "27 February 2017"
 output: beamer_presentation
@@ -28,12 +28,20 @@ source(file.path(root, "Code/ETH_fig.R"))
 
 - A more flexible translog function allowing for interactions between inputs
 - Control function approach to incorporate a feedback loop between nitrogen and yield
-- numerical methods to find optimum nitrogen use
+- Numerical methods to find optimum nitrogen use
 - GYGA variables 
 
 ## Yield gap framework
 
 @michiel insert picture
+
+## LSMS-ISA and GYGA
+
+@ Michiel add in the GYGA map
+```{r GYGA_map}
+#GYGA_LSMS
+```
+
 
 ## Data
 
@@ -51,22 +59,63 @@ dbsum <- readRDS(file.path(root, "Cache/dbsum.rds"))
 stargazer(as.data.frame(dbsum),  type = "latex", digits=2, header=FALSE, title = "Summary statistics")
 ```
 
+
+
 ## Methodology
 
-- Two stage estimation approach
-+ First stage Tobit model to avoid feedback loop/confounding 
-+ Second stage stochastic frontiers estimation (bootstrapping SEs -> nonlinear function)
-+ Third stage policy variables
+- Three stages in the estimation of the production function
+  + First stage Tobit model to avoid feedback loop/confounding 
+  + Second stage stochastic frontiers estimation 
+    + bootstrapping SEs due to nonlinear first stage function function
+    + Numeric solution to find the economically optimal Nitrogen use
+  + Third stage policy variables
 
 \normalsize
 
+## Cobb Douglass function
 
-## LSMS-ISA and GYGA
+![](c:/users/morle001/WEcR/ETHYG/CD.png)
 
-@ Michiel add in the GYGA map
-```{r GYGA_map}
-#GYGA_LSMS
+
+## Translog production function
+
+![](c:/users/morle001/WEcR/ETHYG/translog.png)
+
+
+## Endogeneity
+
+- Idea of a feedback loop between the level of nitrogen applied and the yield
+- In econometrics speak: the residuals from the estimation are correlated with the explanatory variable (Nitrogen)
+- Agronomic interpretation: Higher yield in good soils, but Nitrogen also works better in good soil confounding
+- Policy interpretation: Farmers listen to extension agents and see improvements spurring on more improvements 
+- Solution: Instrumental variables style approach, called a control function for a nonlinear first stage regression
+    + This requires find suitable instruments - distance, age, social capital, politics, soil quality??
+
+## Stochastic frontier analysis
+
+\tiny
+```{r sfa}
+results <- readRDS(file.path(root, "Cache/results_table.rds"))
+row.names(results) <- NULL
+pander(results)
 ```
+
+## Stochastic frontier analysis
+
+- Residuals (rd) are significant implying endogeneity indeed exists
+- GDD is significant and including GYGA variables controls for climate conditions
+- Nitrogen coefficients: level is not significant, square is positive, interaction is negative
+
+## Optimal Nitrogen level and MPP values
+
+\small
+```{r,  results="asis"}
+by_zone <- readRDS(file.path(root, "Cache/by_zone.rds"))
+row.names(by_zone) <- NULL
+by_zone$ZONE <- gsub("BENSHANGULGUMUZ", "BG", by_zone$ZONE)
+pander(by_zone)
+```
+
 
 
 ## Data issues
@@ -80,21 +129,14 @@ stargazer(as.data.frame(dbsum),  type = "latex", digits=2, header=FALSE, title =
 - Use of labour and capital demands assumptions (e.g. 10% increase)
 
 
-## Stochastic frontier analysis
 
-\tiny
-```{r sfa}
-results <- readRDS(file.path(root, "Cache/results_table.rds"))
-row.names(results) <- NULL
-pander(results)
-#, caption="Stochastic Frontier results") 
-```
 \normalsize
 
 
 ## Yield gap estimations
 \small 
 ```{r relative_YG}
+ZonalYieldGap_l$Zone <- gsub("BENSHANGULGUMUZ", "BG", ZonalYieldGap_l$Zone)
 knitr::kable(ZonalYieldGap_l, caption = "Relative yield gap", digits = 0)
 ```
 \normalsize
@@ -116,18 +158,24 @@ Fig_waterfall
 
 
 ## Explaining the TEYG
-\tiny
+\small
 ```{r z_table}
-# knitr::kable(ztable, caption = "Second stage analysis", digits = 2)
+z_res <- readRDS(file.path(root, "Cache/z_res.rds"))
+knitr::kable(z_res, caption = "Third stage analysis", digits = 2)
 ```
 \normalsize
 
+## Wrap up
+
+- New and better translog function means more flexibility of inputs
+- optimal nitrogen levels calcualted per farmer using their actual values of other inputs
+- Identified and dealt with bias introduced due to endogeneity and feedback loops
 
 
 ## Next steps
 
 - Calculate elasticities of second stage variables to get a better interpretation
 - Think about how to link policies to yield gaps
-- finish writing paper
+- Finish writing paper
 - Third wave of data???? but ..... time constraints
 
