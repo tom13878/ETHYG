@@ -146,7 +146,7 @@ YieldLevels <- bind_rows(
     summarize(Y =(sum((Y)*area)/sum(area)),
               Ycor = (sum((Ycor)*area)/sum(area)),
               TEY = (sum((TEY)*area)/sum(area)),
-              EY = (sum((EY)*area)/sum(area)),
+              EY = (sum((EY)*area, na.rm=TRUE)/sum(area)),
               PFY = (sum((PFY)*area)/sum(area)),
               PY = (sum((PY)*area)/sum(area))
     ),
@@ -156,7 +156,7 @@ YieldLevels <- bind_rows(
               Y =(sum((Y)*area)/sum(area)),
               Ycor = (sum((Ycor)*area)/sum(area)),
               TEY = (sum((TEY)*area)/sum(area)),
-              EY = (sum((EY)*area)/sum(area)),
+              EY = (sum((EY)*area, na.rm=TRUE)/sum(area)),
               PFY = (sum((PFY)*area)/sum(area)),
               PY = (sum((PY)*area)/sum(area)))) %>%
   dplyr::select(Zone, Y, Ycor, TEY, EY, PFY, PY)
@@ -169,13 +169,13 @@ ZonalYieldGap_s <- bind_rows(
   db9 %>% 
     dplyr::select(Zone = ZONE, ERROR_s, TEYG_s, EYG_s, EUYG_s, TYG_s, YG_s_Ycor, YG_s, area) %>%
     group_by(Zone) %>%
-    summarize(ERROR_s =(sum((ERROR_s)*area)/sum(area)),
-              TEYG_s = (sum((TEYG_s)*area)/sum(area)),
-              EYG_s = (sum((EYG_s)*area)/sum(area)),
-              EUYG_s = (sum((EUYG_s)*area)/sum(area)),
-              TYG_s = (sum((TYG_s)*area)/sum(area)),
-              YG_s = (sum((YG_s)*area)/sum(area)),
-              YG_s_Ycor = (sum((YG_s_Ycor)*area)/sum(area)),
+    summarize(ERROR_s =(sum((ERROR_s)*area, na.rm=TRUE)/sum(area)),
+              TEYG_s = (sum((TEYG_s)*area, na.rm=TRUE)/sum(area)),
+              EYG_s = (sum((EYG_s)*area, na.rm=TRUE)/sum(area)),
+              EUYG_s = (sum((EUYG_s)*area, na.rm=TRUE)/sum(area)),
+              TYG_s = (sum((TYG_s)*area, na.rm=TRUE)/sum(area)),
+              YG_s = (sum((YG_s)*area, na.rm=TRUE)/sum(area)),
+              YG_s_Ycor = (sum((YG_s_Ycor)*area, na.rm=TRUE)/sum(area)),
               ERROR = (1-ERROR_s)*100,
               TEYG = (1-TEYG_s)*100,
               EYG = (1-EYG_s)*100,
@@ -187,13 +187,13 @@ ZonalYieldGap_s <- bind_rows(
   db9 %>% 
     dplyr::select(Zone = ZONE, ERROR_s, TEYG_s, EYG_s, EUYG_s, TYG_s, YG_s_Ycor, YG_s, area) %>%
     summarize(Zone = "Total", 
-              ERROR_s =(sum((ERROR_s)*area)/sum(area)),
-              TEYG_s = (sum((TEYG_s)*area)/sum(area)),
-              EYG_s = (sum((EYG_s)*area)/sum(area)),
-              EUYG_s = (sum((EUYG_s)*area)/sum(area)),
-              TYG_s = (sum((TYG_s)*area)/sum(area)),
-              YG_s = (sum((YG_s)*area)/sum(area)),
-              YG_s_Ycor = (sum((YG_s_Ycor)*area)/sum(area)),
+              ERROR_s =(sum((ERROR_s)*area, na.rm=TRUE)/sum(area)),
+              TEYG_s = (sum((TEYG_s)*area, na.rm=TRUE)/sum(area)),
+              EYG_s = (sum((EYG_s)*area, na.rm=TRUE)/sum(area)),
+              EUYG_s = (sum((EUYG_s)*area, na.rm=TRUE)/sum(area)),
+              TYG_s = (sum((TYG_s)*area, na.rm=TRUE)/sum(area)),
+              YG_s = (sum((YG_s)*area, na.rm=TRUE)/sum(area)),
+              YG_s_Ycor = (sum((YG_s_Ycor)*area, na.rm=TRUE)/sum(area)),
               ERROR = (1-ERROR_s)*100,
               TEYG = (1-TEYG_s)*100,
               EYG = (1-EYG_s)*100,
