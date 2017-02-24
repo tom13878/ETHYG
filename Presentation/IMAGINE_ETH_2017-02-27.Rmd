@@ -22,6 +22,7 @@ library(pander)
 root <- find_root(is_rstudio_project)
 # source(file.path(root, "Code/ETH_tab.R"))
 source(file.path(root, "Code/ETH_fig.R"))
+source(file.path(root, "Code/ETH_map.R"))
 ```
 
 ## What's new since last time
@@ -29,11 +30,11 @@ source(file.path(root, "Code/ETH_fig.R"))
 - A more flexible translog function allowing for interactions between inputs
 - Control function approach to incorporate a feedback loop between nitrogen and yield
 - numerical methods to find optimum nitrogen use
-- GYGA variables 
+- GYGA environmental control variables 
 
 ## Yield gap framework
 
-@michiel insert picture
+![](D:/Data/Github/ETHYG/FigTabMap/Framework.png)
 
 ## Data
 
@@ -50,22 +51,21 @@ suppressMessages(library(stargazer))
 dbsum <- readRDS(file.path(root, "Cache/dbsum.rds"))
 stargazer(as.data.frame(dbsum),  type = "latex", digits=2, header=FALSE, title = "Summary statistics")
 ```
+\normalsize
 
 ## Methodology
 
-- Two stage estimation approach
+- Three stage estimation approach
 + First stage Tobit model to avoid feedback loop/confounding 
 + Second stage stochastic frontiers estimation (bootstrapping SEs -> nonlinear function)
 + Third stage policy variables
 
-\normalsize
-
 
 ## LSMS-ISA and GYGA
 
-@ Michiel add in the GYGA map
+
 ```{r GYGA_map}
-#GYGA_LSMS
+Map_GYGA_LSMS
 ```
 
 
@@ -76,8 +76,8 @@ stargazer(as.data.frame(dbsum),  type = "latex", digits=2, header=FALSE, title =
 - To calculate feasible yield gap information is needed on the use of inputs when costs are zero:
     + Level of nitrogen when yield diminishes (per region)
     + Use of labour and capital at this point
-- Information on nitrogen/fertilizer use can be taken from experimental plot data => literature survey.
-- Use of labour and capital demands assumptions (e.g. 10% increase)
+- Information on nitrogen/fertilizer use can be taken from experimental plot data => input from agronomy colleagues required.
+- Use of labour and capital demand assumptions (e.g. 50% increase in labour)
 
 
 ## Stochastic frontier analysis
@@ -95,12 +95,13 @@ pander(results)
 ## Yield gap estimations
 \small 
 ```{r relative_YG}
-knitr::kable(ZonalYieldGap_l, caption = "Relative yield gap", digits = 0)
+ZonalYieldGap_l_sh <- ZonalYieldGap_l_sh %>%
+  rename(FYG = EUYG)
+knitr::kable(ZonalYieldGap_l_sh, caption = "Relative yield gap", digits = 0)
 ```
 \normalsize
 
 
-\normalsize
 
 
 ## Closing the yield gap
@@ -109,10 +110,6 @@ knitr::kable(ZonalYieldGap_l, caption = "Relative yield gap", digits = 0)
 Fig_waterfall
 ```
 
-
-## Policies to close the yield gap
-
-@ Michiel policy framework picture
 
 
 ## Explaining the TEYG
@@ -127,6 +124,7 @@ Fig_waterfall
 ## Next steps
 
 - Calculate elasticities of second stage variables to get a better interpretation
+- Slight experimentation with 
 - Think about how to link policies to yield gaps
 - finish writing paper
 - Third wave of data???? but ..... time constraints

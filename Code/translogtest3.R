@@ -17,6 +17,7 @@ library(dplyr)
 library(qdap)
 library(ggplot2)
 library(AER)
+library(stargazer)
 
 # source in prepared data and functions
 # source(file.path(root, "Code/ETH_2013_prepare4analysis.R"))
@@ -27,6 +28,7 @@ source(file.path(root, "Code/sfaFormEval.R"))
 source(file.path(root, "Code/sfa_tab.R"))
 
 # labour values this high are ridiculous
+# CHECK NEED TO WINSOR ALL VALUES I THINK
 db1 <- db1[db1$lab < 3000, ]
 
 #' ------------------------------------------------------------------------------------------------
@@ -118,11 +120,15 @@ CD2 <- lm(CD2_form, data=db1)
 
 # Translog
 TL1 <- lm(TL_form_basic, data=db1)
-TL2 <- lm(TL_form_full, data=db1)
+TL2 <- lm(TL_form_environ, data=db1)
+TL3 <- lm(TL_form_environ_GYGA, data=db1)
+
+stargazer(CD1, CD2, TL1, TL2, TL3, type = "text")
 
 # par(mfrow=c(1, 2))
 # hist(residuals(TL1), main="residuals CD core model")
 # hist(residuals(TL2), main="residuals CD full model")
+# hist(residuals(TL3), main="residuals CD full model")
 
 #' ------------------------------------------------------------------------------------------------
 #' Run sfa models
@@ -133,12 +139,15 @@ sfaCD1 <- sfa(log(yld) ~ log(N) + log(lab), data=db1)
 sfaCD2 <- sfa(CD2_form, data=db1)
 
 par(mfrow=c(1, 2))
-hist(residuals(CD1), main="residuals CD core model")
-hist(residuals(CD2), main="residuals CD full model")
+hist(residuals(sfaCD1), main="residuals sfaCD core model")
+hist(residuals(sfaCD2), main="residuals sfaCD full model")
 
 # Translog
 sfaTLenviron <- sfa(TL_form_environ, data=db1)
 sfaTLGYGA <- sfa(TL_form_environ_GYGA, data=db1)
+
+hist(residuals(sfaTLenviron), main="residuals sfaCD core model")
+hist(residuals(sfaTLGYGA), main="residuals sfaCD full model")
 
 # lrtest to determine what is a better fit
 
@@ -148,6 +157,7 @@ sfaTLGYGA <- sfa(TL_form_environ_GYGA, data=db1)
 #' ------------------------------------------------------------------------------------------------
 
 sfaTL_z <- sfa(TL_form_fullz, data=db1)
+hist(residuals(sfaTL_z), main="residuals sfaTL_z core model")
 
 
 #' ------------------------------------------------------------------------------------------------
@@ -158,10 +168,12 @@ db1$Nout <- ifelse(db1$noN == 1, 0, db1$logN)
 db1$Nout <- ifelse(db1$Nout < 0, 0, db1$logN)
 
 # estimate tobit model
+# CHECK: Probably better to add relative price (WORKS!) (or prices for Pc and Pn separately) 
 m <- tobit(Nout ~ dist_market + age + sex +
-             ed_any + SOC + Pn + elevation +
+             ed_any + SOC + Pn +elevation +
              log(slope + 1) + rain_wq + phdum55_2_70 + phdum_gt70 + 
              extension, data=db1, left=0)
+stargazer(m, type = "text")
 
 # get residuals
 rd <- resid(m, type = "deviance")
@@ -227,7 +239,7 @@ results <- full_join(sfa_table(sfaTLenviron, "Basic"),
   full_join(., sfa_table(sfaTLenvironGYGAr, "GYGA + r"))
 move <- which(results$parameter %in% c("gamma", "sigmaSq") )
 results <- rbind(results[-move, ], results[move,])
-
+results
 
 #' ------------------------------------------------------------------------------------------------
 #' z variable analysis - now with the residuals included
@@ -334,11 +346,13 @@ par(mfrow=c(1,2))
 hist(db1.1$Npm[db1.1$noN==1], xlim=c(0, 500), breaks=500, main="no N")
 hist(db1.1$Npm[db1.1$noN==0], xlim=c(0, 500), breaks=500, main="yes N")
 mean(db1.1$Npm[db1.1$noN==1], na.rm=TRUE); mean(db1.1$Npm[db1.1$noN==0], na.rm=TRUE)
+
+# CHECK 185 bad ones!
 table(is.na(db1.1$Npm)) # 8 bad ones
 
 db1.1$N <- Nobs # get the actual observed values back -> needed for MPP calculation
 db1.1$Ndif <- db1.1$N - db1.1$Npm
-hist(db1.1$Ndif, breaks=100)
+hist(db1.1$Ndif, breaks=500, xlim=c(-700, 500))
 
 # have a look at rows with no solution and
 # see if they have anything in common
@@ -414,6 +428,7 @@ model <- modl
 
 # 1. Technical efficiency yield is found using the
 # output of the sfa model
+# Observations where Npm cannot be calculated are removed
 db3 <- db1.1 %>%
   rename(Y = yld) %>%
   mutate(
@@ -422,7 +437,8 @@ db3 <- db1.1 %>%
     TEY = exp(as.numeric(fitted(model))),
     TE = as.numeric(efficiencies(model)),
     resid = as.numeric(resid(model))
-  )
+  ) %>%
+  filter(!is.na(Npm))
 
 table((db3$Y - db3$TEY) > 0) # number of plots where actual yield bigger than frontier yield
 
@@ -456,6 +472,8 @@ hist(db4$EY[db4$noN==0], col=rgb(0,0,1,0.5), add=T, breaks=40)
 # We assume that all farmers use pesticides and increase assets and labour with 10%
 
 # CHECK increase seed QUANTITY
+# NEED TO SET THE IMPROVED SEED DUMMY TO 1 
+
 # what should be multiplied by 1.1 here? loglab of log(lab*1.1)??
 # Also note that N is evaluated at the cap of 120
 library(qdap)
@@ -468,6 +486,8 @@ ysum <- mgsub("log(N)", "log(Npy)", ysum)
 
 db5 <- db4 %>%
   mutate(PFY = exp(with(., eval(parse(text=ysum)))))
+
+#check <- dplyr::select(db5, hhid, holder_id, parcel_id, field_id, surveyyear, ZONE, REGNAME, area, crop_count2, lat, lon, noN, yesN, loglab, lab, Npm, MPP, Y, PFY) 
 
 # 4. PY: Potential yield
 # Merge Yield potential with maize plot database
@@ -566,10 +586,13 @@ X_EYG_check <- filter(db8, EYG_l<0)
 mean(db8$EYG_s)
 
 # EUYG
-# A number of plots have negative EUYG_l because Npm is larger than Nyw, the nitrogen that is required to achieve Potential yield (Yw).
+# A number of plots have negative EUYG_l because Npm is larger than Npy, the nitrogen that is required to achieve Potential yield (Yw).
 # We have corrected this so check should be 0.
+# CHECK: we stil find negative values. It is possible that because of the interaction with labour >N results in <y? TO BE CHECKED
 X_EUYG_check <- filter(db8, EUYG_l<0)        
 mean(db8$EUYG_s)
+check <- dplyr::select(X_EUYG_check, hhid, holder_id, parcel_id, field_id, surveyyear, ZONE, REGNAME, area, crop_count2, lat, lon, noN, yesN, loglab, lab, Npm, MPP, Y, 
+                       PFY, EY, EUYG_l) 
 
 # TYG
 X_TYG_check <- filter(db8, TYG_l<0)        
