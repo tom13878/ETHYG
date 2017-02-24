@@ -1,0 +1,135 @@
+---
+title: "ETH yield gap analysis"
+author: "Michiel van Dijk and Tom Morley"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  word_document:
+    reference_docx: ../Common/word_styles_01.docx
+bibliography: ../Common/ETHYG.bib
+    
+---
+
+```{r setup, include=FALSE}
+# Knitr settings
+library(rprojroot)
+root <- find_root(is_rstudio_project)
+
+library(knitr)
+knitr::opts_chunk$set(
+  fig.width=12, fig.height=8,
+  dpi = 300,
+  echo=FALSE, warning=FALSE, message=FALSE,
+  fig.path = file.path(root,"FigTabMap/out-"),
+  dev = "CairoPNG",
+  dev.args = list(CairoPNG = list(bg = "transparent"))
+  )
+
+library(pander)
+panderOptions('table.alignment.default', function(df)
+    ifelse(sapply(df, is.numeric), 'right', 'left'))
+panderOptions('table.split.table', Inf)
+panderOptions('big.mark', ",")
+panderOptions('keep.trailing.zeros', TRUE)
+
+# Source figures, tables and maps
+source(file.path(root, "Code/ETH_fig.R"))
+source(file.path(root, "Code/ETH_tab.R"))
+source(file.path(root, "Code/ETH_map.R"))
+```
+
+REFER TO MAIZE REVOLUTOION CHAPTER JAYNE in LARSON.
+SHEAHAN (2016) EMPHASISES sELECTION ON MAIZE FIELDS => CHECK
+DISCUSS with tom What to include in CRE, I think all plot and hh variables that can change over time and across HHs so also rain, which is annually observed. Stil puzzled what happens with observations for which T=1 (about a quarter of the sample).
+
+# Introduction
+Ethiopia has great agricultural potential because of its vast areas of fertile land, diverse climate, generally adequate rainfall, and large labour pool. Consequently, agriculture has remained as the foundation of Ethiopia’s economy, accounting for around 40 percent of the national income and around 80 percent of the total employment (EEA, 2015). It also supplies food to the urban areas and raw materials to the manufacturing sector. Many other economic activities depend on agriculture, including marketing, processing, and export of agricultural products. Among the major drivers of GDP growth crop production had been the second most important contributor next to construction . The agricultural sector has, therefore, been crucial for the overall performance of the Ethiopian economy and would continue to be the backbone of the Ethiopian economy for many years to come. The sector is expected to play a central role in decreasing poverty and increasing growth in Ethiopia.
+
+Agricultural production in Ethiopia is overwhelmingly of a subsistence nature where millions of smallholder farmers cultivate on the average less than a hectare of land. About 80 per cent of the smallholders’ production is destined for home consumption and seed. The smallholder sector is the main source of employment, agricultural GDP, export earnings, and food and raw materials supplies to urban areas and food industries. Crop production is by far the most dominant sub-sector, accounting for over 97 per cent of the agricultural output and more than 60% to agricultural GDP (RATES, 2003). It is estimated that crop production and livestock husbandry account for over 86 per cent of the agricultural GDP (WB, 2013).
+
+Despite this potential, agricultural productivity in Ethiopia is very low compared to other Sub-Saharan African countries. Ethiopian agriculture has remained underdeveloped due to periodic drought, soil degradation, deforestation, high population density, poor infrastructure (making it difficult and expensive to get goods to market) and low level of technology use among others. 
+
+Maize is one of the most important staple crops in terms of calorie intake for many millions of Ethiopians and is grown in many parts of the country. Because of its large geographical coverage and the scale of production, it plays a critical role in the food security of the country and particularly the poor. According to the CSA 2004/5 national survey of consumption expenditure, maize accounted for about 17 percent of the national calorie intake followed by sorghum (14 percent) and wheat (13 percent) among the major cereals (Taffesse et al., 2012). Maize is second to teff in terms of area, but it ranks first among cereals in production. According to CSA (2010) maize accounted around 30 percent of all cereals produced in the country and more than 20 percent of the land cultivated by all cereal crops. According to the Agricultural Growth Program (AGP) Ethiopia is the fifth largest producer of maize in Africa in terms of the area devoted to maize but is second, only to South Africa, in yield and third, after South Africa and Nigeria, in production and smallholder farmers and around 9 million smallholder farmers account for more than 95 % of the total maize area and production in the country (http://ethioagp.org/maize-2/).  
+
+It is grown in the mid highland areas of the country and there are huge tracts of land in all regions suitable for maize farming. Maize is grown primarily in the Amhara, Oromia and SNNPR regions of the country from which 5 zones namely West Wellega, Jimma, East Shewa, East Wellega, and West Gojjam produces more than 44 percent of the smallholder production. Marketable surplus is mainly produced in these high potential zones, and the production in the other zones is mainly for subsistence. Maize production has increased in Ethiopia in recent years, due in large part to an improvement in the supply of seeds to farmers. While there have been significant gains made in maize production over the past decade, there is still a significant opportunity to further increase productivity
+Ethiopia can be considered as a success story for maize production as, apart from South Africa, it has been the only country in Sub-Saharan Africa that shows a substantial progress in maize productivity and input use (Abate et al., 2015) After a period of limited growth, yield more than doubled from around 1.5 ton/ha in 2000 to over 3 ton/ha in 2013 (FAOSTAT). The government has worked hard to ensure timely delivery of seeds and fertilizer, as well as to improve agricultural extension services and trainings for farmers. Maize yield levels are also slightly above the regional average. Despite the recent progress in productivity, yield levels in Ethiopia are still very low relative to what could be produced. According to the Central Statistical Agency of Ethiopia (CSA, 2010), the low level of crop productivity in the country is attributed to inefficient farming methods that utilize outdated crop production and protection technologies, and fragmented pieces of land holdings. Estimates indicate that the current maize yield could be doubled if farmers adopt higher quality inputs and proven agronomy best practices. Data from the Global Yield Gap Atlas (GYGA) shows that the average yield gap is on average 82% in Ethiopia. This is in strong contrast with for example Latin American countries which are able to reach around 45% of potential yield.  
+
+Yield gap measurements are a very powerful metric to determine the absolute potential to increase production and are therefore frequently used in policy studies (Sumberg, 2012). This makes them in particular useful as a basis for forward looking scenario studies to assess future agricultural production and food security. By ‘controlling’ for the biophysical production environment, yield gaps can easily be compared across regions and countries and, therefore, provide a good indicator of relative (potential) performance. 
+A limitation is that yield gap measurements offer only limited guidance in explaining the observed difference between actual and potential yield. It has been argued that it simply not cost-efficient for farmers to use the amount of inputs that are needed to reach potential. This is underscored by Lobell et al. (Lobell et al., 2009), who compared a large number of yield gap studies and find that (best-practice) farmers reach only around 80% of potential yield. The ‘exploitable’ yield gap is therefore lower than the total yield gap because of economic constraints. Other important causes for the existence of yield gaps are differences in farm-level characteristics (e.g. size, education and off farm activities) and the socio-economic context (e.g. subsidies, rural infrastructure and access to finance).
+
+The aim of this paper is the to provide a detailed analysis of the maize yield gap in Ethiopia. We decompose the conventional yield gap into four elements that capture, technical efficiency, economic efficiency, availability of technologies and an ‘unexploitable’ yield gap element.
+
+# Background
+# YIELD GAP CONCEPTUAL MODEL 
+
+
+# Methodology
+We use a stochastic frontier production function [@Aigner1977; @Meeusen1977] to estimate the technical efficiency yield gap. The model is specified as follows for our study:
+
+$$
+y_i=x_i\beta+v_i-u_i
+$$
+
+where, $y_i$ is the logarithm of actual yield (ya) for maize plot $i$, $x_i$ is a vector containing growth defining, growth limiting and growth reducing factors a set of control variables, $\beta$ is a vector of parameters, $v_i$  is a symmetric random error and $u_i$ is non-negative random variable with a half normal distribution that measures technical inefficiency. 
+
+The coefficients in equation [X] will be biased if we do not correct for time-invariant unobserved heterogeneity and endogeneity of inputs [REF]. Examples of the former are farmer's management capacity and soil quality, which are expected to affect crop yield. Both are probably known to the farmer  but are only partially captured by our explanatory factors. Examples of time-variant heterogeneity are a[ADD]. 
+
+To control for time-invariant unobserved heterogeneity, we apply the correlated random effects (CRE) estimator [@Wooldridge2002], which is also referred to as the Mundlak-Chamberlain device, following the work of Mundlak [-@Mundlak1978] and Chamberlain [-@Chamberlain1984]. CRE is the standard approach in recent and similar micro-econometric studies that use panel data to control for time-invariant heterogeneity [e.g. @Mason2013; @Mason2013a; @Sheahan2013] and can also be combined with stochastic frontier analysis [@Farsi2006; @Abdulai2007]. Although it results in similar outcomes as the fixed effects estimator [ADD], it has the major advantage that it can also be applied to unbalanced samples [REF]. This is particularly relevant for our case where the number of observations differs considerable between the first and second year due a design flaw in the survey (see below). A second advantage is that the impact of higher  level explanatory factors, such as farm machinery that are defined at the household level, can be measured.  
+
+The CRE estimator allows for correlation between the time invariant unobserved household specific omitted variable and the explanatory variables. The technique is implemented by modelling the distribution of the omitted variable, conditional on the means of the strictly exogenous variables: 
+
+[ADD eq]
+
+The yield response function (Equation [X]) includes several endogenous farm inputs (i.e. area, labour, fertilizer and capital). Under perfect markets the demand for inputs only depends on the prices for inputs and outputs and technology XX [REF]. In developing countries, where the assumption of perfect markets is not tenable [REF], input use also depends on household and [XX] factors. To control for endogeneity we implement a control function approach [REF].[ADD]. The advantage of the control function approach in comparison to two stage least squares [CHECK] is that it can be combined with non-linear  functions such as the translog stochastic frontier function [@Amsler2016]. Wooldridge [REF] shows that, with certain assumptions, only one residual is required to instrument the endogenous variable and all its transformations (i.e. the squared and interaction terms in the translog model).
+
+Although all inputs are potentially endogenous in equation X, we only estimate a separate demand function for the use of fertilizer, which is a key variable in our analysis. [MAYBE add for labour to]. For land and labour we estimate a OLS function as these are continous input variables. We derive the demand function using the agricultural household model Singh, Squire and Straus [ADD].The model shows that only when consumption and production are separable, the first-order conditions for profit maximisation result in a demand function that solely depends on input and output prices. As separability is unlikely to hold in developing countries like Ethiopia, which are characterised by market failures [REF], we add a number of socio-demographic household characteristics as additional controls in the demand function [REF]. 
+
+Fertilizer is only applied to [X]% of the plots. Due to the large number of zeros in the dependent variable, OLS leads to inconsistent estimates. We therefore use the tobit model that is able to deal with 'corner solutions' [ADD] Following similar research [REF], we include all exogenous variables from equation [X] as well plot (e.g. soil quality, ...[ADD] and household (e.g. age and sex of the household head, household composition and [ADD] factors that are expected to affect input use. Similarly to the estimation of the stochastic frontier function, we apply the CRE framework to account for time-variant unobserved heterogeneity.
+
+# Data
+
+__Table 1: Summary statistics__
+
+```{r Tab_1} 
+# pander(Tab_sumstat)
+``` 
+
+
+Data on actual maize yield comes from the second wave of the Ethiopian Socioeconomic Survey (ESS); implemented by the Central Statistics Agency of Ethiopia (CSA) and the World Bank as part of the multi country Living Standards Measurement Study-Integrated Surveys of Agriculture (LSMS-ISA) project. Collected in 2013-14 the second wave of the ESS has a special focus on improving agricultural statistics in Ethiopia and has an extensive coverage of agricultural production, input use and a number of socio-economic characteristics. A previous ESS survey was conducted in 2011-12. However, crucially output values were not properly recorded and for the purposes of this paper it was not possible to use this earlier survey. The ESS covers a wide range of agricultural variables at the plot, household and community level, including crop-specific production, fertilizer use, labour, and input and output prices. The database also contains the GPS recording for the size of the plot, which are essential to obtain accurate yield estimations. As part of the ESS the longitude and latitude of household locations and plot locations was recorded. This makes it possible to link in external data including climate, soil and a selection of other spatial data. The sources of this spatial data include IFPRI, Worlclim, NASA and the Ethiopian Roads Agency amongst others.
+
+__Figure 1: LSMS-GYGA__
+
+```{r Fig_1}
+Map_GYGA_LSMS
+```
+
+##### Source: LSMS & GYGA
+
+# Results
+
+
+__Table 2: Stochastic frontier__
+```{r Tab_2}
+pander(xtable)
+```
+
+
+__Table 2: Stochastic frontier2__
+```{r Tab_3}
+pander(ztable)
+```
+
+
+__Figure 3: Potential yield__
+```{r Fig_2}
+Fig_waterfall
+```
+
+
+
+# Conclusions
+
+
+
+
+
+# References
