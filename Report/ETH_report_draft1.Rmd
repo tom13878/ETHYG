@@ -2,7 +2,8 @@
 title: "Ethiopia Stochastic Frontiers Analysis Draft 1"
 author: "Tomas Morley"
 date: "31 januari 2017"
-output: 
+output:
+  pdf_document: default
   word_document:
     reference_docx: ../Common/word_styles_01.docx
 bibliography: ../Common/ETHYG.bib
@@ -13,6 +14,7 @@ bibliography: ../Common/ETHYG.bib
 library(rprojroot)
 root <- find_root(is_rstudio_project)
 
+library(frontier)
 library(knitr)
 knitr::opts_chunk$set(
   fig.width=12, fig.height=8,
@@ -29,6 +31,10 @@ panderOptions('table.alignment.default', function(df)
 panderOptions('table.split.table', Inf)
 panderOptions('big.mark', ",")
 panderOptions('keep.trailing.zeros', TRUE)
+
+# read in data to run models on
+db1 <- readRDS(file.path(root, "Cache/db1.rds"))
+db1 <- unique(db1)
 ```
 
 # Abstract
@@ -39,17 +45,56 @@ panderOptions('keep.trailing.zeros', TRUE)
 
 # Econometric methodology
 
+The core estimation method used in this paper is the stochastic frontiers method originating in Meeusen and van Den Broeck 1977 and Aigner, Lovell and Schmidt. This involves the specification of the form of a production function and a composite error term reflecting both statistical error in the model and an assymetric inefficiency term. Common production functions that have been used in crop yield models include the cobb douglass and translog production functions. The translog is the more flexible of the two and a formal comparison can be made between the two using a likelihood ratio tests to determine which model is a better fit to the data.
+
+```{r}
+TL <- sfa(log(yld) ~ log(N + 1) + log(lab + 1) + I(log(N + 1)^2) + I(log(lab + 1)^2) +
+            log(N + 1):log(lab + 1) + log(slope) + elevation + log(area) + SOC +
+            log(rain_wq) + noN + impr + crop_count2 + phdum_gt70 + phdum55_2_70 +
+            GGD + AI + TS, data = db1)
+CD <- sfa(log(yld) ~ log(N + 1) + log(lab + 1) + log(slope) + elevation +
+                  log(area) + SOC + log(rain_wq) + noN + impr + crop_count2 +
+                  phdum_gt70 + phdum55_2_70 + GGD + AI + TS, data = db1)
+```
+
+# endogeneity
+
+Endogeneity formally refers to the situation where the residuals in the estimation are correlated with an explanatory variable. In this case the explanatory variable is then referred to as the endogenous variable. For our estimation we focus on the potential endogeneity of nitrogen which enters the translog production function in a log level term and a log squared term. As a result we need a minimum of two identifying equations in order to be able to estimate with a control function and remove the endogeneity
+
+LIML outperforms 2sls when the instruments are weak or when there are many instruments relative to the number of observations
+
+control functions are used to break the correlation between the endogenous variables and unobservables affecting the response (Wooldrdige 2010) and are often used to handle endogeneity in non-linear models when techniques such as two stage least squares are not applicable. Similar to two stage least squares this approach requires exogenous variables which do not appear in the second stage or structural regression but do appear in the first stage regression. In other words, variables which affect the quantity of nitrogen used, but not the yield response equation.
+
+Carry out tests for endogeneity using just the estimates for the translog and the control function by themselves. WITHOUT stochastic frontiers analysis. This will establish whether endogeneity is present, and then we can move on to estimate the stochastic frontiers, firstly with C2SLS and then with LIML if it can be figured out.
+
+We can also do a pooled endogeneity analysis -> with no panel structure. This is basically what Amsler (2016) does with what is otherwise panel data
+
+We use LIML as an alternative to 2SLS -> but under what conditions and why do we use it?
+
+So due to the squared term on nitrogen we say that this model is nonlinear in the endogenous variable
+
+If nitrogen is correlated with the statistical error term then we also expected its square to be correlated with that term too.
+
+The method described in Aamsler et al 2016 relies on having 
+
+Importantly we need to decide whether we think that there is correlation between the endogenous variable, the statistical error term, the inefficiency term or both.
+
+In the presense of endogeneity the maximum likelihood estimates of the stochastic frontiers model will not be consistent. 
+
+The translog is a non-linear function and it is therefore not possible to use 2-stage least squares. Instead we rely on the crontrol function approach (Wooldridge 2010) which incorporates the residuals from a first stage regression of the endogeneous variable on instruments exogenous to the dependent variable in the second stage.
+
+Crucially we are assuming that the there is no correlation between the endogeneity and the inefficinecy term. So the only correlation that exists is that between the residual of the first stage and the statistical error
+
+rational for a probit model: was the decision to use Nitrogen also related to other variables that we do not see
+rational for the tobit model. Was the decision to use Nitrogen related to other variables and is the "size" of that decision also important
+
 ## 1. Normal stochastic frontiers, all variables - Look at different model types only 2013 wave
 ## 2. Stochastic frontiers only 2013 looking at endogeneity - need to search for an instrument, prices might count, and then we can test for endogeneity.
-## 3. Consider how we can add a panel to this - consider the missing data problem.
-## 4. Look at spatial lags in just one year of the data
 
-Try a panel of just those that fell into the panel correctly. And also add the 
 
 # Data
 
-The data come from the Ethiopia .... sample of ... rural households. One issue is that there was no 
-
+The data come from the Ethiopia .... sample of ... rural households. 
 Because both inputs are measured in per acre terms land is not included although we do include the overall landholdings recorded by the household as an additional measure of wealth.
 
 We consider a stochastic frontiers model using data from the Ghana LSMS-ISA survey. Although part of a panel, we ignore the panel structure due to issues with collection for the second year of the panel. The dependent variable in our analysis is the log of maize yield measured in kilograms per hectare. We consider a large number of inputs which can be broken down into household level inputs, plot level inputs and spatial inputs at a low level of aggregation. 
