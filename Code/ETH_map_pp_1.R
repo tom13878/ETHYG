@@ -28,6 +28,14 @@ options(digits=4)
 
 
 ### GYGA MAP PREPARATION
+# Load GADM
+Map_ETH_adm3 <- readRDS(file.path(root, "Data/GADM_2.8_ETH_adm3.rds"))
+Map_ETH_adm3_df <- Map_ETH_adm3@data
+Map_target <- Map_ETH_adm3[Map_ETH_adm3$NAME_3 %in% c("Bako Tibe", "Adami Tulu Jido Kombolcha"),]
+plot(Map_target)
+Map_target_f <- fortify(Map_target)
+
+
 
 # Load polygon map and cut out tartet country
 GYGApath <- "D:\\Data\\IPOP\\GYGA\\"
@@ -84,8 +92,9 @@ Map_GYGA_YG <- ggplot()+
   theme_classic() +
   theme(legend.key=element_blank(),
         line = element_blank(),
-        axis.text = element_blank())
-#GYGA_YG
+        axis.text = element_blank()) + 
+  geom_polygon(data = Map_target_f, aes(x=long, y=lat, group=group), colour = "black", size = 1.2)
+#ggsave("FigTabMap/Map_GYGA_YG.png")
 
 ### GYGA potential yield
 # Draw map

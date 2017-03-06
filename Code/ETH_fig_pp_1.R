@@ -77,8 +77,9 @@ maize_iso <- maize_yield %>%
 
 Fig_maize_yield_df <- bind_rows(maize_reg, maize_con, maize_iso) 
 
-Fig_maize_yield <- ggplot(data = Fig_maize_yield_df, aes(x = year, y = value, colour = region, linetype = region)) +
+Fig_maize_yield <- ggplot(data = Fig_maize_yield_df, aes(x = year, y = value, colour = region)) +
   geom_line(size = 1.2) +
+  #geom_point(size = 2) +
   #theme_bw() +
   labs(x = "",
        y = "kg/ha",
@@ -92,7 +93,8 @@ Fig_maize_yield <- ggplot(data = Fig_maize_yield_df, aes(x = year, y = value, co
   scale_y_continuous(labels = comma) +
   scale_x_continuous(breaks = seq(1960, 2015, 10)) +
   scale_colour_brewer("", palette="Set1") +
-  scale_linetype_manual("", values = c("solid", "dotted", "dashed", "dotdash")) +
+  #scale_shape_discrete("") +
+  #scale_linetype_manual("", values = c("solid", "dotted", "dashed", "dotdash")) +
   theme(legend.justification=c(0,1), legend.position=c(0.1,0.9)) 
 
 # Fig_maize_yield + 
@@ -106,7 +108,7 @@ Fig_maize_yield <- ggplot(data = Fig_maize_yield_df, aes(x = year, y = value, co
 #     ylab("Maize Yield (kg/ha)") +
 
 Fig_maize_yield
-ggsave("FigTabMap/Fig_maize_yield.png")
+#ggsave("FigTabMap/Fig_maize_yield.png")
 
 ### AREA FIGURE
 # Load data
@@ -220,5 +222,5 @@ legend <- get_legend(p_ss + theme(legend.position="bottom") +
 
 Fig_ss_a <- plot_grid(p_tot, legend, ncol = 1, rel_heights = c(1, .2))
 Fig_ss_a
-ggsave("FigTabMap/Fig_ss_a.png", Fig_ss_a, dpi = 600)
+#ggsave("FigTabMap/Fig_ss_a.png", Fig_ss_a, dpi = 600)
 
