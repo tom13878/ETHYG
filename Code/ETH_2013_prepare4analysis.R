@@ -145,4 +145,4 @@ db1$compost <- ifelse(db1$compost %in% 2, 1,
 # remove everything but the cleaned data
 rm(db0, dbP, Prices)
 
-saveRDS(db1, "Cache/db1.rds")
+saveRDS(db1, file.path(root, "Cache/db1.rds"))
