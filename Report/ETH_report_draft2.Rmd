@@ -1,5 +1,5 @@
 ---
-title: "Ethiopia Stochastic Frontiers Analysis Draft 1"
+title: "Ethiopia Stochastic Frontiers Analysis Draft 2"
 author: "Tomas Morley"
 date: "9 March 2017"
 output:
@@ -32,11 +32,6 @@ panderOptions('table.alignment.default', function(df)
 panderOptions('table.split.table', Inf)
 panderOptions('big.mark', ",")
 panderOptions('keep.trailing.zeros', TRUE)
-
-# read in data to run models on
-db1 <- readRDS(file.path(root, "Cache/db1.rds"))
-db1 <- unique(db1)
-db1 <- filter(db1, lab < 2000, logN >= 0)
 ```
 
 # Abstract
@@ -51,131 +46,11 @@ The core estimation method used in this paper is the stochastic frontiers method
 
 Therefore the returns from using one additional kg pr hecatre of nitrogen are ...
 
-```{r}
-# translog function
-TL <- sfa(log(yld) ~ log(N + 1) + log(lab + 1) + I(log(N + 1)^2) + I(log(lab + 1)^2) +
-            log(N + 1):log(lab + 1) + log(slope + 1) + elevation + log(area) + SOC +
-            I(SOC^2) + log(rain_wq) + noN + impr + crop_count2 + phdum_gt70 +
-            phdum55_2_70 + GGD + AI + TS, data = db1)
-
-summary(TL)
-
-# cobb douglass function
-CD <- sfa(log(yld) ~ log(N + 1) + log(lab + 1) + log(slope + 1) + elevation +
-                  log(area) + SOC + I(SOC^2) + log(rain_wq) + noN + impr + crop_count2 +
-                  phdum_gt70 + phdum55_2_70 + GGD + AI + TS, data = db1)
-
-summary(CD)
-
-# perform likelihood ratio test
-lrtest(TL, CD) # reject CD in favour of TL
-```
-
-# Endogeneity
-
-## Test for endogeneity using ols and a control function first stage
-## Using the price of nitrogen as the instrument for a simple TL and CD model
-
-```{r}
-# we need a first stage for every endogenous variable, which means
-# every time that a term with nitrogen in it appears
-db1$logNsq <- (db1$logN)^2
-db1$loglabsq <- db1$loglab^2
-db1$logNloglab <- db1$logN * db1$loglab
-
-# start with the cobb douglass and test for endogeneity
-first_stageCD <- lm(logN ~ Pn, data=db1)
-
-# get residuals
-v2 <- residuals(first_stageCD)
-
-# put residuals into CD regression
-CD_v <- lm(logyld ~ logN + loglab + v2, data=db1[-first_stageCD$na.action, ])
-
-# look at results
-summary(CD_v) # indicates that v2 is significant and endogeneity is present
-
-# now do the same with the more complicated translog estimation
-# this time estimate the translog first
-TL <- lm(logyld ~ logN + logNsq + loglab + loglabsq + logNloglab, data=db1)
-
-# we need residuals for every term in the regression that
-# could be endogenous, which includes any functions of
-# endogenous variables
-new_dat <- as.data.frame(model.matrix(~ -1 + logyld + logN + logNsq +
-                                        loglab + loglabsq + logNloglab +
-                                        Pn + Pm + dist_market,
-                                      data=db1))
-
-first_stageTL <- lm(logN ~ Pn ,
-                     data=new_dat)
-
-summary(first_stageTL)
-
-# get residuals 
-new_dat$v2 <- residuals(first_stageTL)
-
-# fit a second stage Translog model
-second_stageTL <- lm(logyld ~ logN + logNsq + loglab + loglabsq + logNloglab +
-                     v2, # residuals from first stage
-                   data = new_dat)
-
-# look at results
-summary(second_stageTL)
-
-# the SEs are not correct here so we need to bootstrap them
-# could do this by hand but feeling lazy so we use the boot
-# package
-refitTL <- function(data, indx){
-  coef(lm(formula(second_stageTL), data=new_dat[indx, ]))
-}
-
-library(boot)
-boot(new_dat, refitTL, R=500) # still significant => good news!
-```
-
-## Test for endogeneity using ols and a control function first stage
-## Using the price of nitrogen as the instrument for a full TL and CD model
-
-```{r}
-# start with the cobb douglass and test for endogeneity
-first_stageCD <- lm(logN ~ Pn + loglab + log(slope + 1) + elevation +
-                  log(area) + crop_count2 +
-                  age + I(age^2) + ed_any, data=db1)
-
-summary(first_stageCD)
-
-# get residuals
-v2 <- residuals(first_stageCD)
-
-# put residuals into CD regression
-CD_v <- lm(logyld ~ logN + loglab + log(slope + 1) + elevation +
-                  logarea + crop_count2 +
-                  v2, data=db1[-first_stageCD$na.action, ])
-
-# look at results
-summary(CD_v) # indicates that v2 is significant and endogeneity is present
-
-# bootstrap the results
-refitCD <- function(data, indx){
-  coef(lm(formula(CD_v), data=data[indx, ]))
-}
-library(boot)
-boot(db1[-first_stageCD$na.action, ], refitCD, R=500) # still significant => good news!
-
-# try the translog
-first_stageTL <- lm(logN ~ Pn + loglab + loglabsq + log(slope + 1) + elevation +
-                  logarea + crop_count2 +
-                  age + I(age^2) + ed_any, data=db1)
-
-summary(first_stageTL)
-
-# Second stage TL
-second_stageTL <- lm(logyld ~ logN + loglab + logNsq + loglabsq + logNloglab +
-                      + elevation + logarea + crop_count2 + log(slope + 1) +
-                  v2, data=db1[-first_stageTL$na.action, ])
-
-summary(second_stageTL)
+```{r echo=FALSE}
+FS_tab <- readRDS(file.path(root, "Report/tables/FS_endog_tab.rds"))
+SS_tab <- readRDS(file.path(root, "Report/tables/SS_endog_tab.rds"))
+pander(FS_tab, caption = "First stage results")
+pander(SS_tab, caption = "Second stage results")
 ```
 
 Including the ph variables does not give good results in the endogeneity setting.
