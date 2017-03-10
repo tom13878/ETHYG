@@ -38,22 +38,22 @@ db1 <- as.data.frame(model.matrix(~ -1 + logyld + yesN + logN + loglab + loglabs
 
 # for comparison we the following results we begin
 # with a simple translog function as a benchmark
-TL_simple <- lm(logyld ~ logN + loglab + loglabsq +
-                     logNloglab + yesN + logslope + elevation +
+TL_simple <- lm(logyld ~ logN + loglab +
+                     logNloglab + logslope + elevation +
                      logarea + crop_count2, data=db1)
 
 
 # first stage linear model
 stage1_lm <- lm(logN ~ Pn + dist_market + sex + age + agesq + ed_any +
-                       loglab + loglabsq + logslope + elevation +
+                       loglab + logslope + elevation +
                        logarea + crop_count2, data=db1)
 
 # get residuals
 db1$v <- rstandard(stage1_lm) 
 
 # second stage TL model with residuals
-stage2_TL_lm <- lm(logyld ~ logN + loglab + loglabsq +
-                        logNloglab + yesN + logslope + elevation +
+stage2_TL_lm <- lm(logyld ~ logN + loglab +
+                        logNloglab + logslope + elevation +
                         logarea + crop_count2 + v, data=db1)
 
 # bootstrap results - need to include ALL stages in bootstrap
@@ -68,7 +68,7 @@ TL_lm_boot <- boot(db1, refit_TL_lm, R = 500)
 
 # first stage tobit model
 stage1_tob <- tobit(logN ~ Pn + dist_market + sex + age + agesq + ed_any +
-                       loglab + loglabsq + logslope + elevation +
+                       loglab + logslope + elevation +
                        logarea + crop_count2, data=db1)
 
 # calculate the generalized residual (Greene)
@@ -80,7 +80,7 @@ mills <- -dnorm(-fitted(stage1_tob))/pnorm(-fitted(stage1_tob))
 db1$v <- d1 * mills + d2 * (theta * db1$logN - fitted(stage1_tob))
 
 # put v into the second stage TL model
-stage2_TL_tob <- lm(logyld ~ logN + loglab + loglabsq +
+stage2_TL_tob <- lm(logyld ~ logN + loglab +
                      logNloglab + logslope + elevation +
                      logarea + crop_count2 + v, data=db1)
 
@@ -90,7 +90,7 @@ stage2_TL_tob <- lm(logyld ~ logN + loglab + loglabsq +
 refit_TL_tob <- function(data, indx){
   dat <- data[indx, ]
   fs <- tobit(logN ~ Pn + dist_market + sex + age + agesq + ed_any +
-                loglab + loglabsq + logslope + elevation +
+                loglab + logslope + elevation +
                 logarea + crop_count2, data=dat)
   d1 <- 1 - dat$yesN
   d2 <- dat$yesN
@@ -118,7 +118,7 @@ APE <- coef(stage1_tob) * scale_factor
 refit_APE <- function(data, indx){
   dat <- data[indx, ]
   fs <- tobit(logN ~ Pn + dist_market + sex + age + agesq + ed_any +
-                loglab + loglabsq + logslope + elevation +
+                loglab + logslope + elevation +
                 logarea + crop_count2, data=dat)
   sigma <- fs$scale
   X <- model.matrix(fs)
@@ -143,52 +143,79 @@ FS_tab <- round(FS_tab, 3)
 names(FS_tab) <- c("OLS", "SE", "Tobit", "SE", "APE", "BSE")
 
 # second stage table
-TL_simple <- rbind(summary(TL_simple)$coef[-7, ], v=NA)
-TL_lm <- summary(stage2_TL_lm)$coef[-7, ] # remove yesN because it is not in both models
+TL_simple <- rbind(summary(TL_simple)$coef, v=NA)
+TL_lm <- summary(stage2_TL_lm)$coef#[-7, ] # remove yesN because it is not in both models
 TL_tob <- summary(stage2_TL_tob)$coef
 
 # bootstrapped SEs
-TL_lm_SE <- summary(TL_lm_boot)[-7, ]
+TL_lm_SE <- summary(TL_lm_boot)#[-7, ]
 TL_tob_SE <- summary(TL_tob_boot)
 SS_tab <- as.data.frame(cbind(TL_simple[, 1:2], TL_lm[, 1:2], TL_lm_SE[, 4], TL_tob[, 1:2], TL_tob_SE[, 4]))
 SS_tab <- round(SS_tab, 3)
 names(SS_tab) <- c("TL", "SE", "TL-LM", "SE", "BSE", "TL-Tob", "SE", "BSE")
 
+# we need to calcualte p.values using the BSEs
+# lm first stage
+N <- nrow(db1)
+df <- N - length(stage2_TL_lm$coef)
+t <- stage2_TL_lm$coef/TL_lm_SE[, 4]
+p.value_lm = round(2*pt(abs(t), df=df, lower=FALSE), 3)
+
+# second stage
+N <- nrow(db1)
+df <- N - length(stage2_TL_tob$coef)
+t <- stage2_TL_tob$coef/TL_tob_SE[, 4]
+p.value_tob = round(2*pt(abs(t), df=df, lower=FALSE), 3)
+
+# add stars to tables
+# lm only
+stars <- cut(TL_simple[, 4], breaks=c(0, 0.01, 0.05, 1), labels=c("**", "*", ""), include.lowest = TRUE)
+stars[length(stars)] <- ""
+SS_tab$`TL` <- paste0(SS_tab$`TL`, stars))
+
+# lm -> translog
+stars <- cut(p.value_lm, breaks=c(0, 0.01, 0.05, 1), labels=c("**", "*", ""), include.lowest = TRUE)
+SS_tab$`TL-LM` <- paste0(SS_tab$`TL-LM`, stars)
+
+# tobit -> translog
+stars <- cut(p.value_tob, breaks=c(0, 0.01, 0.05, 1), labels=c("**", "*", ""), include.lowest = TRUE)
+SS_tab$`TL-Tob` <- paste0(SS_tab$`TL-Tob`, stars)
+
 # save tables for later use
 saveRDS(FS_tab, file.path(root, "report/tables/FS_endog_tab.rds"))
 saveRDS(SS_tab, file.path(root, "report/tables/SS_endog_tab.rds"))
 
-# finally, consider a heckit sample selection model
-# with endogeneity. remember we are asking what is the
-# effect of nitrogen per hectare on maize yield.
-
-# step 1 is to do a probit model and get mills ratio
-probit <- glm(yesN ~ Pn + dist_market + sex + age + agesq + ed_any +
-      loglab + loglabsq + logslope + elevation +
-      logarea + crop_count2, data=db1, family=binomial("probit"))
-summary(probit)
-db1$mills <- dnorm(fitted(probit))/pnorm(fitted(probit)) 
-
-# step 2 make a sub sample selection based on seeing N or not
-sub_db1 <- db1[db1$yesN == 1, ]
-
-# step 3 estimate the new equation by 2sls or control function
-stage1_lm <- lm(logN ~ Pn + dist_market + sex + age + agesq + ed_any +
-                  loglab + loglabsq + logslope + elevation +
-                  logarea + crop_count2 + mills, data=sub_db1)
-
-sub_db1$v <- rstandard(stage1_lm)
-
-stage2_TL_lm <- lm(logyld ~ logN + loglab + loglabsq +
-                     logNloglab  + logslope + elevation +
-                     logarea + crop_count2 + v + mills, data=sub_db1)
-
-# and bootstrap SE
-refit_TL_lm <- function(data, indx){
-  dat <- data[indx,]
-  fs <- lm(formula(stage1_lm), data=dat)
-  dat$v <- rstandard(fs) 
-  coef(lm(formula(stage2_TL_lm), data=dat))
-}
-
-TL_lm_boot <- boot(sub_db1, refit_TL_lm, R = 500)
+# # finally, consider a heckit sample selection model
+# # with endogeneity. remember we are asking what is the
+# # effect of nitrogen per hectare on maize yield.
+# 
+# # step 1 is to do a probit model and get mills ratio
+# probit <- glm(yesN ~ Pn + dist_market + sex + age + agesq + ed_any +
+#       loglab + loglabsq + logslope + elevation +
+#       logarea + crop_count2, data=db1, family=binomial("probit"))
+# summary(probit)
+# db1$mills <- dnorm(fitted(probit))/pnorm(fitted(probit)) 
+# 
+# # step 2 make a sub sample selection based on seeing N or not
+# sub_db1 <- db1[db1$yesN == 1, ]
+# 
+# # step 3 estimate the new equation by 2sls or control function
+# stage1_lm <- lm(logN ~ Pn + dist_market + sex + age + agesq + ed_any +
+#                   loglab + loglabsq + logslope + elevation +
+#                   logarea + crop_count2 + mills, data=sub_db1)
+# 
+# sub_db1$v <- rstandard(stage1_lm)
+# 
+# stage2_TL_lm <- lm(logyld ~ logN + loglab + loglabsq +
+#                      logNloglab  + logslope + elevation +
+#                      logarea + crop_count2 + v + mills, data=sub_db1)
+# 
+# # and bootstrap SE
+# refit_TL_lm <- function(data, indx){
+#   dat <- data[indx,]
+#   fs <- lm(formula(stage1_lm), data=dat)
+#   dat$v <- rstandard(fs) 
+#   coef(lm(formula(stage2_TL_lm), data=dat))
+# }
+# 
+# TL_lm_boot <- boot(sub_db1, refit_TL_lm, R = 500)
