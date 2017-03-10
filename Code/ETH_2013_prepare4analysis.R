@@ -67,7 +67,7 @@ db0 <- dbP %>%
                 impr,
                 fung, herb,
                 N, P,
-                off_farm_income,
+                off_farm_income, 
                 manure, compost, other_org,
                 crop_stand, cropping,
                 legume, irrig,
@@ -75,12 +75,15 @@ db0 <- dbP %>%
                 sex, age,
                 literate, cage, ed_any, N1555, family_size, death,
                 dist_hh, dist_road, dist_market, dist_popcenter, dist_regcap,
-                title,
+                title, credit, rotation, extension2, popEA, 
                 popEA, HHEA, oxen, fallow10, fallow_year,
                 road, cost2small_town, cost2large_town, bank, micro_finance, ext_agent, extension,
                 crop_count, surveyyear,
                 rural,
                 lat, lon)
+
+# Dummy for oxen
+db0$dumoxen <- ifelse(db0$oxen > 0, 1, 0)
 
 #db0$phduml55 <- ifelse(db0$ph < 55, 1, 0)
 db0$phdum55_2_70 <- ifelse(db0$ph >= 55 & db0$ph <=70, 1, 0) # Neutral and best suited for crops
