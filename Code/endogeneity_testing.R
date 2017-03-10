@@ -6,12 +6,12 @@
 #' Output:   Results table of endogeneity tests
 #'==============================================================================
 
-# get root path
-root <- find_root(is_rstudio_project)
-
 # get packages
 library(pacman)
-p_load(char=c("boot", "frontier", "dplyr"), install=TRUE)
+p_load(char=c("rprojroot", "boot", "frontier", "dplyr", "AER"), install=TRUE)
+
+# get root path
+root <- find_root(is_rstudio_project)
 
 # read in data to run models on
 db1 <- readRDS(file.path(root, "Cache/db1.rds"))
@@ -31,14 +31,14 @@ db1$agesq <- db1$age^2
 
 # there are some missing values so we exclude these from the data now to avoid
 # problems later
-db1 <- as.data.frame(model.matrix(~ -1 + logyld + yesN + logN + logNsq + loglab + loglabsq +
+db1 <- as.data.frame(model.matrix(~ -1 + logyld + yesN + logN + loglab + loglabsq +
                       logNloglab + Pn + dist_market + sex + age + agesq +
                       ed_any + logslope + elevation +
                       logarea + crop_count2, data=db1))
 
 # for comparison we the following results we begin
 # with a simple translog function as a benchmark
-TL_simple <- lm(logyld ~ logN + loglab + logNsq + loglabsq +
+TL_simple <- lm(logyld ~ logN + loglab + loglabsq +
                      logNloglab + yesN + logslope + elevation +
                      logarea + crop_count2, data=db1)
 
@@ -52,7 +52,7 @@ stage1_lm <- lm(logN ~ Pn + dist_market + sex + age + agesq + ed_any +
 db1$v <- rstandard(stage1_lm) 
 
 # second stage TL model with residuals
-stage2_TL_lm <- lm(logyld ~ logN + loglab + logNsq + loglabsq +
+stage2_TL_lm <- lm(logyld ~ logN + loglab + loglabsq +
                         logNloglab + yesN + logslope + elevation +
                         logarea + crop_count2 + v, data=db1)
 
@@ -80,7 +80,7 @@ mills <- -dnorm(-fitted(stage1_tob))/pnorm(-fitted(stage1_tob))
 db1$v <- d1 * mills + d2 * (theta * db1$logN - fitted(stage1_tob))
 
 # put v into the second stage TL model
-stage2_TL_tob <- lm(logyld ~ logN + loglab + logNsq + loglabsq +
+stage2_TL_tob <- lm(logyld ~ logN + loglab + loglabsq +
                      logNloglab + logslope + elevation +
                      logarea + crop_count2 + v, data=db1)
 
@@ -179,7 +179,7 @@ stage1_lm <- lm(logN ~ Pn + dist_market + sex + age + agesq + ed_any +
 
 sub_db1$v <- rstandard(stage1_lm)
 
-stage2_TL_lm <- lm(logyld ~ logN + loglab + logNsq + loglabsq +
+stage2_TL_lm <- lm(logyld ~ logN + loglab + loglabsq +
                      logNloglab  + logslope + elevation +
                      logarea + crop_count2 + v + mills, data=sub_db1)
 
