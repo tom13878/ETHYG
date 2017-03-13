@@ -58,6 +58,28 @@ Including the SOC variable does not give good results in the endogeneity setting
 Improved seeds are used almost every time nitrogen is used so this dummy is almost
 like having a nitrogen dummy in the estimation
 In both cases the SEs are very very large
+Don't use lograin. This basically stands in place of an intercept
+
+```{r eval=FALSE}
+modl <- lm(logN ~ SOC2, data=db1[db1$yesN ==1, ])
+plot(db1$SOC2, db1$logN)
+abline(modl)
+
+modl2 <- lm(logyld ~ SOC2, data=db1[db1$yesN ==1, ])
+plot(db1$SOC2, db1$logyld)
+abline(modl2)
+
+# we see that having SOC2 in the model does very little to the
+# coefficient on logN. But it does pull on the intercept.
+
+modl3 <- lm(logyld ~ logN, data=db1[db1$yesN == 1, ])
+plot(db1$logN, db1$logyld)
+abline(modl3)
+
+modl4 <- lm(logyld ~ logN + SOC2, data=db1[db1$yesN == 1, ])
+plot(db1$logN, db1$logyld)
+abline(modl4)
+```
 
 Insignificant regression coefficients for the affected variables in the multiple regression, but a rejection of the joint hypothesis that those coefficients are all zero
 

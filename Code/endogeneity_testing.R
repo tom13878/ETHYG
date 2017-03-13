@@ -19,11 +19,11 @@ db1 <- unique(db1)
 db1 <- filter(db1, lab < 2000, logN >= 0)
 
 # make some new variables for convenience.
-db1$logNsq <- (db1$logN)^2
-db1$loglabsq <- db1$loglab^2
 db1$logNloglab <- db1$logN * db1$loglab
 db1$logslope <- log(db1$slope + 1)
 db1$agesq <- db1$age^2
+db1$dumoxen <- ifelse(db1$oxen > 0, 1, 0)
+db1$elevationsqt <- sqrt(db1$elevation)
 
 # -------------------------------------
 # translog production function with 
@@ -31,28 +31,30 @@ db1$agesq <- db1$age^2
 
 # there are some missing values so we exclude these from the data now to avoid
 # problems later
-db1 <- as.data.frame(model.matrix(~ -1 + logyld +  logN + loglab + loglabsq +
+db1 <- as.data.frame(model.matrix(~ -1 + logyld +  logN + loglab  +
                       logNloglab + Pn + dist_market + sex + age + agesq +
-                      ed_any + yesN + crop_count2 +  SOC2 + lograin +
-                      logarea + impr, data=db1))
+                      ed_any + yesN + crop_count2 +
+                      logarea + impr + logslope + elevationsqt, data=db1))
 
 # for comparison we the following results we begin
 # with a simple translog function as a benchmark
 TL_simple <- lm(logyld ~ logN + loglab + 
-                     logNloglab + logarea + crop_count2 + lograin,
+                     logNloglab + logarea +
+                  logslope + elevationsqt + crop_count2,
                 data=db1)
 
 
 # first stage linear model
 stage1_lm <- lm(logN ~ Pn + dist_market + age + agesq +
-                  + crop_count2 +  lograin, data=db1)
+                  logslope + elevationsqt + crop_count2, data=db1)
 
 # get residuals
 db1$v <- residuals(stage1_lm) 
 
 # second stage TL model with residuals
 stage2_TL_lm <- lm(logyld ~ logN + loglab + 
-                        logNloglab + logarea + crop_count2 +  lograin +
+                        logNloglab + logarea +
+                     logslope + elevationsqt + crop_count2 +
                         v, data=db1)
 
 # bootstrap results - need to include ALL stages in bootstrap
@@ -76,7 +78,7 @@ p.value_lm <- round(2*pt(abs(t), df=df, lower=FALSE), 3)
 
 # first stage tobit model
 stage1_tob <- tobit(logN ~ Pn + dist_market + age + agesq +
-                      crop_count2 +  lograin, data=db1)
+                      logslope + elevationsqt + crop_count2, data=db1)
 
 # calculate the generalized residual (Greene)
 d1 <- 1 - db1$yesN
@@ -88,7 +90,8 @@ db1$v <- d1 * mills + d2 * (theta * db1$logN - fitted(stage1_tob))
 
 # put v into the second stage TL model
 stage2_TL_tob <- lm(logyld ~ logN + loglab + 
-                      logNloglab + logarea + crop_count2 +  lograin +
+                      logNloglab + logarea + 
+                      logslope + elevationsqt + crop_count2 +
                       v, data=db1)
 
 # bootstrap results: note that for some reason we cannot use the
@@ -97,7 +100,7 @@ stage2_TL_tob <- lm(logyld ~ logN + loglab +
 refit_TL_tob <- function(data, indx){
   dat <- data[indx, ]
   fs <- tobit(logN ~ Pn + dist_market  + age + agesq +
-                crop_count2 +  lograin, data=dat)
+                logslope + elevationsqt + crop_count2, data=dat)
   d1 <- 1 - dat$yesN
   d2 <- dat$yesN
   sigma <- fs$scale
@@ -115,7 +118,7 @@ TL_tob_SE <- summary(TL_tob_boot)
 N <- nrow(db1)
 df <- N - length(stage2_TL_tob$coef)
 t <- stage2_TL_tob$coef/TL_tob_SE[, 4]
-p.value_tob = round(2*pt(abs(t), df=df, lower=FALSE), 3)
+p.value_tob <- round(2*pt(abs(t), df=df, lower=FALSE), 3)
 
 # tobit results are not comparable to those from
 # an OLS model unless we first calcualte the APE
@@ -132,7 +135,7 @@ APE <- coef(stage1_tob) * scale_factor
 refit_APE <- function(data, indx){
   dat <- data[indx, ]
   fs <- tobit(logN ~ Pn + dist_market + age + agesq +
-                crop_count2 +  lograin, data=dat)
+                logslope + elevationsqt + crop_count2, data=dat)
   sigma <- fs$scale
   X <- model.matrix(fs)
   n <- nrow(X)
