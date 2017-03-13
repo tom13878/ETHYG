@@ -58,7 +58,8 @@ Including the SOC variable does not give good results in the endogeneity setting
 Improved seeds are used almost every time nitrogen is used so this dummy is almost
 like having a nitrogen dummy in the estimation
 In both cases the SEs are very very large
-Don't use lograin. This basically stands in place of an intercept
+Don't use lograin. This basically stands in place of an intercept.
+Don;t use both the phdummies together as they are highly correlated
 
 ```{r eval=FALSE}
 modl <- lm(logN ~ SOC2, data=db1[db1$yesN ==1, ])
