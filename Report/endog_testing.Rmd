@@ -1,0 +1,55 @@
+---
+title: "Endogeneity Testing"
+author: "Tomas Morley"
+date: "13 maart 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+# Knitr settings
+library(rprojroot)
+library(dplyr)
+root <- find_root(is_rstudio_project)
+
+library(frontier)
+library(knitr)
+knitr::opts_chunk$set(
+  fig.width=12, fig.height=8,
+  dpi = 300,
+  echo=FALSE, warning=FALSE, message=FALSE,
+  fig.path = file.path(root,"FigTabMap/out-"),
+  dev = "CairoPNG",
+  dev.args = list(CairoPNG = list(bg = "transparent"))
+  )
+
+library(pander)
+panderOptions('table.alignment.default', function(df)
+    ifelse(sapply(df, is.numeric), 'right', 'left'))
+panderOptions('table.split.table', Inf)
+panderOptions('big.mark', ",")
+panderOptions('keep.trailing.zeros', TRUE)
+```
+
+Wooldridge (2010) proposes a test for endogeneity following the control function approach. Essentially, the procedure involves regressing the endogenous variable against a suitable instrument in a first stage reduced model, and then incorporating the resiudals from the resuced model in the estimation of the full structural model. The presence of endogeneity is confirmed by the significance of the control function (reduced form residual), as determined by a t-test under the null hypothesis of no exogeneity.
+
+In our case, we explore the relationship between maize yield and nitrogen application at the field level. The possibility that nitrogen is endogenous has been explored by .... A suitable instrument for the endogenous variable is the relative price of nitrogen to maize. Both prices are assumed to be exogenous to the biophysical relationship connection maize yields to nitrogen applications. Both prices are given by the market and and while they may affect the decision as to whether or not to produce maize, or how much to produce, they are unlikely to be related to the maize yield response function which is driven by biophysical constraints, crop practices and input availability.
+
+A complication is that in our sample of smallholder maize farmers, many report using no fertilizer and this may influence the choice of reduced form first stage model. Two possible options are a reduced form OLS model or a tobit model. The results for each and the average partial effects (APEs) are displayed in Table 1. 
+
+```{r echo=FALSE}
+FS_tab <- readRDS(file.path(root, "Report/tables/FS_endog_tab.rds"))
+SS_tab <- readRDS(file.path(root, "Report/tables/SS_endog_tab.rds"))
+```
+```{r}
+pander(FS_tab, caption = "First stage results")
+```
+
+The results are broadly similar for those coefficients that are significantly different from zero. Comparing the R-squared from the OLS model to the pseudo R-squared from the Tobit model indicate that there is very little difference between the two in terms of fit. However, it should be noted that the OLS model explicitley maximimizes the R-squared, whereas the tobit model is fit by ML. Nonethless, we find little reason to prefer the one model over the other.
+
+```{r}
+pander(SS_tab, caption = "Second stage results")
+```
+
+The full structural model was then estimated by ordinary least squares incorporatoing the control function. The results are reported in table 2. We see that the reported results in table 2 are very close with the exception of the coefficients on the `logN` term and the residual term. Wooldridge (2010) described a method for constructing a generalized residual from a probit model. Here we use a generalized residual from a tobit model constructed as. There are reasons to suspect that the tobit coefficient in the is controlling for the fact that a large number of plots have no nitrogen applied. In this case the response to nitrogen, once this has been accounted for, is higher than estimated in the ols reduced form where. In short the endogeneity that we observe may in fact be more related to a selection issue or data censoring/truncation
+
+$$\hat{v}_{tob} = d_1 \frac{-\phi(-x_i'\beta)}{\Phi(-x_i'\beta)} + d_2(\theta y_i -x_i'\beta)$$
