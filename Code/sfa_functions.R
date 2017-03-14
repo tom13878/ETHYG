@@ -37,11 +37,11 @@ liml1 <- function(pars, X, X2, Y, Z){
   # get all parameters
   alpha <- pars[1]
   beta <- pars[2:(1 + ncol(X))]
-  sigma2v <- pars[(2 + ncol(X))]
-  sigma2u <- pars[(3 + ncol(X))]
+  sigma2v <- exp(pars[(2 + ncol(X))]) + 10^-10
+  sigma2u <- exp(pars[(3 + ncol(X))]) + 10^-10
   pos <- (4+ncol(X))
   Sigmavn <- pars[pos]
-  Sigmann <- pars[pos + 1]
+  Sigmann <- exp(pars[pos + 1]) + 10^-10
   Pi <- pars[(pos + 2): length(pars)]
   
   # calculate values derived from these
@@ -49,7 +49,8 @@ liml1 <- function(pars, X, X2, Y, Z){
   eta <- X2 - (Z %*% Pi)
   muc <- Sigmavn * (1/Sigmann) * eta
   sigmau <- sqrt(sigma2u)
-  sigma2c <- sigma2v - Sigmavn * (1/Sigmann) * Sigmavn
+  sigma2u <- sigmau^2
+  sigma2c <- exp(sigma2v - Sigmavn * (1/Sigmann) * Sigmavn) + 10^-10
   sigmac <- sqrt(sigma2c)
   lambda <- sigmau/sigmac
   sigma2 <- sigma2u + sigma2c
@@ -62,3 +63,5 @@ liml1 <- function(pars, X, X2, Y, Z){
   # return the (minus) the sum of the log densities
   -sum(f_epsilon_eta)
 }
+
+
