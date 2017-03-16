@@ -49,7 +49,6 @@ liml1 <- function(pars, X, X2, Y, Z){
   eta <- X2 - (Z %*% Pi)
   muc <- Sigmavn * (1/Sigmann) * eta
   sigmau <- sqrt(sigma2u)
-  sigma2u <- sigmau^2
   sigma2c <- exp(sigma2v - Sigmavn * (1/Sigmann) * Sigmavn) + 10^-10
   sigmac <- sqrt(sigma2c)
   lambda <- sigmau/sigmac
@@ -63,5 +62,3 @@ liml1 <- function(pars, X, X2, Y, Z){
   # return the (minus) the sum of the log densities
   -sum(f_epsilon_eta)
 }
-
-

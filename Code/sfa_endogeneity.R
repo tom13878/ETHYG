@@ -8,7 +8,7 @@
 
 # get packages
 library(pacman)
-p_load(char=c("rprojroot", "boot", "dplyr", "frontier"), install=TRUE)
+p_load(char=c("rprojroot", "optimx", "dplyr", "frontier"), install=TRUE)
 
 # get root path
 root <- find_root(is_rstudio_project)
@@ -41,7 +41,7 @@ db1 <- as.data.frame(model.matrix(~ -1 + logyld +  logN + loglab  +
                                     logarea + impr + logslope + elevationsqt +
                                     SOC2 + SOC2sq + phdum55_2_70 + dumoxen + title +
                                     rain_wq + relprice + Pm + GGD +
-                                    cost2large_town, data=db1))
+                                    cost2large_town + extension, data=db1))
 
 # basic frontier model for comparison
 sf <- summary(sfa(logyld ~ logN + loglab + logNloglab + logarea +
@@ -53,17 +53,6 @@ sf <- summary(sfa(logyld ~ logN + loglab + logNloglab + logarea +
 RM <- lm(logN ~ relprice + age + agesq + dist_market +
            logslope + elevationsqt + crop_count2 + SOC2 +
            phdum55_2_70 + GGD, data=db1)
-
-# starting value for Sigmann
-Sigmann_hat <- mean(residuals(RM)^2)
-
-# simple ols model with translog for comparison
-TL <- lm(logyld ~ logN + loglab + logNloglab + logarea +
-           logslope + elevationsqt + crop_count2 + SOC2 +
-           phdum55_2_70 + GGD, data=db1)
-
-# starting value for Sigmavn
-Sigmavn_hat <- mean(residuals(RM)*residuals(TL))
 
 # data
 # outcome of structural equation
@@ -85,55 +74,55 @@ X3 <- model.matrix(~ -1 + loglab + logNloglab + logarea, data = db1)
 X <- cbind(X2, X3, X1)
 
 # instruments/variables only in reduced equation
-#  + sex + age + agesq + ed_any + dist_market + cost2large_town
 W <- model.matrix(~ -1 + relprice + age + agesq + dist_market,
                   data = db1)
 
 # complete set of regressors for reduced equation
 Z <- cbind(1, W, X1)
 
-# initial parameters - starting values were chosen
-# on the basis of the output from simple models
-# bearing in mind that with many parameters the 
-# chances of falling into a local minima are high ->
-# therefore, we would like to start our search
-# for the correct parameters in the region of 
-# parameter space that we would expect to find
-# them
-pars <- c(6, rep(0.2, ncol(X)), 0.4, 1.7, 0.03, 2.7, 7.5, rep(0.1, ncol(Z)-1))
-# #pars[ncol(X) + 2] <- sfco["sigmaSqV"]
-# #pars[ncol(X) + 3] <- sfco["sigmaSqU"]
-# pars[ncol(X) + 4] <- Sigmavn_hat
-# pars[ncol(X) + 5] <- Sigmann_hat
-# try out the function
+# parameters for optimisation
+n <- (ncol(X) + ncol(Z) + 5)
+pars <- rep(1, n)
+
+# test out the function based on
+# starting parameters - starting parameters
+# must give a non NAN answer
 liml1(pars, X, X2, Y, Z)
 
-# optimize function
-stats <- optim(pars, liml1, NULL, X, X2, Y, Z,
-               method="BFGS",
-               control = list(trace=2, maxit=200),
-               hessian=T)
+# optimx function
+stats <- optimx(pars, liml1, NULL,
+                hess=NULL,
+                lower=-Inf,
+                upper=Inf,
+                method="BFGS",
+                itnmax=NULL,
+                hessian=FALSE,
+                control = list(trace=2, maxit=200),
+                X, X2, Y, Z)
 
 # get parameters (same order as they appear in the liml1 function)
-alpha <- stats$par[1]
-beta <- stats$par[2:(1 + ncol(X))]
-sigma2v <- stats$par[(2 + ncol(X))]
-sigma2u <- stats$par[(3 + ncol(X))]
-lambda <- sqrt(exp(sigma2u))/sqrt(exp(sigma2v))
 
+# output from optimx
+alpha <- stats[1]
+beta <- stats[2:(1 + ncol(X))]
+sigma2v <- stats[(2 + ncol(X))]
+sigma2u <- stats[(3 + ncol(X))]
 pos <- (4+ncol(X))
-Sigmavn <- stats$par[pos]
-Sigmann <- stats$par[pos + 1]
-Pi <- stats$par[(pos + 2): length(stats$par)]
+Sigmavn <- stats[pos]
+Sigmann <- stats[pos + 1]
+Pi <- stats[(pos + 2): (pos + 1 + ncol(Z))]
 
-# match up beta and Pi parameters with the names from
-# the X and Z matrices
-alpha
-beta
-dimnames(X)[[2]]
-sf
+# match up beta parameters with the names from
+# the X matrix (second stage)
+c(alpha, beta) # parameters from liml second stage
+dimnames(X)[[2]] # order in which parameters appear from liml output
+sf$mleParam[, 1] # normal (no endogeneity) SF ML estimates
+sf$olsParam[, 1] # ols estimates
+c(sigma2v, sigma2u) # variance and relative variance estimates
 
-Pi
-dimnames(Z)[[2]]
-RM
+# match up Pi parameters with the names from the Z
+# matrix (first stage)
+Pi # parameters from liml first stage
+dimnames(Z)[[2]] # order in which parameters appear from liml output
+RM # ols normal reduced model
 
