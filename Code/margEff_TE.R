@@ -226,4 +226,7 @@ CI[, 1, 1] # check against quantile function above
 # given we have an APE for each observation
 # we could do something similar for the CI
 APE_CI <- apply(CI, c(1, 3), mean)
-APE # check APE falls inside CI
+
+# check APE falls inside CI
+APE_CI
+APE 
