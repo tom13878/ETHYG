@@ -25,7 +25,6 @@ ETH2013$ea_id <- ifelse(is.na(ETH2013$ea_id), ETH2013$ea_id2, ETH2013$ea_id)
 dbP <- ETH2013
 dbP <- select(dbP, hhid=household_id, indidy=individual_id, everything())
 
-
 # Select maize plots and head of household
 dbP <- filter(dbP, status %in% "HEAD", crop_code %in% 2)
 
@@ -38,7 +37,8 @@ dbP <- dbP %>%
   mutate(
     area = area_gps, 
     yld = crop_qty_harv/area,
-    N = N/area)
+    N = N/area,
+    seedha = seed_q/area)
 
 
 # As we focus on small scale farmers we restrict area size
@@ -66,7 +66,7 @@ db0 <- dbP %>%
                 harv_lab, harv_lab_hire ,
                 impr,
                 fung, herb,
-                N, P,
+                N, P, seedha,
                 off_farm_income, 
                 manure, compost, other_org,
                 crop_stand, cropping,
@@ -112,6 +112,7 @@ db0 <- db0 %>% mutate (logyld=log(yld),
                        hirelab_sh = harv_lab_hire/(harv_lab_hire + harv_lab)*100,
                        lab=lab/area,
                        loglab = log(lab+1),
+                       logseed = log(seedha),
                        logarea = log(area_gps), # area_gps not area because we want to add plot size as proxy for economies of scale
                        rain_wq2 = rain_wq*rain_wq,
                        rain_year2 = rain_year*rain_year,
