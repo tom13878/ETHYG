@@ -8,7 +8,7 @@
 
 # get packages
 library(pacman)
-p_load(char=c("rprojroot", "optimx", "dplyr", "frontier"), install=TRUE)
+p_load(char=c("rprojroot", "ucminf", "optimx", "dplyr", "frontier"), install=TRUE)
 
 # get root path
 root <- find_root(is_rstudio_project)
@@ -50,7 +50,7 @@ sf <- summary(sfa(logyld ~ logN + loglab + logNloglab + logarea +
       extraPar = TRUE)
 
 # basic reduced model for comparison
-RM <- lm(logN ~ relprice + age + agesq + dist_market +
+RM <- lm(logN ~ relprice + cost2large_town +
            logslope + elevationsqt + crop_count2 + SOC2 +
            phdum55_2_70 + GGD, data=db1)
 
@@ -74,23 +74,30 @@ X3 <- model.matrix(~ -1 + loglab + logNloglab + logarea, data = db1)
 X <- cbind(X2, X3, X1)
 
 # instruments/variables only in reduced equation
-W <- model.matrix(~ -1 + relprice + age + agesq + dist_market,
+W <- model.matrix(~ -1 + relprice + cost2large_town,
                   data = db1)
 
 # complete set of regressors for reduced equation
 Z <- cbind(1, W, X1)
+N <- length(Y)
 
-# parameters for optimisation
+# initial parameters for optimisation - note
+# that parameter sigma2v must be greater than
+# Sigmavn * (1/Sigmann) * Sigmavn, otherwise 
+# sigma2c will be negative and this is not
+# allowed.
 n <- (ncol(X) + ncol(Z) + 5)
 pars <- rep(1, n)
+pars[ncol(X) + 2] <- 2
 
 # test out the function based on
 # starting parameters - starting parameters
 # must give a non NAN answer
-liml1(pars, X, X2, Y, Z)
+liml2(pars, X, X2, Y, Z, N)
+
 
 # optimx function
-stats <- optimx(pars, liml1, NULL,
+stats <- optimx(pars, liml2, NULL,
                 hess=NULL,
                 lower=-Inf,
                 upper=Inf,
@@ -98,7 +105,7 @@ stats <- optimx(pars, liml1, NULL,
                 itnmax=NULL,
                 hessian=FALSE,
                 control = list(trace=2, maxit=200),
-                X, X2, Y, Z)
+                X, X2, Y, Z, N)
 
 # get parameters (same order as they appear in the liml1 function)
 
@@ -114,7 +121,7 @@ Pi <- stats[(pos + 2): (pos + 1 + ncol(Z))]
 
 # match up beta parameters with the names from
 # the X matrix (second stage)
-c(alpha, beta) # parameters from liml second stage
+unlist(c(alpha, beta)) # parameters from liml second stage
 dimnames(X)[[2]] # order in which parameters appear from liml output
 sf$mleParam[, 1] # normal (no endogeneity) SF ML estimates
 sf$olsParam[, 1] # ols estimates
@@ -126,3 +133,7 @@ Pi # parameters from liml first stage
 dimnames(Z)[[2]] # order in which parameters appear from liml output
 RM # ols normal reduced model
 
+# note that Kumbhakar points out that when the model is misspecified
+# it may not converge, regardless of which parameters we use.
+# It may be the case that the model we use is misspecified ->
+# no proper variance estimates

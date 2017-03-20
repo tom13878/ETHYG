@@ -6,111 +6,102 @@
 #' Output:   Results table of endogeneity tests
 #'==============================================================================
 
-# get packages
-library(pacman)
-p_load(char=c("rprojroot", "boot", "frontier", "dplyr", "AER"), install=TRUE)
-
-# get root path
+# set project root
+library(rprojroot)
 root <- find_root(is_rstudio_project)
 
-# read in data to run models on
+# load packages
+library(pacman)
+p_load(frontier)
+
+# get data
 db1 <- readRDS(file.path(root, "Cache/db1.rds"))
 db1 <- unique(db1)
-db1 <- filter(db1, lab < 2000, logN >= 0)
 
-# make some new variables for convenience.
-db1$logNloglab <- db1$logN * db1$loglab
-db1$logslope <- log(db1$slope + 1)
+# get square and interaction terms for translog
+db1$logNsq <- db1$logN^2
+db1$loglabsq <- db1$loglab^2
+db1$logseedsq <- db1$logseed^2
+db1$logarea_tot <- log(db1$area_tot)
 db1$agesq <- db1$age^2
-db1$elevationsqt <- sqrt(db1$elevation)
-db1$SOC2sq <- db1$SOC2^2
+
+# Also divide GGD and AI by 1000
+# to get a more interpretable coef
 db1$GGD <- db1$GGD/1000
+db1$AI <- db1$AI/1000
 
 # -------------------------------------
 # translog production function with 
 # endogeneity
 
-# there are some missing values so we exclude these from the data now to avoid
-# problems later
-db1 <- as.data.frame(model.matrix(~ -1 + logyld +  logN + loglab  +
-                      logNloglab + Pn + dist_market + sex + age + agesq +
-                      ed_any + yesN + crop_count2 +
-                      logarea + impr + logslope + elevationsqt +
-                        SOC2 + SOC2sq + phdum55_2_70 + dumoxen + title +
-                        rain_wq + relprice + Pm + GGD +
-                        cost2large_town, data=db1))
-corrplot(cor(db1))
-
 # first stage linear model
-stage1_lm <- lm(logN ~ relprice + sex + age + agesq +
-                  logslope + elevationsqt + crop_count2 +
-                  impr + ed_any + SOC2 +
-                   phdum55_2_70 + dist_market + GGD +
-                   cost2large_town, data=db1)
+stage1_lm <- lm(logN ~ relprice + sex + age + ed_any +
+                  logarea_tot + credit + extension +
+                  title + elevation + logslope +
+                  logarea + SOC2, data=db1)
+
+# make a new database which has only those
+# terms that we have complete cases for
+db2 <- db1[-stage1_lm$na.action, ]
 
 # get residuals
-db1$v <- residuals(stage1_lm) 
+db2$v <- residuals(stage1_lm) 
 
 # try doing stepwise selection
-db2 <- select(db1, -Pn, -dist_market, -sex, -age, -agesq,
-                -ed_any, -yesN, -relprice, -Pm, -title, -SOC2sq,
-              -rain_wq, -cost2large_town) 
-null <- lm(logyld ~ logN + loglab + 
-             logNloglab + logarea, data=db2)
-full <- lm(logyld ~ ., data=db2)
-x <- step(null, scope=list(lower=null, upper=full), direction="forward")
-summary(lm(x$call$formula, data=db2))
+stage2_TL_lm <- lm(logyld ~ logN + loglab + logseed +
+                logNsq + loglabsq + logseedsq +
+                logN:loglab + logN:logseed +
+                loglab:logseed + logarea + phdum55_2_70 +
+                crop_count2 + dumoxen + SOC2 + logslope +
+                elevation + GGD + AI + TS + v, data=db2)
 
-# second stage TL model with residuals
-stage2_TL_lm <- lm(x$call$formula, data=db1)
+summary(stage2_TL_lm)
 
 # bootstrap results - need to include ALL stages in bootstrap
 refit_TL_lm <- function(data, indx){
   dat <- data[indx,]
   fs <- lm(formula(stage1_lm), data=dat)
   dat$v <- residuals(fs) 
-  coef(lm(x$call$formula, data=dat))
+  coef(lm(formula(stage2_TL_lm), data=dat))
 }
 
-TL_lm_boot <- boot(db1, refit_TL_lm, R = 500)
+TL_lm_boot <- boot(db2, refit_TL_lm, R = 500)
 TL_lm_SE <- summary(TL_lm_boot)
 
 # we need to calcualte p.values using the BSEs
 # lm first stage
-N <- nrow(db1)
+N <- nrow(db2)
 df <- N - length(stage2_TL_lm$coef)
 t <- stage2_TL_lm$coef/TL_lm_SE[, 4]
 p.value_lm <- round(2*pt(abs(t), df=df, lower=FALSE), 3)
 
 
 # first stage tobit model
-stage1_tob <- tobit(logN ~ relprice + sex + age + agesq +
-                      logslope + elevationsqt + crop_count2 +
-                      impr + ed_any + SOC2 +
-                      phdum55_2_70 + dist_market + GGD + 
-                      cost2large_town, data=db1)
+stage1_tob <- tobit(logN ~ relprice + sex + age + ed_any +
+                      logarea_tot + credit + extension +
+                      title + elevation + logslope +
+                      logarea + SOC2, data=db2)
 
 # calculate the generalized residual (Greene)
-d1 <- 1 - db1$yesN
-d2 <- db1$yesN
+d1 <- 1 - db2$yesN
+d2 <- db2$yesN
 sigma <- stage1_tob$scale
 theta <- 1/sigma
 mills <- -dnorm(-fitted(stage1_tob))/pnorm(-fitted(stage1_tob))
-db1$v <- d1 * mills + d2 * (theta * db1$logN - fitted(stage1_tob))
+db2$v <- d1 * mills + d2 * (theta * db2$logN - fitted(stage1_tob))
 
 # put v into the second stage TL model
-stage2_TL_tob <- lm(x$call$formula, data=db1)
+stage2_TL_tob <- lm(formula(stage2_TL_lm), data=db2)
 
 # bootstrap results: note that for some reason we cannot use the
 # formula(modl) trick with the tobit function -> have to write out everything
 # whole
 refit_TL_tob <- function(data, indx){
   dat <- data[indx, ]
-  fs <- tobit(logN ~ relprice + sex + age + agesq +
-                logslope + elevationsqt + crop_count2 +
-                impr + ed_any + SOC2 +
-                phdum55_2_70 + dist_market + GGD +
-                cost2large_town, data=dat)
+  fs <- tobit(logN ~ relprice + sex + age + ed_any +
+                logarea_tot + credit + extension +
+                title + elevation + logslope +
+                logarea + SOC2, data=dat)
   d1 <- 1 - dat$yesN
   d2 <- dat$yesN
   sigma <- fs$scale
@@ -120,12 +111,12 @@ refit_TL_tob <- function(data, indx){
   coef(lm(formula(stage2_TL_tob), data=dat))
 }
 
-TL_tob_boot <- boot(db1, refit_TL_tob, R = 500)
+TL_tob_boot <- boot(db2, refit_TL_tob, R = 500)
 TL_tob_SE <- summary(TL_tob_boot)
 
 # we need to calcualte p.values using the BSEs
 # lm first stage
-N <- nrow(db1)
+N <- nrow(db2)
 df <- N - length(stage2_TL_tob$coef)
 t <- stage2_TL_tob$coef/TL_tob_SE[, 4]
 p.value_tob <- round(2*pt(abs(t), df=df, lower=FALSE), 3)
@@ -144,11 +135,10 @@ APE <- coef(stage1_tob) * scale_factor
 # bootstrap the making of the APE!!!
 refit_APE <- function(data, indx){
   dat <- data[indx, ]
-  fs <- tobit(logN ~ relprice + sex + age + agesq +
-                logslope + elevationsqt + crop_count2 +
-                impr + ed_any + SOC2 +
-                phdum55_2_70 + dist_market + GGD +
-                cost2large_town, data=dat)
+  fs <- tobit(logN ~ relprice + sex + age + ed_any +
+                logarea_tot + credit + extension +
+                title + elevation + logslope +
+                logarea + SOC2, data=dat)
   sigma <- fs$scale
   X <- model.matrix(fs)
   n <- nrow(X)
@@ -158,11 +148,11 @@ refit_APE <- function(data, indx){
 }
 
 # results from bootstrap
-APE_boot <- boot(db1, refit_APE, R = 500)
+APE_boot <- boot(db2, refit_APE, R = 500)
 APE_SE <- summary(APE_boot)
 
 # work out p-values
-N <- nrow(db1)
+N <- nrow(db2)
 df <- N - length(APE)
 t <- APE/APE_SE[, 4]
 p.value_APE <- round(2*pt(abs(t), df=df, lower=FALSE), 3)
@@ -198,7 +188,7 @@ FS_tab$Tobit <- paste0(FS_tab$Tobit, stars)
 # tobit first stage R-squared equivalent
 yi <- pnorm(fitted(stage1_tob)/stage1_tob$scale)*fitted(stage1_tob) +
   stage1_tob$scale * dnorm(fitted(stage1_tob)/stage1_tob$scale)
-Rsq_tob <- cor(yi, db1$logN)^2
+Rsq_tob <- cor(yi, db2$logN)^2
 
 Rsq <- round(c(summary(stage1_lm)$adj.r.squared, NA, Rsq_tob, NA, NA, NA), 3)
 FS_tab <- rbind(FS_tab, Rsq)
