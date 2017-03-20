@@ -2,91 +2,56 @@
 #' Project:  IMAGINE ETH
 #' Subject:  Exogenous marginal effects calcualtion
 #' Author:   Michiel van Dijk & Tom Morley
-#' Contact:  michiel.vandijk@wur.nl, Tomas.morley@wur.nl
+#' Contact:  michiel.vandijk@wur.nl, tomas.morley@wur.nl
 #' Output:   Blueprint for marginal effects of exogenous variables
 #'==============================================================================
 
 # get packages
 library(pacman)
-p_load(char=c("optimx", "frontier", "truncnorm", "abind"), install=TRUE)
+p_load(char=c("rprojroot", "optimx", "frontier", "truncnorm", "abind", "dplyr"), install=TRUE)
 
-# include exogenous determinants of inefficiency
-# basic SF log likelihood function
-SFlogLik_x <- function(pars, X, Y, Z){
-  
-  # get parameters
-  alpha <- pars[1]
-  beta <- pars[2:(1 + ncol(X))]
-  sigma2u <- pars[(2 + ncol(X))]
-  sigma2v <- pars[(3 + ncol(X))]
-  delta <- pars[(4 + ncol(X)):length(pars)]
-  
-  # create variables
-  epsilon <- Y - alpha - (X %*% beta)
-  mu <- Z %*% delta
-  sigma2 <- sigma2u + sigma2v
-  sigma <- sqrt(sigma2)
-  sigmau <- sqrt(sigma2u)
-  sigmav <- sqrt(sigma2v)
-  lambda <- sigmau/sigmav
-  mus <- (mu * sigma2v - epsilon * sigma2u)/sigma2
-  sigma2s <- sigma2u*sigma2v/sigma2
-  sigmas <- sqrt(sigma2s)
-  
-  # construct (log) densities
-  Li <- -(1/2) * log(sigma2) + dnorm((mu + epsilon)/sigma, log=TRUE) +
-    pnorm(mus/sigmas, log=TRUE) - pnorm(mu/sigmau, log=TRUE)
-  
-  
-  # evaluate log density and sum
-  -sum(Li)
-}
+# get root path
+root <- find_root(is_rstudio_project)
 
-dat <- model.matrix(~ -1 + logyld + logN + logseed + loglab +
-                      extension + title, data=panel_ETH)
-yindx <- which(dimnames(dat)[[2]] == "logyld")
-zindx <- which(dimnames(dat)[[2]] == c("extension", "title"))
+# read in data to run models on
+db1 <- readRDS(file.path(root, "Cache/db1.rds"))
+db1 <- unique(db1)
+db1 <- filter(db1, lab < 2000, logN >= 0)
 
-Y <- dat[, yindx]
-Z <- dat[, zindx]
-X <- dat[, -c(yindx, zindx)]
+# make some new variables for convenience.
+db1$logNloglab <- db1$logN * db1$loglab
+db1$logslope <- log(db1$slope + 1)
+db1$agesq <- db1$age^2
+db1$elevationsqt <- sqrt(db1$elevation)
+db1$SOC2sq <- db1$SOC2^2
+db1$GGD <- db1$GGD/1000
 
-# initial parameters
-pars <- rep(0.5, ncol(X) + ncol(Z) + 3)
-
-# test function works at initial parameters
-# if NA is returned, pick better starting
-# parameters
-SFlogLik_x(pars, X, Y, Z)
-
-# use optimx to get ML estimates
-stats <- optimx(pars, SFlogLik_x, NULL,
-                hess=NULL,
-                lower=-Inf,
-                upper=Inf,
-                method="BFGS",
-                itnmax=NULL,
-                hessian=FALSE,
-                control = list(trace=2, maxit=200),
-                X, Y, Z)
-
-# check if it matches output from frontier package
-sf <- sfa(logyld ~ logN + logseed + loglab |
-            -1 + extension + title, data=panel_ETH)
+# get ML parameters using the frontier package
+sf <- sfa(logyld ~ logN + loglab | -1 +
+            extension + title + age,
+          data=db1)
+sfsum <- summary(sf, extraPar = TRUE)$mleParam[, 1]
 
 # Get ML parameters from optimization output
-alpha <- as.numeric(stats[1])
-beta <- as.numeric(stats[2:(1 + ncol(X))])
-sigma2u <- as.numeric(stats[(2 + ncol(X))])
-sigma2v <- as.numeric(stats[(3 + ncol(X))])
-delta <- as.numeric(stats[(4 + ncol(X)):length(pars)])
+xvars <- c("logN", "loglab")
+zvars <- c("extension", "title", "age")
+zcoef <- grep("Z_", names(sfsum))
+beta <- sfsum[1:(min(zcoef)-1)]
+sigma2u <- sfsum["sigmaSqU"]
+sigma2v <- sfsum["sigmaSqV"]
+delta <- sfsum[zcoef]
+
+# get model matrix for Z coefficients 
+Z <- sf$dataTable[, zvars]
+Y <- sf$dataTable[, "logyld"]
+X <- sf$dataTable[, xvars]
 
 # Derive values from ML estimates (this will also work
 # with frontier package sfa function output)
 sigma2 <- sigma2u + sigma2v
 sigma <- sqrt(sigma2)
 mu <- Z %*% delta
-epsilon <- Y - alpha - (X %*% beta)
+epsilon <- residuals(sf)
 mus <- (mu * sigma2v - epsilon * sigma2u)/sigma2
 sigma2s <- sigma2u*sigma2v/sigma2
 sigmas <- sqrt(sigma2s)
@@ -115,35 +80,30 @@ vi <- rnorm(length(Y), mean=0, sqrt(sigma2v))
 ui <- rtruncnorm(length(Y), a = 0, b = Inf, mean=mu, sqrt(sigma2u))
 
 # generate a new Y values based on the new vi and ui terms
-Ynew <- alpha + X %*% beta + vi - ui
+logyld <- cbind(1, X) %*% beta + vi - ui
 
 # using {Ynew, X, Z} as before, get estimated
 # parameters and then calculate marginal effects
-get_stats <- function(Ynew){
-  optimx(pars, SFlogLik_x, NULL,
-                hess=NULL,
-                lower=-Inf,
-                upper=Inf,
-                method="BFGS",
-                itnmax=NULL,
-                hessian=FALSE,
-                control = list(trace=2, maxit=200),
-                X, Ynew, Z)
-}
+new_dat <- data.frame(logyld, X, Z)
+
+# get ML parameters using the frontier package
+sf <- sfa(logyld ~ logN + loglab | -1 +
+            extension + title + age,
+          data=new_dat)
+sfsum <- summary(sf, extraPar = TRUE)$mleParam[, 1]
 
 # Get ML parameters from optimization output
-alpha2 <- as.numeric(stats[1])
-beta2 <- as.numeric(stats[2:(1 + ncol(X))])
-sigma2u2 <- as.numeric(stats[(2 + ncol(X))])
-sigma2v2 <- as.numeric(stats[(3 + ncol(X))])
-delta2 <- as.numeric(stats[(4 + ncol(X)):length(pars)])
+beta2 <- sfsum[1:(min(zcoef)-1)]
+sigma2u2 <- sfsum["sigmaSqU"]
+sigma2v2 <- sfsum["sigmaSqV"]
+delta2 <- sfsum[zcoef]
 
 # Derive values from ML estimates (this will also work
 # with frontier package sfa function output)
 sigma22 <- sigma2u2 + sigma2v2
 sigma2 <- sqrt(sigma22)
 mu2 <- Z %*% delta2
-epsilon2 <- Ynew - alpha2 - (X %*% beta2)
+epsilon2 <- residuals(sf)
 mus2 <- (mu2 * sigma2v2 - epsilon2 * sigma2u2)/sigma22
 sigma2s2 <- sigma2u2*sigma2v2/sigma22
 sigmas2 <- sqrt(sigma2s2)
@@ -159,32 +119,44 @@ margEff2 <- outer(scale2, delta2)
 # times. Of course we cannot hold this information
 # in a 2 by 2 matrix because we have N observations
 # for p exogenous variables over B bootstrap samples
+# so instead we use a three dimensional array
 
 B <- 10
 N <- length(Y)
 p <- ncol(Z)
 margEff_array <- array(data=NA, dim=c(N, p, B))
 
+system.time({
 # bootstrap
 for (i in 1:B){
   vi <- rnorm(length(Y), mean=0, sqrt(sigma2v))
   ui <- rtruncnorm(length(Y), a = 0, b = Inf, mean=mu, sqrt(sigma2u))
-  Ynew <- alpha + X %*% beta + vi - ui 
-  stats_new <- get_stats(Ynew)
+  
+  # generate a new Y values based on the new vi and ui terms
+  logyld <- cbind(1, X) %*% beta + vi - ui
+  
+  # using {Ynew, X, Z} as before, get estimated
+  # parameters and then calculate marginal effects
+  new_dat <- data.frame(logyld, X, Z)
+  
+  # get ML parameters using the frontier package
+  sf <- sfa(logyld ~ logN + loglab | -1 +
+              extension + title + age,
+            data=new_dat)
+  sfsum <- summary(sf, extraPar = TRUE)$mleParam[, 1]
   
   # Get ML parameters from optimization output
-  alpha2 <- as.numeric(stats_new[1])
-  beta2 <- as.numeric(stats_new[2:(1 + ncol(X))])
-  sigma2u2 <- as.numeric(stats_new[(2 + ncol(X))])
-  sigma2v2 <- as.numeric(stats_new[(3 + ncol(X))])
-  delta2 <- as.numeric(stats_new[(4 + ncol(X)):length(pars)])
+  beta2 <- sfsum[1:(min(zcoef)-1)]
+  sigma2u2 <- sfsum["sigmaSqU"]
+  sigma2v2 <- sfsum["sigmaSqV"]
+  delta2 <- sfsum[zcoef]
   
   # Derive values from ML estimates (this will also work
   # with frontier package sfa function output)
   sigma22 <- sigma2u2 + sigma2v2
   sigma2 <- sqrt(sigma22)
   mu2 <- Z %*% delta2
-  epsilon2 <- Ynew - alpha2 - (X %*% beta2)
+  epsilon2 <- residuals(sf)
   mus2 <- (mu2 * sigma2v2 - epsilon2 * sigma2u2)/sigma22
   sigma2s2 <- sigma2u2*sigma2v2/sigma22
   sigmas2 <- sqrt(sigma2s2)
@@ -196,7 +168,7 @@ for (i in 1:B){
   scale2 <- as.numeric((sigma2v2/sigma22) * (1 - m2 * g2 - g2^2))
   margEff_array[, c(1:ncol(Z)), i] <- outer(scale2, delta2)
 }
-
+})
 # bind the original margEffs to the parametric bootstrap
 # margEffs in order to get sample of (1 + B) marginal
 # effects for each observation
