@@ -32,6 +32,9 @@ panderOptions('table.alignment.default', function(df)
 panderOptions('table.split.table', Inf)
 panderOptions('big.mark', ",")
 panderOptions('keep.trailing.zeros', TRUE)
+
+source(file.path(root, "Code/production_function_tests.R"))
+
 ```
 
 # Abstract
@@ -45,6 +48,12 @@ We investigate the determinants of the maize yield gap in a nationally represent
 The main data source is the Living Standards Measurement Study - Integrated Surveys on Agriculture (LSMS-ISA) Ethiopian Socioeconomic survey (ESS). This survey was implemented by the Central Statistical Agency of Ethiopia (CSA) and was funded by the World Bank through a grant from the Bill and Melinda Gates foundation. Although part of a panel, the first wave of the ESS did not record crop harvested quantities for a majority of plots making it unsuitable for this analysis. However, the second wave (2013-2014) of the ESS provides detailed information on crop production, input use, environmental and scocioeconomic variables. 
 
 In order to calculate maize yields and input rates, accurate measurements of field areas are required. GPS measurements were recorded for the vast majority of plots in the second wave of the ESS. For those plots lacking a GPS measurement, multiple imputation was used following LSMS-ISA World Bank (2014). Maize yield (`yld`), nitrogen rates (`N`), labour rates (`lab`) and seed rates (`seedha`), are measures of the per hectare application of each variable to a plot. In some cases more than one crop was grown per plot and this is captured in the analysis by the incorporation of variables referring to the number of crops on a field, and whether a field had more than one crop (`crop_count`, `crop_count2`, respectively). Furthermore, variables covering the Ph, soil quality, slope and elevation of the field, and environmental characteristics were also recorded. The longitude and latitude of each household was recorded allowing climate, soil and geographical data to be matched to households from sources including IFPRI, Worlclim, NASA and the Ethiopian Roads Agency amongst others.
+
+__Table 1: Descriptive Statistics__
+
+```{r}
+pander(sum_tab)
+```
 
 ## Estimation procedures
 
@@ -81,28 +90,33 @@ Where $W_i$ are the environmental variables. With a slight modification to the d
 
 The resulting SF ML estimates are presented in table 1 for four models. Model 1 shows the coefficient estimates for the core translog production function terms. Model 2 extend this to include the exogenous determinants of inefficiences. Models 3 and 4 do likewise and also include the environmental variables.
 
+__Table 2: Translog production function__
 ```{r}
-source(file.path(root, "Code/production_function_tests.R"))
 pander(results_tab)
 ```
 
-The raw coefficients of the exogenous determinants of technical inefficinecy cannot be interpreted as elasticities. However, the marginal effects of each variable can be computed following Kumbhakar & Sun (2013). These are observation specific and a concise estimate of the marginal effects is presented in table 2 in the form of the average partial effects (APE) for models 2 and 4 respectively. 
+The raw coefficients of the exogenous determinants of technical inefficinecy cannot be interpreted as elasticities. However, the marginal effects of each variable can be computed following Kumbhakar & Sun (2013). These are observation specific and a concise estimate of the marginal effects is presented in table 2 in the form of the average partial effects (APE) for models 3 and 4 respectively. 
 
+__Table 3: Marginal effects (APE) of exogenous determinants of inefficiency__
 ```{r}
 pander(ME_tab)
 ```
 
 Although we control for a range of environmental variables, several studies have investigated the possibility of endogeneity between nitrogen and maize yield (Liverpool tasie, smale and mason, etc etc). Endogeneity may occur in the presence of a feedback loop between the error term and the choice of inputs (Amsler 2016). In the stochastic frontiers setting this may involve either the statistical error term, the inefficiency term or both. One way of testing for the presence of endogeneity is to employ a control function approach, estimating a first stage reduced form model for the endogenous variable and using the predicted residuals as a regressor in a second stage full structural model. The null hypothesis that the endogenous variable is exogenous is rejected based on the significance of a standard t or F test. The control function approach is an alternative to two stage least squares estimation which is suitable when using a nonlinear second stage estimation such as in the case of a translog production function. It has the additional advantage that only one control function is required per endogenous inputs, rather than four, corresponding to the four terms involving nitrogen, that would be required in 2SLS setting. 
 
+
 ```{r echo=FALSE}
 FS_tab <- readRDS(file.path(root, "Report/tables/FS_endog_tab.rds"))
 SS_tab <- readRDS(file.path(root, "Report/tables/SS_endog_tab.rds"))
 ```
 
+__Table 4: First stage endogeneity__
 ```{r}
 pander(FS_tab)
 ```
 
+
+__Table 5: Second stage endogeneity__
 ```{r}
 pander(SS_tab)
 ```
