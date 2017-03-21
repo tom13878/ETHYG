@@ -33,6 +33,7 @@ options(digits=4)
 
 # Load and process data
 maize <- read.csv(file.path(root, "Data/FAOSTAT_data_1-24-2017_maize.csv"))
+maize_con <- read.csv(file.path(root, "Data/FAOSTAT_data_3-21-2017_maize_continents.csv"))
 land <- read.csv(file.path(root, "Data/FAOSTAT_data_1-24-2017_land.csv"))
 maize$Area <- as.character(maize$Area)
 
@@ -42,42 +43,20 @@ land$Area <- ifelse(land$Area %in% "Ethiopia PDR", "Ethiopia", land$Area)
 
 # select only maize yield and create table
 # hectograms are 0.1 kilograms -> convert
-maize_yield <- dplyr::select(maize, country=Area, variable = Element,
+maize <- dplyr::select(maize, country=Area, variable = Element,
                              year=Year, value = Value) %>%
-  filter(variable=="Yield")
-maize_yield$value <- maize_yield$value * 0.1
+  filter(variable=="Yield", country == "Ethiopia") %>%
+  mutate(value = value*0.1)
 
-maize_yield$region <- countrycode(maize_yield$country, "country.name", "region")
-maize_yield$continent <- countrycode(maize_yield$country, "country.name", "continent")
 
-# note that the region and continent cannot be found
-# for several countries due to the names being obsolete
-# or strange. None of these are likely to affect
-# the results
-unique(maize_yield$country[is.na(maize_yield$region)])
+maize_con <- dplyr::select(maize_con, country=Area, variable = Element,
+                             year=Year, value = Value) %>%
+  filter(variable=="Yield") %>%
+  mutate(value = value*0.1)
 
-# Calculate averages of interesting countries
-# continents and regions to compare with Ghana
-# and Ethiopia
+Fig_maize_yield_df <- bind_rows(maize_con, maize) 
 
-maize_reg <- maize_yield %>%
-  group_by(region, year) %>%
-  summarize (value = mean(value, na.rm=T)) %>%
-  filter(region %in% "South America")
-
-maize_con <- maize_yield %>%
-  group_by(continent, year) %>%
-  summarize (value = mean(value, na.rm=T)) %>%
-  rename(region = continent) %>%
-  filter(region %in% c("Asia", "Africa"))
-
-maize_iso <- maize_yield %>%
-  filter(country %in% c("Ethiopia")) %>%
-  dplyr::select(region = country, value, year)
-
-Fig_maize_yield_df <- bind_rows(maize_reg, maize_con, maize_iso) 
-
-Fig_maize_yield <- ggplot(data = Fig_maize_yield_df, aes(x = year, y = value, colour = region)) +
+Fig_maize_yield <- ggplot(data = Fig_maize_yield_df, aes(x = year, y = value, colour = country)) +
   geom_line(size = 1.2) +
   #geom_point(size = 2) +
   #theme_bw() +

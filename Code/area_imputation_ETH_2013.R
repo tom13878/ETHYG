@@ -1,16 +1,21 @@
 # -------------------------------------
 # area imputation file for ETHiopia 2013
 # missing gps measurements
+library(pacman)
+p_load(char=c("rprojroot", "dplyr", "haven"), install=TRUE)
 
-library(haven)
-library(dplyr)
+# GET ROOT PATH
+root <- find_root(is_rstudio_project)
 
-dataPath <- "C:/Users/Tomas/Documents/LEI/data/ETH"
+# SET ROOT AND WORKING DIRECTORY
+
+# Get dataPath
+source(file.path(root, "Code/get_dataPath_ETH.r"))
 
 # -------------------------------------
 # plot characteristics
 
-plots <- read_dta(file.path(dataPath, "Post-Planting/sect3_pp_w2.dta")) %>%
+plots <- read_dta(file.path(dataPath, "2013/Data/Post-Planting/sect3_pp_w2.dta")) %>%
   dplyr::select(holder_id, household_id2, parcel_id, field_id, status = pp_s3q03,
                 irrigated = pp_s3q12, urea = pp_s3q15, dap = pp_s3q18,
                 other_inorg = pp_s3q20a, manure = pp_s3q21, compost = pp_s3q23,
@@ -48,7 +53,7 @@ plots <- left_join(plots, plotCount)
 
 # soil quality is a parcel level variable
 
-parcel <- read_dta(file.path(dataPath, "Post-Planting/sect2_pp_w2.dta")) %>%
+parcel <- read_dta(file.path(dataPath, "2013/Data/Post-Planting/sect2_pp_w2.dta")) %>%
   dplyr::select(holder_id, household_id2, parcel_id,
                 owned = pp_s2q04, soil_qlty=pp_s2q15)
 
@@ -60,7 +65,7 @@ plots <- left_join(plots, parcel)
 
 # Hired labour
 
-pp_lab <- read_dta(file.path(dataPath, "Post-Planting/sect3_pp_w2.dta")) %>%
+pp_lab <- read_dta(file.path(dataPath, "2013/Data/Post-Planting/sect3_pp_w2.dta")) %>%
   dplyr::select(holder_id, household_id2, parcel_id, field_id, pp_s3q28_a:pp_s3q28_h) %>%
   transmute(holder_id, household_id2, parcel_id, field_id,
             hirM=pp_s3q28_a*pp_s3q28_b,
@@ -77,7 +82,7 @@ pp_lab <- transmute(pp_lab, holder_id, household_id2, parcel_id, field_id,
 
 # post harvest hired labour - measured at the crop level
 
-ph_lab <- read_dta(file.path(dataPath, "Post-Harvest/sect10_ph_w2.dta")) %>%
+ph_lab <- read_dta(file.path(dataPath, "2013/Data/Post-Harvest/sect10_ph_w2.dta")) %>%
   dplyr::select(holder_id, household_id2, parcel_id, field_id,
                 crop=crop_code, ph_s10q01_b:ph_s10q01_h) %>%
   transmute(holder_id, household_id2, parcel_id, field_id, crop,
@@ -99,7 +104,7 @@ ph_lab <- group_by(ph_lab, holder_id, household_id2, parcel_id, field_id) %>%
   summarise(hir_lab = sum(ph_hir_lab))
 
 # bind and sumarise the data
-hir_lab <- rbind(pp_lab, ph_lab) %>%
+hir_lab <- bind_rows(pp_lab, ph_lab) %>%
   group_by(holder_id, household_id2, parcel_id, field_id) %>%
   summarise(hiredLabour = sum(hir_lab))
 
@@ -115,7 +120,7 @@ rm(list=ls()[!ls() %in% c("plots", "dataPath")])
 
 # plot manager characteristics
 
-pmc <- read_dta(file.path(dataPath, "Household/sect1_hh_w2.dta")) %>%
+pmc <- read_dta(file.path(dataPath, "2013/Data/Household/sect1_hh_w2.dta")) %>%
   filter(hh_s1q02 %in% 1) %>% # 1 for head of household
   dplyr::select(household_id2, individual_id, sex=hh_s1q03,
                 age=hh_s1q04_a, rural, weight=pw2)
@@ -137,7 +142,7 @@ pmc$rural <- ifelse(pmc$rural %in% 1, 1, 0)
 # count number of people of each age group in
 # the household
 
-ag <- read_dta(file.path(dataPath, "Household/sect1_hh_w2.dta")) %>%
+ag <- read_dta(file.path(dataPath, "2013/Data/Household/sect1_hh_w2.dta")) %>%
   dplyr::select(household_id2, individual_id, age=hh_s1q04_a, sex=hh_s1q03) %>%
   mutate(age_group = cut(age, c(0, 5, 14, 39, 59, 100),
                          include.lowest = TRUE, right = FALSE))
@@ -174,7 +179,7 @@ rm(pmc, ag, by_hhid)
 # ------------------------------------
 # areas
 
-areas <- read_dta(file.path(dataPath, "Post-Planting/sect3_pp_w2.dta")) %>%
+areas <- read_dta(file.path(dataPath, "2013/Data/Post-Planting/sect3_pp_w2.dta")) %>%
   dplyr::select(region=saq01, zone=saq02, woreda=saq03,
                 holder_id, household_id2, parcel_id,
                 field_id, area_sr=pp_s3q02_a,
@@ -322,6 +327,8 @@ areas <- cbind(ids, areas)
 
 # save areas to a file
 
-write_dta(areas, "C:/Users/Tomas/Documents/LEI/data/ETH/areas_ETH2013.dta")
+write_dta(file.path(dataPath, "/../Other/Plot_size/areas_ETH2013.dta"))
+
+
 
 
