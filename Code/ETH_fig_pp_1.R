@@ -87,7 +87,7 @@ Fig_maize_yield <- ggplot(data = Fig_maize_yield_df, aes(x = year, y = value, co
 #     ylab("Maize Yield (kg/ha)") +
 
 Fig_maize_yield
-#ggsave("FigTabMap/Fig_maize_yield.png")
+ggsave("FigTabMap/Fig_maize_yield.png")
 
 ### AREA FIGURE
 # Load data
