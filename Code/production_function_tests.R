@@ -7,7 +7,9 @@
 #'==============================================================================
 
 # set project root
+library(dplyr)
 library(rprojroot)
+library(moments)
 root <- find_root(is_rstudio_project)
 
 # load packages
@@ -28,6 +30,24 @@ db1$logarea_tot <- log(db1$area_tot)
 # to get a more interpretable coef
 db1$GGD <- db1$GGD/1000
 db1$AI <- db1$AI/1000
+
+# make a summary tab of variables for paper
+sum_dat <- select(db1, yld, N, area, lab, seedha,
+                   phdum55_2_70, crop_count2,
+                  dumoxen, SOC2, logslope,
+                  elevation, GGD, AI, TS)
+
+Mean <- colMeans(sum_dat, na.rm=TRUE)
+Median <- apply(sum_dat, 2, function(col) median(col, na.rm=TRUE))
+SD <- apply(sum_dat, 2, function(col) sd(col, na.rm=TRUE))
+Skewness <- apply(sum_dat, 2, function(col) skewness(col, na.rm=TRUE))
+Min <- apply(sum_dat, 2, function(col) min(col, na.rm=TRUE))
+Max <- apply(sum_dat, 2, function(col) max(col, na.rm=TRUE))
+sum_tab <- data.frame(Variable=colnames(sum_dat),
+                      Mean, Median, SD, Skewness,
+                      Min, Max)
+sum_tab[, -1] <- round(sum_tab[,-1], 3)
+row.names(sum_tab) <- NULL
 
 # basic translog function
 sf1 <- sfa(logyld ~ logN + loglab + logseed +
@@ -295,6 +315,9 @@ results_tab <- full_join(model1, model2) %>%
   select(Variable, everything())
 names(results_tab) <- c("Variable", "model 1", "model 2",
                         "model 3", "model 4")
+results_tab[, -1] <- round(results_tab[, -1], 3)
+results_tab[is.na(results_tab)] <- ""
+
 
 # from the models which have exogenous determinants
 # of inefficiency, calculate the marginal effects
@@ -375,7 +398,9 @@ APE_sf11x9 <- apply(margEff, 2, mean)
 
 # join APEs together to make a table
 ME_tab <- round(data.frame(cbind(APE_sf1x9, APE_sf11x9)), 5)
+ME_tab <- as.data.frame(lapply(ME_tab, function(col) sprintf("%.3f", round(col, 3))))
 row.names(ME_tab) <- zvars
+names(ME_tab) <- c("model 3", "model 4")
 
 # take out trash
 rm(APE_sf11x9, APE_sf1x9, beta, db1, delta, epsilon,
