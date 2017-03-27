@@ -28,56 +28,56 @@ options(digits=4)
 source(file.path(root, "Code/waterfall_plot.r"))
 
 ### LOAD DATA
-db9 <- readRDS(file.path(root, "Cache/db9.rds"))
+db3 <- readRDS(file.path(root, "Cache/db3.rds"))
 #db_sfaCD_CRE_Z <- readRDS(file.path(root, "Cache/db_sfaCD_CRE_Z.rds"))
 
 
 # Table with yield levels
 YieldLevels <- bind_rows(
-  db9 %>% 
-    dplyr::select(Zone = ZONE, Y, Ycor, TEY, EY, PFY, PY, area) %>%
+  db3 %>% 
+    select(Zone = ZONE, Y, Ycor, TEY, EY, PFY, PY, area) %>%
     group_by(Zone) %>%
-    summarize(Y =(sum((Y)*area)/sum(area)),
+    summarize(Y = (sum((Y)*area)/sum(area)),
               Ycor = (sum((Ycor)*area)/sum(area)),
               TEY = (sum((TEY)*area)/sum(area)),
-              EY = (sum((EY)*area, na.rm=TRUE)/sum(area)),
+              EY = (sum((EY)*area, na.rm=TRUE)/sum(area[!is.na(EY)])), # there are NA values -> hence understimate of true EY
               PFY = (sum((PFY)*area)/sum(area)),
               PY = (sum((PY)*area)/sum(area))
     ),
-  db9%>% 
+  db3 %>% 
     dplyr::select(Zone = ZONE, Y, Ycor, TEY, EY, PFY, PY, area) %>%
     summarize(Zone = "Total", 
               Y =(sum((Y)*area)/sum(area)),
               Ycor = (sum((Ycor)*area)/sum(area)),
               TEY = (sum((TEY)*area)/sum(area)),
-              EY = (sum((EY)*area, na.rm=TRUE)/sum(area)),
+              EY = (sum((EY)*area, na.rm=TRUE)/sum(area[!is.na(EY)])),
               PFY = (sum((PFY)*area)/sum(area)),
               PY = (sum((PY)*area)/sum(area)))) %>%
-  dplyr::select(Zone, Y, Ycor, TEY, EY, PFY, PY)
+  select(Zone, Y, Ycor, TEY, EY, PFY, PY)
 
 
 # Table with absolute yield gap information per zone
 # Note that by definition, YG_s computed by weighting individual YG_s values is not the same as multiplication of weighted TEYG_s etc.
 # We therefore calculate YG_s as the product of the weighted components.
 ZonalYieldGap_l <- bind_rows(
-  db9 %>% 
-    dplyr::select(Zone = ZONE, ERROR_l, TEYG_l, EYG_l, EUYG_l, TYG_l, YG_l_Ycor, YG_l, area) %>%
+  db3 %>% 
+    select(Zone = ZONE, ERROR_l, TEYG_l, EYG_l, EUYG_l, TYG_l, YG_l_Ycor, YG_l, area) %>%
     group_by(Zone) %>%
     summarize(ERROR_l =(sum((ERROR_l)*area, na.rm=TRUE)/sum(area)),
               TEYG_l = (sum((TEYG_l)*area, na.rm=TRUE)/sum(area)),
-              EYG_l = (sum((EYG_l)*area, na.rm=TRUE)/sum(area)),
-              EUYG_l = (sum((EUYG_l)*area, na.rm=TRUE)/sum(area)),
+              EYG_l = (sum((EYG_l)*area, na.rm=TRUE)/sum(area[!is.na(EYG_l)])),
+              EUYG_l = (sum((EUYG_l)*area, na.rm=TRUE)/sum(area[!is.na(EUYG_l)])),
               TYG_l = (sum((TYG_l)*area, na.rm=TRUE)/sum(area)),
               YG_l = (sum((YG_l)*area, na.rm=TRUE)/sum(area)),
               YG_l_Ycor = (sum((YG_l_Ycor)*area, na.rm=TRUE)/sum(area)),
               YG_lcheck = (ERROR_l+TEYG_l+EYG_l+EUYG_l+TYG_l)),
-  db9 %>% 
+  db3 %>% 
     dplyr::select(Zone = ZONE, ERROR_l, TEYG_l, EYG_l, EUYG_l, TYG_l, YG_l_Ycor, YG_l, area) %>%
     summarize(Zone = "Total", 
               ERROR_l =(sum((ERROR_l)*area, na.rm=TRUE)/sum(area)),
               TEYG_l = (sum((TEYG_l)*area, na.rm=TRUE)/sum(area)),
-              EYG_l = (sum((EYG_l)*area, na.rm=TRUE)/sum(area)),
-              EUYG_l = (sum((EUYG_l)*area, na.rm=TRUE)/sum(area)),
+              EYG_l = (sum((EYG_l)*area, na.rm=TRUE)/sum(area[!is.na(EYG_l)])),
+              EUYG_l = (sum((EUYG_l)*area, na.rm=TRUE)/sum(area[!is.na(EUYG_l)])),
               TYG_l = (sum((TYG_l)*area, na.rm=TRUE)/sum(area)),
               YG_l = (sum((YG_l)*area, na.rm=TRUE)/sum(area)),
               YG_l_Ycor = (sum((YG_l_Ycor)*area, na.rm=TRUE)/sum(area)),
@@ -97,7 +97,7 @@ ZonalYieldGap_l_sh <- ZonalYieldGap_l %>%
 
 
 # Calculation of potential increase in production when gap is closed on the basis of sample
-GapClose1 <- mutate(db9, PROD = Y * area,
+GapClose1 <- mutate(db3, PROD = Y * area,
                     ERROR_close = ERROR_l*area,
                     TEYG_close = TEYG_l*area,
                     EYG_close = EYG_l*area,
@@ -132,14 +132,14 @@ SPAMData <- readRDS(file.path(root, "Cache/SPAMData_ETH.rds"))  %>%
 # With a very low potential. The all over impact is low as the involved regions have very limited maize production.
 
 
-GapClose2 <- db9 %>% 
+GapClose2 <- db3 %>% 
   group_by(ZONE) %>%
   summarize(
     TEYG_s = sum(TEYG_s*area)/sum(area),
-    EYG_s = sum(EYG_s*area)/sum(area),
+    EYG_s = sum(EYG_s*area)/sum(area[!is.na(EYG_s)]),
     #TYG_s = (sum((TYG_s)*area)/sum(area)), # TYG_s based on LSMS yield, not used
     #YG_s = (sum((YG_s)*area)/sum(area)), # YG_s based on LSMS yield, not used
-    EUYG_s = sum(EUYG_s*area)/sum(area),
+    EUYG_s = sum(EUYG_s*area)/sum(area[!is.na(EUYG_s)]),
     PY = mean(PY, na.rm=T)) %>% # Average of potential yield from GYGA
   left_join(SPAMData, .) %>%
   mutate(
