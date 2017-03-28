@@ -18,18 +18,6 @@ p_load(frontier)
 
 # get data
 db1 <- readRDS(file.path(root, "Cache/db1.rds"))
-db1 <- unique(db1)
-
-# get square and interaction terms for translog
-db1$logNsq <- db1$logN^2
-db1$loglabsq <- db1$loglab^2
-db1$logseedsq <- db1$logseed^2
-db1$logarea_tot <- log(db1$area_tot)
-
-# Also divide GGD and AI by 1000
-# to get a more interpretable coef
-db1$GGD <- db1$GGD/1000
-db1$AI <- db1$AI/1000
 
 # make a summary tab of variables for paper
 sum_dat <- select(db1, yld, N, area, lab, seedha,
@@ -301,23 +289,39 @@ sf11x9 <- sfa(logyld ~ logN + loglab + logseed +
 # translog production with the 
 # exogenous variables
 
-model1 <- as.data.frame(summary(sf1)$mleParam[, 1])
-model2 <- as.data.frame(summary(sf11)$mleParam[, 1])
-model3 <- as.data.frame(summary(sf1x9)$mleParam[, 1])
-model4 <- as.data.frame(summary(sf11x9)$mleParam[, 1])
-model1$Variable <- row.names(model1)
-model2$Variable <- row.names(model2)
-model3$Variable <- row.names(model3)
-model4$Variable <- row.names(model4)
+model1 <- sprintf("%.3f", round(summary(sf1)$mleParam[, 1], 3))
+model2 <- sprintf("%.3f", round(summary(sf11)$mleParam[, 1], 3))
+model3 <- sprintf("%.3f", round(summary(sf1x9)$mleParam[, 1], 3))
+model4 <- sprintf("%.3f", round(summary(sf11x9)$mleParam[, 1], 3))
+
+# get stars from pvals
+p1 <- cut(summary(sf1)$mleParam[, 4], breaks=c(0, 0.01, 0.05, 1), labels=c("**", "*", ""), include.lowest = TRUE)
+p2 <- cut(summary(sf11)$mleParam[, 4], breaks=c(0, 0.01, 0.05, 1), labels=c("**", "*", ""), include.lowest = TRUE)
+p3 <- cut(summary(sf1x9)$mleParam[, 4], breaks=c(0, 0.01, 0.05, 1), labels=c("**", "*", ""), include.lowest = TRUE)
+p4 <- cut(summary(sf11x9)$mleParam[, 4], breaks=c(0, 0.01, 0.05, 1), labels=c("**", "*", ""), include.lowest = TRUE)
+
+# add stars to models
+model1 <- as.data.frame(paste(model1, p1, sep=""))
+model2 <- as.data.frame(paste(model2, p2, sep=""))
+model3 <- as.data.frame(paste(model3, p3, sep=""))
+model4 <- as.data.frame(paste(model4, p4, sep=""))
+
+# set row names
+model1$Variable <- names(coef(sf1))
+model2$Variable <- names(coef(sf11))
+model3$Variable <- names(coef(sf1x9))
+model4$Variable <- names(coef(sf11x9))
+
+# join all results
 results_tab <- full_join(model1, model2) %>%
   full_join(model3) %>%
   full_join(model4) %>%
   select(Variable, everything())
 names(results_tab) <- c("Variable", "model 1", "model 2",
                         "model 3", "model 4")
-results_tab[, -1] <- round(results_tab[, -1], 3)
-results_tab[is.na(results_tab)] <- ""
-
+move <- which(results_tab$Variable %in% c("sigmaSq", "gamma"))
+results_tab <- rbind(results_tab[-move, ], results_tab[move, ])
+row.names(results_tab) <- NULL
 
 # from the models which have exogenous determinants
 # of inefficiency, calculate the marginal effects

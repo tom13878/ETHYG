@@ -28,13 +28,13 @@ options(digits=4)
 source(file.path(root, "Code/sfaTable.R"))
 
 ### LOAD DATA
-db9 <- readRDS(file.path(root, "Cache/db9.rds"))
+db3 <- readRDS(file.path(root, "Cache/db3.rds"))
 #db_sfaCD_CRE_Z <- readRDS(file.path(root, "Cache/db_sfaCD_CRE_Z.rds"))
 db1 <- readRDS(file.path(root, "Cache/db1.rds"))
 
 # SUMMARY STATISTICS
 # Number of unique households
-length(unique(db9$hhid))
+length(unique(db3$hhid))
 
 # summary statistics
 # dbsum <- db_sfaCD_CRE_Z %>% dplyr::select(Yield = yld, ImprovedSeeds = impr, Slope = slope, 
@@ -47,14 +47,14 @@ length(unique(db9$hhid))
 
 # Table with key information per zone and subtotals
 Yieldsum <- bind_rows(
-  db9 %>% 
+  db3 %>% 
     dplyr::select(Y, N, yesN, ZONE, surveyyear, area) %>%
     group_by(ZONE) %>%
     summarize(Yield = mean(Y),
               Yield_w = (sum(Y*area)/sum(area)),
               NitrogenUser = round(mean(yesN)*100, digits=1),
               Number=n()),
-  db9 %>%
+  db3 %>%
     dplyr::select(Y, N, yesN, area, ZONE) %>%
     summarize(ZONE = "Total",  
               Yield = mean(Y),
@@ -65,14 +65,14 @@ Yieldsum <- bind_rows(
 
 # Table with key information per zone and subtotals for pure maize plots
 Yieldsum_pure <- bind_rows(
-  db9 %>%
+  db3 %>%
     filter(crop_count2==1) %>%
     dplyr::select(Y, N, yesN, ZONE, surveyyear, area) %>%
     group_by(ZONE) %>%
     summarize(Yield_p = mean(Y),
               Yield_w_p = (sum(Y*area)/sum(area))
     ),
-  db9 %>%
+  db3 %>%
     filter(crop_count2==1) %>%
     dplyr::select(Y, N, yesN, ZONE, area) %>%
     summarize(ZONE = "Total", 
@@ -84,12 +84,12 @@ Yieldsum_pure <- bind_rows(
 
 
 Nitrogensum <- bind_rows(
-  db9 %>% 
+  db3 %>% 
     dplyr::select(Y, N, yesN, ZONE) %>%
     filter(yesN ==1) %>%
     group_by(ZONE) %>%
     summarize(Nitrogen = mean(N)),
-  db9 %>%
+  db3 %>%
     dplyr::select(Y, N, yesN, ZONE) %>%
     filter(yesN ==1) %>%
     summarize(ZONE= "Total", Nitrogen = mean(N))
@@ -139,8 +139,9 @@ Zonalsum <- left_join(Yieldsum, Nitrogensum) %>%
 
 
 # Table with yield levels
+db4 <- filter(db3, !is.na(EY))
 YieldLevels <- bind_rows(
-  db9 %>% 
+  db4 %>% 
     dplyr::select(Zone = ZONE, Y, Ycor, TEY, EY, PFY, PY, area) %>%
     group_by(Zone) %>%
     summarize(Y =(sum((Y)*area)/sum(area)),
@@ -150,7 +151,7 @@ YieldLevels <- bind_rows(
               PFY = (sum((PFY)*area)/sum(area)),
               PY = (sum((PY)*area)/sum(area))
     ),
-  db9 %>% 
+  db4 %>% 
     dplyr::select(Zone = ZONE, Y, Ycor, TEY, EY, PFY, PY, area) %>%
     summarize(Zone = "Total", 
               Y =(sum((Y)*area)/sum(area)),
@@ -166,7 +167,7 @@ YieldLevels <- bind_rows(
 # Note that by definition, YG_s computed by weighting individual YG_s values is not the same as multiplication of weighted TEYG_s etc.
 # We therefore calculate YG_s as the product of the weighted components.
 ZonalYieldGap_s <- bind_rows(
-  db9 %>% 
+  db4 %>% 
     dplyr::select(Zone = ZONE, ERROR_s, TEYG_s, EYG_s, EUYG_s, TYG_s, YG_s_Ycor, YG_s, area) %>%
     group_by(Zone) %>%
     summarize(ERROR_s =(sum((ERROR_s)*area, na.rm=TRUE)/sum(area)),
@@ -184,7 +185,7 @@ ZonalYieldGap_s <- bind_rows(
               YG = (1-(ERROR_s*TEYG_s*EYG_s*EUYG_s*TYG_s))*100,
               YG_Ycor = (1-(TEYG_s*EYG_s*EUYG_s*TYG_s))*100
     ),
-  db9 %>% 
+  db3 %>% 
     dplyr::select(Zone = ZONE, ERROR_s, TEYG_s, EYG_s, EUYG_s, TYG_s, YG_s_Ycor, YG_s, area) %>%
     summarize(Zone = "Total", 
               ERROR_s =(sum((ERROR_s)*area, na.rm=TRUE)/sum(area)),

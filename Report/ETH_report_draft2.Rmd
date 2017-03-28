@@ -35,11 +35,16 @@ panderOptions('keep.trailing.zeros', TRUE)
 
 source(file.path(root, "Code/production_function_tests.R"))
 
+# Source figures, tables and maps
+source(file.path(root, "Code/ETH_fig.R"))
+source(file.path(root, "Code/ETH_tab.R"))
+# source(file.path(root, "Code/ETH_map.R"))
+
 ```
 
 # Abstract
 
-We investigate the determinants of the maize yield gap in a nationally representative sample of Ethiopian smallholder farmers.  
+This paper adopts the framework developed by Dijk et al. (2016) to decompose the maize yield gap in Ethiopia, combining information from household survey data and 
 
 # Introduction
 
@@ -47,7 +52,7 @@ We investigate the determinants of the maize yield gap in a nationally represent
 
 The main data source is the Living Standards Measurement Study - Integrated Surveys on Agriculture (LSMS-ISA) Ethiopian Socioeconomic survey (ESS). This survey was implemented by the Central Statistical Agency of Ethiopia (CSA) and was funded by the World Bank through a grant from the Bill and Melinda Gates foundation. Although part of a panel, the first wave of the ESS did not record crop harvested quantities for a majority of plots making it unsuitable for this analysis. However, the second wave (2013-2014) of the ESS provides detailed information on crop production, input use, environmental and scocioeconomic variables. 
 
-In order to calculate maize yields and input rates, accurate measurements of field areas are required. GPS measurements were recorded for the vast majority of plots in the second wave of the ESS. For those plots lacking a GPS measurement, multiple imputation was used following LSMS-ISA World Bank (2014). Maize yield (`yld`), nitrogen rates (`N`), labour rates (`lab`) and seed rates (`seedha`), are measures of the per hectare application of each variable to a plot. In some cases more than one crop was grown per plot and this is captured in the analysis by the incorporation of variables referring to the number of crops on a field, and whether a field had more than one crop (`crop_count`, `crop_count2`, respectively). Furthermore, variables covering the Ph, soil quality, slope and elevation of the field, and environmental characteristics were also recorded. The longitude and latitude of each household was recorded allowing climate, soil and geographical data to be matched to households from sources including IFPRI, Worlclim, NASA and the Ethiopian Roads Agency amongst others.
+In order to calculate maize yields and input rates, accurate measurements of field areas are required. GPS measurements were recorded for the vast majority of plots in the second wave of the ESS. For those plots lacking a GPS measurement, multiple imputation was used following LSMS-ISA World Bank (2014). Maize yield (`yld`), nitrogen rates (`N`), labour rates (`lab`) and seed rates (`seedha`), are measures of the per hectare application of each variable to a plot. In some cases more than one crop was grown per plot and this is captured in the analysis by the incorporation of variables referencing the number of crops on a field, and whether a field had more than one crop (`crop_count`, `crop_count2`, respectively). Furthermore, variables covering the Ph, soil quality, slope and elevation of the field, and environmental characteristics were also included The longitude and latitude of each household was recorded allowing climate, soil and geographical data to be matched to households from sources including IFPRI, Worlclim, NASA and the Ethiopian Roads Agency amongst others.
 
 __Table 1: Descriptive Statistics__
 
@@ -78,13 +83,39 @@ Where $y_i$ is the log of maize yield and $x_i$ is the log of the inputs includi
 f_\epsilon(\epsilon_i) = \frac{2}{\sigma}\phi(\frac{\epsilon_i}{\sigma})\Phi(-\frac{\lambda\epsilon_i}{\sigma})
 \end{equation}
 
-Given a suitable functional form $f(.)$ The parameters of the stochastic frontiers model can be estimated using maximum likelihood (ML) estimation. Common production functions that have been used in crop yield models include the Cobb Douglass and translog production functions. The translog is the more flexible of the two and includes the squares and interactions of the inputs. In addition we can append environmental variables such as the slope and elevation of the plot to the chosen production form yielding the following model in the translog case:
+Given a suitable functional form $f(.)$ The parameters of the stochastic frontiers model can be estimated using maximum likelihood (ML) estimation. Common production functions that have been used in crop yield models include the Cobb Douglass and translog production functions. The translog is the more flexible of the two and includes the squares and interactions of the inputs, nesting the cobb douglass functional form inside its model specification. Which allows a LR test
 
 \begin{equation}\label{folstandardform}
-y_i = \alpha + \sum_{k=1}^K \beta_k x_{ik} \sum_{k=1}^K \sum_{j=1}^K \gamma_{jk}x_{ij} x_{ik} + W_i \theta + \epsilon_i
+Y_i = f(X_{i1}, X_{i2}, \ldots, X_{iK}; \beta) E_i
 \end{equation}
 
-Where $W_i$ are the environmental variables. With a slight modification to the density of $\epsilon_i$ we can allow the mean of the inefficiency term $u_i$ to depend on exogenous factors that explain technical inefficiency such as education, age and access to markets. 
+For example in the translog case
+
+\begin{equation}\label{folstandardform}
+Y_i = exp \Big(\alpha + \sum_{k=1}^K \beta_k ln X_{ik} + \sum_{k=1}^K \sum_{j=1}^K \gamma_{jk} ln X_{ik} ln X_{ij} \Big) E_i
+\end{equation}
+
+Which can then be written in log form
+
+\begin{equation}\label{folstandardform}
+y_i = \alpha + \sum_{k=1}^K \beta_k x_{ik} + \sum_{k=1}^K \sum_{j=1}^K \gamma_{jk} x_{ik} x_{ij} + \epsilon_i
+\end{equation}
+
+Where $y_i$ is the log of the dependent variable, and we have replaced $ln X$ with $x$. The error term $\epsilon_i$ is the log of the error term and is comprised of the truncated normal technical inefficiency and the symmetric error term $\epsilon_i = v_i - u_i$ as shown above. Setting the parameters $delta$ equal to zero we see that the cobb douglass form is nested within the translog. In addition we can include environmental variables such as the slope and elevation of the plot to the chosen production form yielding the following model in the translog case:
+
+\begin{equation}\label{folstandardform}
+y_i = \alpha + \sum_{k=1}^K \beta_k x_{ik} + \sum_{k=1}^K \sum_{j=1}^K \gamma_{jk}x_{ij} x_{ik} + W_i \theta + \epsilon_i
+\end{equation}
+
+This form of the translog production function is suitable for estimation via ML SF using the specification in equation 1 - 4 and the density in equation 5. We are interested in the factors which determine inefficiency and this can be incorporated by ammending equation 5 to allow the mean of the truncated normal distribution ( pre-truncated normal?) to depend on exogenous deteminants of inefficiency such as such as the education, age or gender of the farmer or access to markets and extension services. In this case equation 4 becomes
+
+\begin{equation}\label{folstandardform}
+u_i \sim \mathbb{N}^+(z_i\delta, \sigma_u^2)
+\end{equation}
+
+Where $z_i$ are the exogenous determinants of inefficiency. Estimation is still carried out by maximum likelihood using the density for the error term $epsilon_i$ incorporating this new term. 
+
+We cannot solve for the optimal N analytically and instead we rely on numerical methods.
 
 ## Results
 
@@ -102,35 +133,18 @@ __Table 3: Marginal effects (APE) of exogenous determinants of inefficiency__
 pander(ME_tab)
 ```
 
-Although we control for a range of environmental variables, several studies have investigated the possibility of endogeneity between nitrogen and maize yield (Liverpool tasie, smale and mason, etc etc). Endogeneity may occur in the presence of a feedback loop between the error term and the choice of inputs (Amsler 2016). In the stochastic frontiers setting this may involve either the statistical error term, the inefficiency term or both. One way of testing for the presence of endogeneity is to employ a control function approach, estimating a first stage reduced form model for the endogenous variable and using the predicted residuals as a regressor in a second stage full structural model. The null hypothesis that the endogenous variable is exogenous is rejected based on the significance of a standard t or F test. The control function approach is an alternative to two stage least squares estimation which is suitable when using a nonlinear second stage estimation such as in the case of a translog production function. It has the additional advantage that only one control function is required per endogenous inputs, rather than four, corresponding to the four terms involving nitrogen, that would be required in 2SLS setting. 
 
+__Figure 3: Potential yield__
 
-```{r echo=FALSE}
-FS_tab <- readRDS(file.path(root, "Report/tables/FS_endog_tab.rds"))
-SS_tab <- readRDS(file.path(root, "Report/tables/SS_endog_tab.rds"))
+```{r Fig_2}
+Fig_waterfall
 ```
 
-__Table 4: First stage endogeneity__
+
+__Table 4: __
+
 ```{r}
-pander(FS_tab)
+pander(ZonalYieldGap_l_sh)
 ```
 
-
-__Table 5: Second stage endogeneity__
-```{r}
-pander(SS_tab)
-```
-
-Although incorporating the residuals from the reduced form regression tests for endogeneity it does not provide suitable estimation in a stochastic frontiers framework. In other words, knowing that nitrogen is endogenous to the relationship does not take us closer to estimating the frontier function. Instead, a recent survey of methods for incorporating endogeneity in stochastic frontiers models suggests the use of corrected two stage least squares (C2SLS) or Limited information maximum likelihood (LIML) as frameworks for estimating the stochastic frontiers model. We cannot add fitted values for the endogenous variable to the normal COLS or SF ML estimation. Moreover, the composite error term $epsilon_i$ may be correlated with either the statistical noise or the inefficinecy and additional assumptions are required to determine which. determine this based on what could lead to inefficinecy 
-Endogeneity formally refers to the situation where the residuals in the estimation are correlated with an explanatory variable. In this case the explanatory variable is then referred to as the endogenous variable. For our estimation we focus on the potential endogeneity of nitrogen which enters the translog production function in a log level term and a log squared term. As a result we need a minimum of two identifying equations in order to be able to estimate with a control function and remove the endogeneityLIML outperforms 2sls when the instruments are weak or when there are many instruments relative to the number of observations
-
-control functions are used to break the correlation between the endogenous variables and unobservables affecting the response (Wooldrdige 2010) and are often used to handle endogeneity in non-linear models when techniques such as two stage least squares are not applicable. Similar to two stage least squares this approach requires exogenous variables which do not appear in the second stage or structural regression but do appear in the first stage regression. In other words, variables which affect the quantity of nitrogen used, but not the yield response equation.
-
-So due to the squared term on nitrogen we say that this model is nonlinear in the endogenous variable
-We should be careful to include all terms that appear in the second stage in the first stage, with the exception of the endogenous variable which appears as the dependent variable on the right hand side.
-When we have a translog (nonlinear function) special attention is needed for identification and choice of instruments.
-Feedback loop in the sense that you can write yield as a function of nitrogen but you can also write nitrogen as a function of yield.
-We make the assumption that the endogenous variable is correlated with statistical noise but not with inefficiency.
-If nitrogen is correlated with the statistical error term then we also expected its square to be correlated with that term too.
-In the presense of endogeneity the maximum likelihood estimates of the stochastic frontiers model will not be consistent. 
 
