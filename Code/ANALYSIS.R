@@ -13,30 +13,18 @@ root <- find_root(is_rstudio_project)
 
 # get data
 db1 <- readRDS(file.path(root, "Cache/db1.rds"))
-db1 <- unique(db1)
 
 # there is no predict function in the sfa package
 # but we would like one - make our own and source
 # it in
 source(file.path(root, "Code/predict.sfa.R"))
 
-# get square and interaction terms for translog
-db1$logNsq <- db1$logN^2
-db1$loglabsq <- db1$loglab^2
-db1$logseedsq <- db1$logseed^2
-db1$logarea_tot <- log(db1$area_tot)
-
-# Also divide GGD and AI by 1000
-# to get a more interpretable coef
-db1$GGD <- db1$GGD/1000
-db1$AI <- db1$AI/1000
-
 # run the model
 sf11x9 <- sfa(logyld ~ logN + loglab + logseed +
                 logNsq + loglabsq + logseedsq +
                 logN:loglab + logN:logseed +
                 loglab:logseed + logarea + phdum55_2_70 +
-                crop_count2 + dumoxen + yesN + SOC2 + logslope +
+                crop_count2 + dumoxen + SOC2 + logslope +
                 elevation + GGD + AI + TS|
                 -1 + age + sex + ed_any + title +
                 extension + credit + dist_market +
