@@ -147,6 +147,27 @@ db1$compost <- ifelse(db1$compost %in% 2, 1,
                      ifelse(db1$compost %in% 1, 0, NA))
 
 # remove everything but the cleaned data
-rm(db0, dbP, Prices)
+rm(db0, dbP, Prices, ETH2013)
+
+# 
+db1 <- unique(db1)
+
+# get square and interaction terms for translog
+db1$logNsq <- db1$logN^2
+db1$loglabsq <- db1$loglab^2
+db1$logseedsq <- db1$logseed^2
+db1$logarea_tot <- log(db1$area_tot)
+
+# Also divide GGD and AI by 1000
+# to get a more interpretable coef
+db1$GGD <- db1$GGD/1000
+db1$AI <- db1$AI/1000
+
+# there are several core variables which
+# have extreme values. 
+db1 <- filter(db1,
+              lab < 3000,
+              seedha < 1000 | is.na(seedha)) 
+
 
 saveRDS(db1, file.path(root, "Cache/db1.rds"))
