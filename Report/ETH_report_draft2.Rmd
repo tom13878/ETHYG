@@ -1,7 +1,7 @@
 ---
 title: "Ethiopia Stochastic Frontiers Analysis Draft 2"
 author: "Tomas Morley"
-date: "20 March 2017"
+date: "30 March 2017"
 output:
   pdf_document: default
   word_document:
@@ -44,15 +44,34 @@ source(file.path(root, "Code/ETH_tab.R"))
 
 # Abstract
 
-This paper adopts the framework developed by Dijk et al. (2016) to decompose the maize yield gap in Ethiopia, combining information from household survey data and 
+This paper adopts the framework developed by Dijk et al. (2016) to decompose the maize yield gap in Ethiopia. The yield gap can be decomposed into (1) the technical efficiency yield gap, (2) the allocative yield gap, (3) the economic yield gap and (4) the technology yield gap. In this study we combine micro level household survey data on a cross section of Ethiopian maize farmers with results from crop simulation models in order to decompose. The decomposition suggests that the technology yield gap makes up the largest  share of the total yield gap followed by the feasible yield gap, the technical efficiency yield gap and the economic yield gap. However, this progression is not consistent over all zones. The results from this paper can be used to design targeted policy and and farming recommendations at the plot, farm household, local and national level, taking into account geographical variations in the results.
 
 # Introduction
 
+Ethiopia has great agricultural potential because of its vast areas of fertile land, diverse climate, generally adequate rainfall, and large labour pool. Consequently, agriculture has remained as the foundation of Ethiopia’s economy, accounting for around 40 percent of the national income and around 80 percent of the total employment (EEA, 2015). It also supplies food to the urban areas and raw materials to the manufacturing sector. Many other economic activities depend on agriculture, including marketing, processing, and export of agricultural products. Among the major drivers of GDP growth crop production had been the second most important contributor next to construction . The agricultural sector has, therefore, been crucial for the overall performance of the Ethiopian economy and will likely continue to be the backbone of the Ethiopian economy for years to come. The sector is expected to play a central role in decreasing poverty and increasing growth in Ethiopia.
+
+Agricultural production in Ethiopia is overwhelmingly of a subsistence nature where millions of smallholder farmers cultivate on average less than one hectare of land. About 80 per cent of smallholder production is destined for home consumption and use as seed for subsequent harvests. The smallholder sector is the main source of employment, agricultural GDP, export earnings, and food and raw materials supplies to urban areas and food industries. Crop production is by far the most dominant sub-sector, accounting for over 97 per cent of agricultural output and more than 60% of agricultural GDP (RATES, 2003). It is estimated that crop production and livestock husbandry account for over 86 per cent of the agricultural GDP (WB, 2013).
+
+Despite this potential, agricultural productivity in Ethiopia is very low compared to other Sub-Saharan African countries. Ethiopian agriculture has remained underdeveloped due to periodic drought, soil degradation, deforestation, high population density, poor infrastructure (making it difficult and expensive to get goods to market) and low level of technology use among others. 
+
+Maize is one of the most important staple crops in terms of calorie intake for millions of Ethiopians and is grown in many parts of the country. Because of its large geographical coverage and the scale of production, it plays a critical role in the food security of the country and particularly the poor. According to the CSA 2004/5 national survey of consumption expenditure, maize accounted for about 17 percent of the national calorie intake followed by sorghum (14 percent) and wheat (13 percent) among the major cereals (Taffesse et al., 2012). Maize is second to teff in terms of area, but it ranks first among cereals in production. According to CSA (2010) maize accounted for around 30 percent of all cereals produced in the country and more than 20 percent of the land cultivated by all cereal crops. According to the Agricultural Growth Program (AGP) Ethiopia is the fifth largest producer of maize in Africa in terms of the area devoted to maize but is second, only to South Africa, in yield and third, after South Africa and Nigeria, in production and smallholder farmers and around 9 million smallholder farmers account for more than 95 % of the total maize area and production in the country (http://ethioagp.org/maize-2/).  
+
+Maize is grown in the mid highland areas of the country and there are huge tracts of land in all regions suitable for maize farming. Maize is grown primarily in the Amhara, Oromia and SNNPR regions of the country from which 5 zones namely West Wellega, Jimma, East Shewa, East Wellega, and West Gojjam account for over 44 percent of total smallholder production. Marketable surplus is mainly produced in these high potential zones, and the production in the other zones is mainly for subsistence. Maize production has increased in Ethiopia in recent years, due in large part to an improvement in the supply of seeds to farmers. While there have been significant gains made in maize production over the past decade, there is still a significant opportunity to further increase productivity. Ethiopia can be considered a success story for maize production as, apart from South Africa, it is the only country in Sub-Saharan Africa that shows substantial progress in maize productivity and input use (Abate et al., 2015) After a period of limited growth, yield more than doubled from around 1.5 ton/ha in 2000 to over 3 ton/ha in 2013 (FAOSTAT). The government has worked hard to ensure timely delivery of seeds and fertilizer, as well as to improve agricultural extension services and trainings for farmers. Maize yield levels are also slightly above the regional average. Despite the recent progress in productivity, yield levels in Ethiopia are still very low relative to what could be produced. According to the Central Statistical Agency of Ethiopia (CSA, 2010), the low level of crop productivity in the country is attributed to inefficient farming methods that utilize outdated crop production and protection technologies, and fragmented pieces of land holdings. Estimates indicate that the current maize yield could be doubled if farmers adopt higher quality inputs and proven agronomy best practices. Data from the Global Yield Gap Atlas (GYGA) shows that the average yield gap is on average 82% in Ethiopia. This is in strong contrast with for example Latin American countries which are able to reach around 45% of potential yield.  
+
+Yield gap measurements are a very powerful metric to determine the absolute potential to increase production and are therefore frequently used in policy studies (Sumberg, 2012). This makes them particularly useful as a basis for forward looking scenario studies to assess future agricultural production and food security. By ‘controlling’ for the biophysical production environment, yield gaps can easily be compared across regions and countries and, therefore, provide a good indicator of relative (potential) performance. 
+A limitation is that yield gap measurements offer only limited guidance in explaining the observed difference between actual and potential yield. It has been argued that it simply not cost-efficient for farmers to use the amount of inputs that are needed to reach potential. This is underscored by Lobell et al. (Lobell et al., 2009), who compared a large number of yield gap studies and find that (best-practice) farmers reach only around 80% of potential yield. The ‘exploitable’ yield gap is therefore lower than the total yield gap and is governed by economic constraints such as input prices and market access. Other important causes for the existence of yield gaps are differences in farm-level characteristics (e.g. size, education and off farm activities) and the socio-economic context (e.g. subsidies, rural infrastructure and access to finance).
+
+The aim of this paper is the to provide a detailed analysis of the maize yield gap in Ethiopia. We decompose the conventional yield gap into four elements that capture, technical efficiency, economic efficiency, availability of technologies and an ‘unexploitable’ yield gap element.
+
+The structure of this paper is as follows. Section 2 describes the econometric procedure used to decompose the yield gaps. Section 3 describes the data used for this study. Section 4 presents the results of our estimations and yield gap calculations. Section 5 deiscusses the results. Section 7 concludes.
+
 # Data
 
-The main data source is the Living Standards Measurement Study - Integrated Surveys on Agriculture (LSMS-ISA) Ethiopian Socioeconomic survey (ESS). This survey was implemented by the Central Statistical Agency of Ethiopia (CSA) and was funded by the World Bank through a grant from the Bill and Melinda Gates foundation. Although part of a panel, the first wave of the ESS did not record crop harvested quantities for a majority of plots making it unsuitable for this analysis. However, the second wave (2013-2014) of the ESS provides detailed information on crop production, input use, environmental and scocioeconomic variables. 
+The main data source is the Living Standards Measurement Study - Integrated Surveys on Agriculture (LSMS-ISA) Ethiopian Socioeconomic survey (ESS). This survey was implemented by the Central Statistical Agency of Ethiopia (CSA) and funded by the World Bank through a grant from the Bill and Melinda Gates foundation. Although part of a panel, the first wave of the ESS did not record crop harvested quantities for a majority of plots making it unsuitable for this analysis. However, the second wave (2013-2014) of the ESS provides detailed information on crop production, input use, environmental and scocioeconomic variables. 
 
-In order to calculate maize yields and input rates, accurate measurements of field areas are required. GPS measurements were recorded for the vast majority of plots in the second wave of the ESS. For those plots lacking a GPS measurement, multiple imputation was used following LSMS-ISA World Bank (2014). Maize yield (`yld`), nitrogen rates (`N`), labour rates (`lab`) and seed rates (`seedha`), are measures of the per hectare application of each variable to a plot. In some cases more than one crop was grown per plot and this is captured in the analysis by the incorporation of variables referencing the number of crops on a field, and whether a field had more than one crop (`crop_count`, `crop_count2`, respectively). Furthermore, variables covering the Ph, soil quality, slope and elevation of the field, and environmental characteristics were also included The longitude and latitude of each household was recorded allowing climate, soil and geographical data to be matched to households from sources including IFPRI, Worlclim, NASA and the Ethiopian Roads Agency amongst others.
+In both waves of the data respondents were visited twice as part of a post planting and post harvesting questionnaire. Through these questionnaires, detailed information at the plot level was gathered concerning the preparation of the plot, the use of chemicals, type of crops, labour inputs and the size of the harvest. Both years of the data include GPS measured plot areas which are essential for accurate measurement of crop yields and input rates. In addition to agricultural activities, a broad range of socio-economic characteristics were recorded including the gender, age and level of education of the household head, as well as shocks faced by the household. Moreover, the ESS also includes the longitude and latitude of each household surveyed. This makes it possible to link the ESS households with external geo-spatial data sources such as climate, soil and infrastructure variables.
+
+In order to calculate maize yields and input rates, accurate measurements of field areas are required. GPS measurements were recorded for the vast majority of plots in the second wave of the ESS. For those plots lacking a GPS measurement, multiple imputation was used following LSMS-ISA World Bank (2014). Maize yield (`yld`), nitrogen rates (`N`), labour rates (`lab`) and seed rates (`seedha`), are measures of the per hectare application of each variable to a plot. In some cases more than one crop was grown per plot and this is captured in the analysis by the incorporation of variables referencing the number of crops on a field, and whether a field had more than one crop (`crop_count`, `crop_count2`, respectively). Furthermore, variables covering the Ph, soil quality, slope and elevation of the field, and growing conditions derived from crop simulation models were also included. The longitude and latitude of each household was recorded allowing climate, soil and geographical data to be matched to households from sources including IFPRI, Worlclim, NASA and the Ethiopian Roads Agency amongst others. A full  Potential water-limited yield is taken from the Global Yield Gap Atlas (GYGA).
 
 __Table 1: Descriptive Statistics__
 
@@ -61,6 +80,10 @@ pander(sum_tab)
 ```
 
 ## Estimation procedures
+
+The analyitical framework in this paper follows Dijk et al. (2016), and decomposes the yield gap into its constituent parts. Figure 1 illustrates this analystical framework. A key part of the estimation procedure is the solid black production function that relates the maize yield to nitrogen application rates. This function 
+
+![](C:/Users/morle001/WEcR/ETHYG/FigTabMap/Framework.png)
 
 The core estimation method in this paper is the stochastic frontiers (SF) method [@Aigner1977; @Meeusen1977]. This involves specification of the form of a production function and a composite error term that reflects both statistical error in the model and an assymetric inefficiency term.
 
@@ -77,48 +100,55 @@ v_i \sim \mathbb{N}(0, \sigma_v^2)
 u_i \sim \mathbb{N}^+(0, \sigma_u^2)
 \end{equation}
 
-Where $y_i$ is the log of maize yield and $x_i$ is the log of the inputs including the nitrogen, labour and seed rates. The composite error term $\epsilon_i$ includes a truncated normal inefficiency term $u_i$ and a statistical error term $v_i$ where $u$ and $v$ are independent. [@Aigner1977] show that the composite error term $\epsilon_i$ follows the following density
+Where $y_i$ is the log of maize yield and $x_i$ is the log of the inputs including the nitrogen, labour and seed rates. The composite error term $\epsilon_i$ includes a truncated normal inefficiency term $u_i$ and a statistical error term $v_i$ where $u$ and $v$ are independent. With these specifications [@Aigner1977] show that the composite error term $\epsilon_i$ follows the following density
 
 \begin{equation}\label{folstandardform}
 f_\epsilon(\epsilon_i) = \frac{2}{\sigma}\phi(\frac{\epsilon_i}{\sigma})\Phi(-\frac{\lambda\epsilon_i}{\sigma})
 \end{equation}
 
-Given a suitable functional form $f(.)$ The parameters of the stochastic frontiers model can be estimated using maximum likelihood (ML) estimation. Common production functions that have been used in crop yield models include the Cobb Douglass and translog production functions. The translog is the more flexible of the two and includes the squares and interactions of the inputs, nesting the cobb douglass functional form inside its model specification. Which allows a LR test
+Given a suitable functional form $f(.)$ The parameters of the stochastic frontiers model can be estimated using maximum likelihood (ML) estimation. Common production functions that have been used in crop yield models include the Cobb Douglass and translog production functions. The translog is the more flexible of the two and the Cobb Douglass functional form is nested within the translog allowing selection of the model based on a likelihood ratio test.
 
 \begin{equation}\label{folstandardform}
-Y_i = f(X_{i1}, X_{i2}, \ldots, X_{iK}; \beta) E_i
+Y_i = exp \Big(\alpha + \sum_{k=1}^K \beta_k ln X_{ik} + \sum_{k=1}^K \sum_{j=1}^K \gamma_{jk} ln X_{ik} ln X_{ij} \Big)
 \end{equation}
 
-For example in the translog case
-
-\begin{equation}\label{folstandardform}
-Y_i = exp \Big(\alpha + \sum_{k=1}^K \beta_k ln X_{ik} + \sum_{k=1}^K \sum_{j=1}^K \gamma_{jk} ln X_{ik} ln X_{ij} \Big) E_i
-\end{equation}
-
-Which can then be written in log form
+Or, written in log form and augmented with an error term $\epsilon$, the translog production function can be written
 
 \begin{equation}\label{folstandardform}
 y_i = \alpha + \sum_{k=1}^K \beta_k x_{ik} + \sum_{k=1}^K \sum_{j=1}^K \gamma_{jk} x_{ik} x_{ij} + \epsilon_i
 \end{equation}
 
-Where $y_i$ is the log of the dependent variable, and we have replaced $ln X$ with $x$. The error term $\epsilon_i$ is the log of the error term and is comprised of the truncated normal technical inefficiency and the symmetric error term $\epsilon_i = v_i - u_i$ as shown above. Setting the parameters $delta$ equal to zero we see that the cobb douglass form is nested within the translog. In addition we can include environmental variables such as the slope and elevation of the plot to the chosen production form yielding the following model in the translog case:
+Where the log of the output is written as $y_i$ and the log of the inputs are written as $x_i$. When $\gamma_{jk} = 0$ for all $j$ and $k$, (7) reduces to the Cobb Douglass form. The error term $\epsilon_i$ is comprised of the truncated normal technical inefficiency and the symmetric error term $\epsilon_i = v_i - u_i$ allowing SF ML estimation as described above. In addition we can include environmental variables such as the slope and elevation of the plot to the chosen production form yielding the following model in the translog case:
 
 \begin{equation}\label{folstandardform}
 y_i = \alpha + \sum_{k=1}^K \beta_k x_{ik} + \sum_{k=1}^K \sum_{j=1}^K \gamma_{jk}x_{ij} x_{ik} + W_i \theta + \epsilon_i
 \end{equation}
 
-This form of the translog production function is suitable for estimation via ML SF using the specification in equation 1 - 4 and the density in equation 5. We are interested in the factors which determine inefficiency and this can be incorporated by ammending equation 5 to allow the mean of the truncated normal distribution ( pre-truncated normal?) to depend on exogenous deteminants of inefficiency such as such as the education, age or gender of the farmer or access to markets and extension services. In this case equation 4 becomes
+We are interested in the factors which determine inefficiency and this can be incorporated by ammending equation 5 to allow the mean of the truncated normal distribution ( pre-truncated normal?) to depend on exogenous deteminants of inefficiency such as the education, age or gender of the farmer or access to markets and extension services. In this case equation 4 becomes
 
 \begin{equation}\label{folstandardform}
 u_i \sim \mathbb{N}^+(z_i\delta, \sigma_u^2)
 \end{equation}
 
-Where $z_i$ are the exogenous determinants of inefficiency. Estimation is still carried out by maximum likelihood using the density for the error term $epsilon_i$ incorporating this new term. 
+Where $z_i$ is a vector of exogenous determinants of inefficiency. Estimation is carried out by maximum likelihood using the density for the error term $\epsilon_i$ and incorporating this new term. The resulting coefficinets $\delta$ are not directly interpretable but the marginal effects of the exogenous determinants of technical inefficiency on the mean of technical inefficiency $u_i$ can be derived. We follow Kumbhakar and Sun (2013) and calculate the marginal effects on the conditional mean of technical inefficiency in keeping with the Jondrow et al (1982) estimator. The   
 
-We cannot solve for the optimal N analytically and instead we rely on numerical methods.
+To calculate the economically optimal level of nitrogen we set the marginal physical product of nitrogen equal to the relative prices of nitrogen and maize. The value of nitrogen that solves this relationship is the economically optimal nitrogen input level. However, this value cannot be found analytically. Instead, it is necessary to use numerical methods. The marginal physical product of maize yield with respect to nitrogen is the derivative of a translog production function given by (7):
+
+\begin{equation}\label{folstandardform}
+MPP = \frac{Y}{N}\Big( \beta_k + 2\beta_k + \sum_j ln x_j \Big)
+\end{equation}
+
+Which is then set equal to the relative price of nitrogen and maize $\frac{Pn}{Pm}$.
+
+
+Endogeneity 
+Although a Tobit model may be better given the large number of zeroes. We note from Angrist and Krueger say that an OLS is OK, and Wooldridge also makes this point, although neither seem to explain why.
+
+Recent advances in the study of endogeneity within the context of stochastic frontiers models have provided several estimation methods which we apply to our dataset.
 
 ## Results
 
+We initially test the suitability of a 
 The resulting SF ML estimates are presented in table 1 for four models. Model 1 shows the coefficient estimates for the core translog production function terms. Model 2 extend this to include the exogenous determinants of inefficiences. Models 3 and 4 do likewise and also include the environmental variables.
 
 __Table 2: Translog production function__
