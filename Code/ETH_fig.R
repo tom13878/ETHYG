@@ -99,7 +99,7 @@ ZonalYieldGap_l_sh <- ZonalYieldGap_l %>%
 
 
 # Calculation of potential increase in production when gap is closed on the basis of sample
-GapClose1 <- mutate(db3, PROD = Y * area,
+GapClose1 <- mutate(db4, PROD = Y * area,
                     ERROR_close = ERROR_l*area,
                     TEYG_close = TEYG_l*area,
                     EYG_close = EYG_l*area,
