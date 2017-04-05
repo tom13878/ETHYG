@@ -41,7 +41,7 @@ relprices <- db1$relprice[sf11x9$validObs]
 
 # function to calculate the MPP
 calc_mpp <- function(N, row){
-  row$logN <- log(N) # add one because we cannot take log(0)
+  row$logN <- log(N) 
   logY <- as.matrix(row) %*% xcoef
   Y <- exp(logY)
   MPP <- with(row, ((xcoef["logN"] + 
@@ -148,7 +148,7 @@ db2$EY[predict_dat$logN == 0] <- NA
 # Increase labour and seed rate by 10%
 # turn on all dummies.
 predict_dat2 <- mutate(predict_dat,
-                       logN = log(200),
+                       logN = log(400),
                        logNsq = logN^2,
                        loglab = loglab + log(1.5),
                        loglabsq = loglab^2,
