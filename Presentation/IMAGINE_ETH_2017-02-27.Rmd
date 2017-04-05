@@ -1,7 +1,7 @@
 ---
 title: "Ethiopia Yield Gap Analysis"
 author: "Michiel van Dijk & Tom Morley"
-date: "27 February 2017"
+date: "10 April 2017"
 output: beamer_presentation
 #output:
 #  revealjs::revealjs_presentation:
