@@ -162,6 +162,7 @@ Harder using LIML approach, or two step LIML or corrected 2sls
 
 - in progress
 - mainly based on Amsler et al. (2016)
+- seems to work actually quite well.
 
 ## Results
 
