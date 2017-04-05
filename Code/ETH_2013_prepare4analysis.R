@@ -156,6 +156,11 @@ db1 <- unique(db1)
 db1$logNsq <- db1$logN^2
 db1$loglabsq <- db1$loglab^2
 db1$logseedsq <- db1$logseed^2
+db1$logNlab <- db1$logN * db1$loglab
+db1$logNseed <- db1$logN * db1$logseed
+db1$loglabseed <- db1$loglab * db1$logseed
+
+
 db1$logarea_tot <- log(db1$area_tot)
 
 # Also divide GGD and AI by 1000

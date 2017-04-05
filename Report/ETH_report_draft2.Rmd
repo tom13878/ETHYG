@@ -44,7 +44,7 @@ source(file.path(root, "Code/ETH_tab.R"))
 
 # Abstract
 
-This paper adopts the framework developed by Dijk et al. (2016) to decompose the maize yield gap in Ethiopia. The yield gap can be decomposed into (1) the technical efficiency yield gap, (2) the allocative yield gap, (3) the economic yield gap and (4) the technology yield gap. In this study we combine micro level household survey data on a cross section of Ethiopian maize farmers with results from crop simulation models in order to decompose. The decomposition suggests that the technology yield gap makes up the largest  share of the total yield gap followed by the feasible yield gap, the technical efficiency yield gap and the economic yield gap. However, this progression is not consistent over all zones. The results from this paper can be used to design targeted policy and and farming recommendations at the plot, farm household, local and national level, taking into account geographical variations in the results.
+Maize is an important staple crop in Ethiopia with wide implications for food security and policy. In this paper we adopt the framework developed by Dijk et al. (2016) to decompose the maize yield gap in Ethiopia into (1) the technical efficiency yield gap, (2) the allocative yield gap, (3) the economic yield gap and (4) the technology yield gap. Our dataset is constructed using plot level data covering <number> Ethiopian maize plots derived from a survey of Ethiopian households. This is combined with maize specific growing information derived from crop simulation models. The results of the decomposition and econometric analysis suggest that the technology yield gap makes up the largest share of the total yield gap followed by the feasible yield gap, the technical efficiency yield gap and the economic yield gap. The results from this paper can be used to design targeted policy and and farming recommendations at the plot, farm household, local and national level.
 
 # Introduction
 
@@ -63,15 +63,17 @@ A limitation is that yield gap measurements offer only limited guidance in expla
 
 The aim of this paper is the to provide a detailed analysis of the maize yield gap in Ethiopia. We decompose the conventional yield gap into four elements that capture, technical efficiency, economic efficiency, availability of technologies and an ‘unexploitable’ yield gap element.
 
-The structure of this paper is as follows. Section 2 describes the econometric procedure used to decompose the yield gaps. Section 3 describes the data used for this study. Section 4 presents the results of our estimations and yield gap calculations. Section 5 deiscusses the results. Section 7 concludes.
+The structure of this paper is as follows. Section 2 describes the econometric procedure used to decompose the yield gaps. Section 3 describes the data used for this study. Section 4 presents the results of our estimations and yield gap calculations. Section 5 discusses the results. Section 7 concludes.
 
 # Data
 
-The main data source is the Living Standards Measurement Study - Integrated Surveys on Agriculture (LSMS-ISA) Ethiopian Socioeconomic survey (ESS). This survey was implemented by the Central Statistical Agency of Ethiopia (CSA) and funded by the World Bank through a grant from the Bill and Melinda Gates foundation. Although part of a panel, the first wave of the ESS did not record crop harvested quantities for a majority of plots making it unsuitable for this analysis. However, the second wave (2013-2014) of the ESS provides detailed information on crop production, input use, environmental and scocioeconomic variables. 
+The main data source is the Living Standards Measurement Study - Integrated Surveys on Agriculture (LSMS-ISA) Ethiopian Socioeconomic survey (ESS). This survey was implemented by the Central Statistical Agency of Ethiopia (CSA) and funded by the World Bank through a grant from the Bill and Melinda Gates foundation. Although part of a panel, the first wave of the ESS did not record crop harvested quantities for a majority of plots making it unsuitable for this analysis. However, the second wave (2013-2014) of the ESS provides detailed information on crop production, input use, environmental and socioeconomic variables. 
 
-In both waves of the data respondents were visited twice as part of a post planting and post harvesting questionnaire. Through these questionnaires, detailed information at the plot level was gathered concerning the preparation of the plot, the use of chemicals, type of crops, labour inputs and the size of the harvest. Both years of the data include GPS measured plot areas which are essential for accurate measurement of crop yields and input rates. In addition to agricultural activities, a broad range of socio-economic characteristics were recorded including the gender, age and level of education of the household head, as well as shocks faced by the household. Moreover, the ESS also includes the longitude and latitude of each household surveyed. This makes it possible to link the ESS households with external geo-spatial data sources such as climate, soil and infrastructure variables.
+In both waves of the data respondents were visited twice as part of a post planting and post harvesting questionnaire. Through these questionnaires, detailed information at the plot level was gathered including the size of the harvest for each crop. The vast majority of plots were GPS measured, however, in some cases this was not the case and area measurements were imputed using multiple imputation and following LSMS-ISA World Bank (2014). Respondents were asked to record key production inputs including seed application, fertilizer and labour rates. Moreover, important variables regarding environmental variables, crop management practices, and the socioeconomic status of the household were recorded at the plot, household and community levels.
 
-In order to calculate maize yields and input rates, accurate measurements of field areas are required. GPS measurements were recorded for the vast majority of plots in the second wave of the ESS. For those plots lacking a GPS measurement, multiple imputation was used following LSMS-ISA World Bank (2014). Maize yield (`yld`), nitrogen rates (`N`), labour rates (`lab`) and seed rates (`seedha`), are measures of the per hectare application of each variable to a plot. In some cases more than one crop was grown per plot and this is captured in the analysis by the incorporation of variables referencing the number of crops on a field, and whether a field had more than one crop (`crop_count`, `crop_count2`, respectively). Furthermore, variables covering the Ph, soil quality, slope and elevation of the field, and growing conditions derived from crop simulation models were also included. The longitude and latitude of each household was recorded allowing climate, soil and geographical data to be matched to households from sources including IFPRI, Worlclim, NASA and the Ethiopian Roads Agency amongst others. A full  Potential water-limited yield is taken from the Global Yield Gap Atlas (GYGA).
+The longitude and latitude of each household was recorded and households were matched as part of the LSMS-ISA with climate, soil and geographical from sources including IFPRI, Worlclim, NASA and the Ethiopian Roads Agency among others. Using the longitude and latitude of the households we were able to further augment the dataset with more granular informationfrom the Africa Soil Information Service (AfSIS, http://africasoils.net) and the Global Yield Gap Atlas (GYGA, www.yieldgap.org). AfSIS provides soil quality maps for Africa at 250m spatial resolution and various depths based on 28 thousand sampling locations (Hengl et al., 2015). We use AfSIS data to derive the soil organic carbon stock and pH for the top 200cm soil layer. We also derive the water-limited potential yield from GYGA which acts as a cap on the highest yield levels that can be attained in Ethiopia from a biophysical standpoint.
+
+Table 1 provides summary statistics for the key variables in our study.
 
 __Table 1: Descriptive Statistics__
 
@@ -81,14 +83,10 @@ pander(sum_tab)
 
 ## Estimation procedures
 
-The analyitical framework in this paper follows Dijk et al. (2016), and decomposes the yield gap into its constituent parts. Figure 1 illustrates this analystical framework. A key part of the estimation procedure is the solid black production function that relates the maize yield to nitrogen application rates. This function 
-
-![](C:/Users/morle001/WEcR/ETHYG/FigTabMap/Framework.png)
-
-The core estimation method in this paper is the stochastic frontiers (SF) method [@Aigner1977; @Meeusen1977]. This involves specification of the form of a production function and a composite error term that reflects both statistical error in the model and an assymetric inefficiency term.
+The analytical framework in this paper follows Dijk et al. (2016), and decomposes the yield gap into its constituent parts. Central to this framework is the estimation of the frontier yield response curve. There are competing methods for estimating this function including data envelopments analysis, corrected ordinary least squares and stochastic frontiers maximum likelihood. We follow the SF ML method [@Aigner1977; @Meeusen1977] which involves specification of the production technology and a composite error term that reflects both statistical error in the model and an asymmetric inefficiency term.
 
 \begin{equation}\label{folstandardform}
-y_i = \alpha + f(x_i, \beta) + \epsilon_i
+y_i = f(x_i, \beta) + \epsilon_i
 \end{equation}
 \begin{equation}\label{folstandardform}
 \epsilon_i = v_i - u_i
@@ -106,57 +104,77 @@ Where $y_i$ is the log of maize yield and $x_i$ is the log of the inputs includi
 f_\epsilon(\epsilon_i) = \frac{2}{\sigma}\phi(\frac{\epsilon_i}{\sigma})\Phi(-\frac{\lambda\epsilon_i}{\sigma})
 \end{equation}
 
-Given a suitable functional form $f(.)$ The parameters of the stochastic frontiers model can be estimated using maximum likelihood (ML) estimation. Common production functions that have been used in crop yield models include the Cobb Douglass and translog production functions. The translog is the more flexible of the two and the Cobb Douglass functional form is nested within the translog allowing selection of the model based on a likelihood ratio test.
+Given a suitable form for the production technology, the parameters of the stochastic frontiers model can be estimated using maximum likelihood (ML) estimation. Common production functions used in crop yield models include the Cobb Douglas and translog production functions. The translog is the more flexible of the two and nests the Cobb Douglass form allowing model selection based on a likelihood ratio (LR) test. Viewed as an extension of the cobb douglass or as a second order expansion of an unknown production function we can write
 
 \begin{equation}\label{folstandardform}
-Y_i = exp \Big(\alpha + \sum_{k=1}^K \beta_k ln X_{ik} + \sum_{k=1}^K \sum_{j=1}^K \gamma_{jk} ln X_{ik} ln X_{ij} \Big)
+Y_i = F(X_i, \beta) = exp \Big(\alpha + \sum_{k=1}^K \beta_k ln X_{ik} + \sum_{k=1}^K \sum_{j=1}^K \gamma_{jk} ln X_{ik} ln X_{ij} \Big)
 \end{equation}
 
-Or, written in log form and augmented with an error term $\epsilon$, the translog production function can be written
+Where $Y_i$ is the output and the $X_{ik}$ are the production inputs. Taking the log of expression (6) yields:
 
 \begin{equation}\label{folstandardform}
-y_i = \alpha + \sum_{k=1}^K \beta_k x_{ik} + \sum_{k=1}^K \sum_{j=1}^K \gamma_{jk} x_{ik} x_{ij} + \epsilon_i
+y_i = f(x_i, \beta) = \alpha + \sum_{k=1}^K \beta_k x_{ik} + \sum_{k=1}^K \sum_{j=1}^K \gamma_{jk} x_{ik} x_{ij} + \epsilon_i
 \end{equation}
 
-Where the log of the output is written as $y_i$ and the log of the inputs are written as $x_i$. When $\gamma_{jk} = 0$ for all $j$ and $k$, (7) reduces to the Cobb Douglass form. The error term $\epsilon_i$ is comprised of the truncated normal technical inefficiency and the symmetric error term $\epsilon_i = v_i - u_i$ allowing SF ML estimation as described above. In addition we can include environmental variables such as the slope and elevation of the plot to the chosen production form yielding the following model in the translog case:
+Where the log of the output is written as $y_i$ and the log of the inputs are written as $x_i$. Expression (7) has the familiar translog form, or, setting setting $\gamma_{jk} = 0$, the Cobb Douglas form. Expression (7) is then augmented with a composite error term $\epsilon_i$ comprised of the truncated normal technical inefficiency and the symmetric error term $\epsilon_i = v_i - u_i$. In this form it is possible to carry out SF ML estimation as described in (1) - (5) above. We can also include environmental variables such as the slope and elevation of the plot yielding the following model in the translog case:
 
 \begin{equation}\label{folstandardform}
 y_i = \alpha + \sum_{k=1}^K \beta_k x_{ik} + \sum_{k=1}^K \sum_{j=1}^K \gamma_{jk}x_{ij} x_{ik} + W_i \theta + \epsilon_i
 \end{equation}
 
-We are interested in the factors which determine inefficiency and this can be incorporated by ammending equation 5 to allow the mean of the truncated normal distribution ( pre-truncated normal?) to depend on exogenous deteminants of inefficiency such as the education, age or gender of the farmer or access to markets and extension services. In this case equation 4 becomes
+Where $W_i$ are the environmental variables and $\theta$ is a vector of parameters.
+
+As our interest is also in the determinants of the inefficiency term we allow the mean of the pretruncated normal inefficiency term to depend on exogenous determinants of inefficiency such as the education, age or gender of the farmer or access to markets and extension services. In this case equation 4 becomes:
 
 \begin{equation}\label{folstandardform}
 u_i \sim \mathbb{N}^+(z_i\delta, \sigma_u^2)
 \end{equation}
 
-Where $z_i$ is a vector of exogenous determinants of inefficiency. Estimation is carried out by maximum likelihood using the density for the error term $\epsilon_i$ and incorporating this new term. The resulting coefficinets $\delta$ are not directly interpretable but the marginal effects of the exogenous determinants of technical inefficiency on the mean of technical inefficiency $u_i$ can be derived. We follow Kumbhakar and Sun (2013) and calculate the marginal effects on the conditional mean of technical inefficiency in keeping with the Jondrow et al (1982) estimator. The   
+Where $z_i$ is a vector of exogenous determinants of inefficiency. Estimation is carried out by maximum likelihood using the density for the error term $\epsilon_i$ and incorporating this new term. The resulting coefficients $\delta$ are not directly interpretable but the marginal effects of the exogenous determinants of technical inefficiency on the mean of technical inefficiency $u_i$ can be derived. We follow Kumbhakar and Sun (2013) and calculate the marginal effects on the conditional mean of technical inefficiency in keeping with the Jondrow et al (1982) estimator.
 
-To calculate the economically optimal level of nitrogen we set the marginal physical product of nitrogen equal to the relative prices of nitrogen and maize. The value of nitrogen that solves this relationship is the economically optimal nitrogen input level. However, this value cannot be found analytically. Instead, it is necessary to use numerical methods. The marginal physical product of maize yield with respect to nitrogen is the derivative of a translog production function given by (7):
+Finally, our framework for decomposing maize yields includes a measure of the economically optimal level of maize yield, The yield at which profits are maximized. This level can be identified as the point at which the relative market price of the input to the output is tangent to the frontier yield response function. The tangent or marginal physical product (MPP) of (7) with respect to one of the inputs $k$ is
 
 \begin{equation}\label{folstandardform}
 MPP = \frac{Y}{N}\Big( \beta_k + 2\beta_k + \sum_j ln x_j \Big)
 \end{equation}
 
-Which is then set equal to the relative price of nitrogen and maize $\frac{Pn}{Pm}$.
+which we equate with the relative price $\frac{Pn}{Pm}$ and solve for $N*$
 
+\begin{equation}\label{folstandardform}
+\frac{Y}{X_k}\Big( \beta_0 + 2\beta_k x_k + \sum_j ln x_j \Big) - \frac{Pn}{Pm} = 0
+\end{equation}
 
-Endogeneity 
-Although a Tobit model may be better given the large number of zeroes. We note from Angrist and Krueger say that an OLS is OK, and Wooldridge also makes this point, although neither seem to explain why.
+The value of nitrogen that solves this relationship is the economically optimal nitrogen input level. However, this value cannot be found analytically. Instead, it is necessary to use numerical methods to solve for the optimal use of inputs.
 
-Recent advances in the study of endogeneity within the context of stochastic frontiers models have provided several estimation methods which we apply to our dataset.
+## Endogeneity 
+
+Still lots to add
+
+### testing for endogeneity
+
+easy using control function approach
+
+- We note from Angrist and Krueger that an OLS (instead of tobit) first stage is OK, and Wooldridge also makes this point, although neither seem to explain why. Should also mention tobit + literature on average production functions arguing for tobit
+
+### Accounting for endogeneity
+
+Harder using LIML approach, or two step LIML or corrected 2sls
+
+- in progress
+- mainly based on Amsler et al. (2016)
+- seems to work actually quite well.
 
 ## Results
 
 We initially test the suitability of a 
-The resulting SF ML estimates are presented in table 1 for four models. Model 1 shows the coefficient estimates for the core translog production function terms. Model 2 extend this to include the exogenous determinants of inefficiences. Models 3 and 4 do likewise and also include the environmental variables.
+The resulting SF ML estimates are presented in table 1 for four models. Model 1 shows the coefficient estimates for the core translog production function terms. Model 2 extend this to include the exogenous determinants of inefficiencies. Models 3 and 4 do likewise and also include the environmental variables.
 
 __Table 2: Translog production function__
 ```{r}
 pander(results_tab)
 ```
 
-The raw coefficients of the exogenous determinants of technical inefficinecy cannot be interpreted as elasticities. However, the marginal effects of each variable can be computed following Kumbhakar & Sun (2013). These are observation specific and a concise estimate of the marginal effects is presented in table 2 in the form of the average partial effects (APE) for models 3 and 4 respectively. 
+The raw coefficients of the exogenous determinants of technical inefficiency cannot be interpreted as elasticities. However, the marginal effects of each variable can be computed following Kumbhakar & Sun (2013). These are observation specific and a concise estimate of the marginal effects is presented in table 2 in the form of the average partial effects (APE) for models 3 and 4 respectively. 
 
 __Table 3: Marginal effects (APE) of exogenous determinants of inefficiency__
 ```{r}
@@ -177,4 +195,4 @@ __Table 4: __
 pander(ZonalYieldGap_l_sh)
 ```
 
-
+![](C:/Users/morle001/WEcR/ETHYG/FigTabMap/Framework.png)

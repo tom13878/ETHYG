@@ -25,7 +25,7 @@ sf11x9 <- sfa(logyld ~ logN + loglab + logseed +
                 logN:loglab + logN:logseed +
                 loglab:logseed + logarea + phdum55_2_70 +
                 crop_count2 + dumoxen + SOC2 + logslope +
-                elevation + GGD + AI + TS|
+                elevation + GGD + AI + TS + yesN|
                 -1 + age + sex + ed_any + title +
                 extension + credit + dist_market +
                 popEA + logarea_tot, data=db1)
@@ -41,7 +41,7 @@ relprices <- db1$relprice[sf11x9$validObs]
 
 # function to calculate the MPP
 calc_mpp <- function(N, row){
-  row$logN <- log(N) # add one because we cannot take log(0)
+  row$logN <- log(N) 
   logY <- as.matrix(row) %*% xcoef
   Y <- exp(logY)
   MPP <- with(row, ((xcoef["logN"] + 
@@ -127,15 +127,17 @@ db2 <- db2 %>%
 # for the Npm variable, BUT we also need a way of doing
 # this for the interaction terms that also involve N
 model_vars <- names(sf11x9$olsParam)[-c(1, length(names(sf11x9$olsParam)))]
-model_vars <- model_vars[-grep(":", model_vars)]
+model_vars <- model_vars[-grep(":", model_vars)] # get rid of interaction terms
 predict_dat <- db2[, model_vars]
-predict_dat$logN <- log(db2$Npm)
-predict_dat$logNsq <- log(db2$Npm)^2
+predict_dat <- mutate(predict_dat,
+                      logN = log(db2$Npm),
+                      logNsq = logN^2)
 
 # now make the prediction predict.sfa
 # function is not made to handle NA values
 # so to keep order and compare with other yield
-# measures we probably want to 
+# measures we probably want to set NA values to
+# zero temporarily 
 predict_dat$logN[is.na(predict_dat$logN)] <- 0
 predict_dat$logNsq[is.na(predict_dat$logNsq)] <- 0
 db2$EY <- exp(predict.sfa(sf11x9, predict_dat))
@@ -146,15 +148,14 @@ db2$EY[predict_dat$logN == 0] <- NA
 # Increase labour and seed rate by 10%
 # turn on all dummies.
 predict_dat2 <- mutate(predict_dat,
-                       logN = log(150),
+                       logN = log(400),
                        logNsq = logN^2,
-                       loglab = loglab + log(1.1),
+                       loglab = loglab + log(1.5),
                        loglabsq = loglab^2,
-                       logseed = logseed + log(1.1),
+                       logseed = logseed + log(1.5),
                        logseedsq = logseed^2,
-                       phdum55_2_70 = 1,
-                       crop_count2 = 1,
-                       dumoxen = 1)
+                       dumoxen = 1,
+                       yesN = 1)
 
 # make prediction
 db2$PFY <- exp(predict.sfa(sf11x9, predict_dat2))

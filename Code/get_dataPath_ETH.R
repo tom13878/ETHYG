@@ -15,7 +15,7 @@
 
 # Tom
 if(Sys.info()["user"] == "morle001") {
-  dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/ETH"}
+  dataPath <- "C:/Users/morle001/WEcR/ETH"}
 
 # Michiel WEcR
 if(Sys.info()["user"] == "dijk158") {

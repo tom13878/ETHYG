@@ -8,7 +8,7 @@
 
 # get packages
 library(pacman)
-p_load(char=c("rprojroot", "ucminf", "optimx", "dplyr", "frontier"), install=TRUE)
+p_load(char=c("rprojroot", "ucminf", "optimx", "dplyr", "frontier", "boot"), install=TRUE)
 
 # get root path
 root <- find_root(is_rstudio_project)
@@ -18,16 +18,6 @@ source(file.path(root, "Code/sfa_functions.R"))
 
 # read in data to run models on
 db1 <- readRDS(file.path(root, "Cache/db1.rds"))
-db1 <- unique(db1)
-db1 <- filter(db1, lab < 2000, logN >= 0)
-
-# make some new variables for convenience.
-db1$logNloglab <- db1$logN * db1$loglab
-db1$logslope <- log(db1$slope + 1)
-db1$agesq <- db1$age^2
-db1$elevationsqt <- sqrt(db1$elevation)
-db1$SOC2sq <- db1$SOC2^2
-db1$GGD <- db1$GGD/1000
 
 # -------------------------------------
 # translog production function with 
@@ -35,50 +25,73 @@ db1$GGD <- db1$GGD/1000
 
 # there are some missing values so we exclude these from the data now to avoid
 # problems later
-db1 <- as.data.frame(model.matrix(~ -1 + logyld +  logN + loglab  +
-                                    logNloglab + Pn + dist_market + sex + age + agesq +
-                                    ed_any + yesN + crop_count2 +
-                                    logarea + impr + logslope + elevationsqt +
-                                    SOC2 + SOC2sq + phdum55_2_70 + dumoxen + title +
-                                    rain_wq + relprice + Pm + GGD +
-                                    cost2large_town + extension, data=db1))
+db1 <- as.data.frame(model.matrix(~ -1 + logyld +  logN + loglab  + logseed +
+                                    logNsq + loglabsq + logseedsq +
+                                    logNlab + logNseed + loglabseed +
+                                    Pn + dist_market + cost2large_town,
+                                  data=db1))
+
+
+# step 1: test if endogeneity exists
+stage1 <- lm(logN ~ Pn + cost2large_town + dist_market, data=db1)
+v <- rstandard(stage1)
+stage2 <- lm(logyld ~ logN + loglab + logseed +
+             logNsq + loglabsq + logseedsq +
+             logNlab + logNseed + loglabseed + v, data=db1)
+
+# bootstrap SE
+refit <- function(data, indx){
+  dat <- data[indx,]
+  fs <- lm(formula(stage1), data=dat)
+  v <- residuals(fs) 
+  coef(lm(formula(stage2), data=dat))
+}
+
+# bootstrap results
+boot_out <- summary(boot(db1, refit, R = 500))
+
+# p.values
+N <- nrow(db1)
+df <- N - length(stage2$coef)
+t <- stage2$coef/boot_out[, 4]
+pval <- round(2*pt(abs(t), df=df, lower=FALSE), 3)
+
+# and for comparison just an ordinary ols translog
+olstl <- lm(logyld ~ logN + loglab + logseed +
+                        logNsq + loglabsq + logseedsq +
+                        logNlab + logNseed + loglabseed, data=db1)
+
+
+# Step 2: liml estimation using likelihood from APS 2016
 
 # basic frontier model for comparison
-sf <- summary(sfa(logyld ~ logN + loglab + logNloglab + logarea +
-                    logslope + elevationsqt + crop_count2 + SOC2 +
-                    phdum55_2_70 + GGD, data=db1),
-      extraPar = TRUE)
-
-# basic reduced model for comparison
-RM <- lm(logN ~ relprice + cost2large_town +
-           logslope + elevationsqt + crop_count2 + SOC2 +
-           phdum55_2_70 + GGD, data=db1)
+sf <- summary(sfa(logyld ~ logN + loglab + logseed +
+                    logNsq + loglabsq + logseedsq +
+                    logNlab + logNseed + loglabseed, data=db1))
 
 # data
 # outcome of structural equation
 Y <- db1$logyld
-
-# exogenous variables present in reduced and
-# structural models
-X1 <- model.matrix(~ -1 + logslope + elevationsqt + crop_count2 + SOC2 +
-                     phdum55_2_70 + GGD, data=db1)
 
 # endogenous variable(s)
 X2 <- model.matrix( ~ -1 + logN, data=db1)
 
 # variables we want in the structural equation but not 
 # the reduced equation
-X3 <- model.matrix(~ -1 + loglab + logNloglab + logarea, data = db1)
+X1 <- model.matrix(~ -1 + loglab + logseed +
+                     logNsq + loglabsq + logseedsq +
+                     logNlab + logNseed + loglabseed,
+                   data = db1)
 
 # full X ( all structural variables )
-X <- cbind(X2, X3, X1)
+X <- cbind(X2, X1)
 
 # instruments/variables only in reduced equation
-W <- model.matrix(~ -1 + relprice + cost2large_town,
+W <- model.matrix(~ -1 + Pn + cost2large_town + dist_market,
                   data = db1)
 
 # complete set of regressors for reduced equation
-Z <- cbind(1, W, X1)
+Z <- cbind(1, W)
 N <- length(Y)
 
 # initial parameters for optimisation - note
@@ -87,14 +100,13 @@ N <- length(Y)
 # sigma2c will be negative and this is not
 # allowed.
 n <- (ncol(X) + ncol(Z) + 5)
-pars <- rep(1, n)
+pars <- rep(0.2, n)
 pars[ncol(X) + 2] <- 2
 
 # test out the function based on
 # starting parameters - starting parameters
 # must give a non NAN answer
 liml2(pars, X, X2, Y, Z, N)
-
 
 # optimx function
 stats <- optimx(pars, liml2, NULL,
@@ -131,9 +143,34 @@ c(sigma2v, sigma2u) # variance and relative variance estimates
 # matrix (first stage)
 Pi # parameters from liml first stage
 dimnames(Z)[[2]] # order in which parameters appear from liml output
-RM # ols normal reduced model
+stage1 # ols normal reduced model
 
-# note that Kumbhakar points out that when the model is misspecified
-# it may not converge, regardless of which parameters we use.
-# It may be the case that the model we use is misspecified ->
-# no proper variance estimates
+# ==============================================================================
+# make tables of results comparing estimations.
+
+# testing endogeneity tables
+# stage 1 - ols vs liml ML
+stage1_tab <- round(as.data.frame(summary(stage1)$coef[, -4]), 3)
+liml1_tab <- as.numeric(round(Pi, 3))
+stage1_tab <- data.frame(stage1_tab, liml=liml1_tab)
+saveRDS(stage1_tab, file.path(root, "Cache/endog1.rds"))
+
+# stage 2 - control function vs std ols and test for endog
+stage2_tab <- round(as.data.frame(summary(stage2)$coef[, -4]), 3)
+stage2_tab$`Std. Error` <- boot_out$bootSE
+stage2_tab$`t value` <- t
+olstl_tab <- round(as.data.frame(summary(olstl)$coef[, -4]), 3)
+olstl_tab <- rbind(olstl_tab, v=c(NA, NA, NA))
+stage2_tab <- cbind(olstl_tab, stage2_tab)
+names(stage2_tab)[4:6] <- c("CF Est", "CF SE", "CF p.val")
+saveRDS(stage2_tab, file.path(root, "Cache/endog2.rds"))
+
+# accounting for endogeneity tables
+sf_tab <- round(as.data.frame(sf$mleParam), 3)
+
+# compare normal sf with the liml estimates
+sigma2 <- sigma2u + sigma2v
+gamma <- sigma2u/sigma2
+liml_tab <- as.numeric(round(unlist(c(alpha, beta, sigma2, gamma)),3))
+sf_tab <- data.frame(sf_tab, LIML=liml_tab)
+saveRDS(sf_tab, file.path(root, "Cache/endog3.rds"))
