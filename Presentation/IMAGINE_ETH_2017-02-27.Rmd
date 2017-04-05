@@ -22,15 +22,17 @@ library(pander)
 root <- find_root(is_rstudio_project)
 # source(file.path(root, "Code/ETH_tab.R"))
 source(file.path(root, "Code/ETH_fig.R"))
-source(file.path(root, "Code/ETH_map.R"))
+# source(file.path(root, "Code/ETH_map.R"))
 ```
 
-## What's new since last time
+## Outline of analysis
 
-- A more flexible translog function allowing for interactions between inputs
-- Control function approach to incorporate a feedback loop between nitrogen and yield
-- numerical methods to find optimum nitrogen use
+- Decomposition of maize yield gap in Ethiopia
+- A flexible translog production allowing for interactions between inputs
+- Numerical methods for finding optimal nitrogen use 
 - GYGA environmental control variables 
+- Heterogeneity not dealt with due to data limitations
+- Endogeneity
 
 ## Yield gap framework
 ```{r}
@@ -41,13 +43,13 @@ knitr::include_graphics(file.path(root, "FigTabMap/Framework.png"))
 ## LSMS-ISA and GYGA
 
 ```{r GYGA_map}
-Map_GYGA_LSMS
+# Map_GYGA_LSMS
 ```
 
 
 ## Data
 
-- Two (now three) LSMS-ISA surveys 2011 and 2013 (and as of last week 2015)
+- Two (now three) LSMS-ISA surveys 2011 and 2013 (and as of a month ago, 2015 - 2016)
 - But due to a mistake in recording production in 2011 we only analyse 2013
 - Yield defined as production/plot size => different from FAOSTAT/GYGA 
 
@@ -63,84 +65,27 @@ stargazer(as.data.frame(dbsum),  type = "latex", digits=2, header=FALSE, title =
 \normalsize
 
 
-
 ## Methodology
 
+- Stochastic frontiers analysis
+- Includes an asymmetric error component which accounts for plot level inefficiency.
+- Estimated by maximum likelihood
+- Altered density of error term to allow exogenous determinants of inefficiency such as extension services.
+- Marginal effects of exogenous determinants of inefficiency
 
-- Three stages in the estimation of the production function
-  + First stage Tobit model to avoid feedback loop/confounding 
-  + Second stage stochastic frontiers estimation 
-    + bootstrapping SEs due to nonlinear first stage function function
-    + Numeric solution to find the economically optimal Nitrogen use
-  + Third stage policy variables
-
-
-
-## Cobb Douglass function
-
-```{r, Fig_3d_CD}
-knitr::include_graphics(file.path(root, "FigTabMap/CD.png")) 
-```
-
-
-
-## Translog production function
-```{r, Fig_3d_TL}
-knitr::include_graphics(file.path(root, "FigTabMap/translog.png")) 
-```
-
-
-## Endogeneity
-
-- Idea of a feedback loop between the level of nitrogen applied and the yield
-- In econometrics speak: the residuals from the estimation are correlated with the explanatory variable (Nitrogen)
-- Agronomic interpretation: Higher yield in good soils, but Nitrogen also works better in good soil confounding
-- Policy interpretation: Farmers listen to extension agents and see improvements spurring on more improvements 
-- Solution: Instrumental variables style approach, called a control function for a nonlinear first stage regression
-    + This requires finding suitable instruments - distance, age, social capital, politics, soil quality??
 
 ## Stochastic frontier analysis
+
 \tiny
-```{r sfa}
-results <- readRDS(file.path(root, "Cache/results_table.rds"))
-row.names(results) <- NULL
-pander(results)
+```{r ech=FALSE, message=FALSE, warning=FALSE, sfa}
+source(file.path(root, "Code/production_function_tests.R"))
+pander(results_tab)
 ```
 \normalsize
 
 
-## Stochastic frontier analysis
-
-- Residuals (rd) are significant implying endogeneity indeed exists
-- GDD is significant and including GYGA variables controls for climate conditions
-- Nitrogen coefficients: level is not significant, square is positive, interaction is negative
-
-## Optimal Nitrogen level and MPP values
-
-\small
-```{r,  results="asis"}
-by_zone <- readRDS(file.path(root, "Cache/by_zone.rds"))
-row.names(by_zone) <- NULL
-by_zone$ZONE <- gsub("BENSHANGULGUMUZ", "BG", by_zone$ZONE)
-pander(by_zone)
-```
-
-
-
-## Data issues
-
-- How to solve missing yield potential data?
-    + Average values are too low, maximum is too high.
-- To calculate feasible yield gap information is needed on the use of inputs when costs are zero:
-    + Level of nitrogen when yield diminishes (per region)
-    + Use of labour and capital at this point
-- Information on nitrogen/fertilizer use can be taken from experimental plot data => input from agronomy colleagues required.
-- Use of labour and capital demand assumptions (e.g. 50% increase in labour)
-
-
-
-
 ## Yield gap estimations
+
 \small 
 ```{r relative_YG}
 ZonalYieldGap_l_sh <- ZonalYieldGap_l_sh %>%
@@ -150,37 +95,75 @@ knitr::kable(ZonalYieldGap_l_sh, caption = "Relative yield gap", digits = 0)
 ```
 \normalsize
 
-
-
-
 ## Closing the yield gap
 
 ```{r Gap}
 Fig_waterfall
 ```
 
-
-
 ## Explaining the TEYG
+
+- marginal effects of exogenous determinants of inefficiency.
+
 \small
 ```{r z_table}
-z_res <- readRDS(file.path(root, "Cache/z_res.rds"))
-knitr::kable(z_res, caption = "Third stage analysis", digits = 2)
+pander(ME_tab)
+```
+\normalsize
+
+## Remaining issues
+
+- Take cap values for nitrogen from nutrient gap project? Also useful for other countries.
+
+- Missing yield potential data - currently taking the national maximum, average values are too low, maximum is too high!
+
+- Reasonable increases in other variables such as labour and seed rates and dummy variables. Plus anything else we might expect?
+
+## Endogeneity
+
+- Idea of a feedback loop between the level of nitrogen applied and the yield.
+
+- Agronomic interpretation: Higher yield in good soils, but Nitrogen also works better in good soil resulting in confounding
+
+- Policy interpretation: Farmers listen to extension agents and see improvements spurring on more improvements.
+
+- Bottom line: failing to account for endogeneity in survey data results in biased estimates.
+
+- For nitrogen this is most likely biased up implying that we overstate the impact of nitrogen on yields. And there is a large literature identifying the endogeneity of nitrogen so we should include this.
+
+- Solution in stochastic frontiers analysis is to use a 2 stage limited information ML technique.
+
+## first stage
+
+\tiny
+```{r echo=FALSE}
+pander(readRDS(file.path(root, "Cache/endog1.rds")))
+```
+\normalsize
+
+- R-squared on first stage is only 0.238, but this is OK because LIML performs well in the presence of weak instruments. Including other variables that affect the demand for nitrogen will also increase this.
+
+## Second stage
+
+\tiny
+```{r echo=FALSE}
+pander(readRDS(file.path(root, "Cache/endog2.rds")))
+```
+\normalsize
+
+- Bootstrapped second stage SEs because v term is an estimate of the true error.
+
+## SF ML vs LIML with endogeneity
+
+\tiny
+```{r echo=FALSE}
+pander(readRDS(file.path(root, "Cache/endog3.rds")))
 ```
 \normalsize
 
 ## Wrap up
 
 - New and better translog function means more flexibility of inputs
-- Optimal nitrogen levels calcualted per farmer using their actual values of other inputs
-- Identified and dealt with bias introduced due to endogeneity and feedback loops
-
-
-## Next steps
-
-- Calculate elasticities of second stage variables to get a better interpretation and add more policy variables (e.g. cost of transportation)
-- Slight experimentation with additonal control variables (e.g. use of animal traction)
-- Think about how to link policies to yield gaps
-- Finish writing paper for ETH meeting.
-- Third wave of data???? but ..... time constraints
-
+- Optimal nitrogen levels calculated per farmer using their actual values of other inputs
+- Marginal effects of exogenous variables calculated giving a policy interpretation
+- Identified bias introduced due to endogeneity but this needs to be extended somewhat.
