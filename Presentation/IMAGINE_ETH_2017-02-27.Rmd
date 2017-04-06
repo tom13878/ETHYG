@@ -35,17 +35,8 @@ source(file.path(root, "Code/ETH_fig.R"))
 - Endogeneity
 
 ## Yield gap framework
-```{r}
-knitr::include_graphics(file.path(root, "FigTabMap/Framework.png")) 
-```
-
 
 ## LSMS-ISA and GYGA
-
-```{r GYGA_map}
-# Map_GYGA_LSMS
-```
-
 
 ## Data
 
@@ -91,6 +82,7 @@ pander(results_tab)
 ZonalYieldGap_l_sh <- ZonalYieldGap_l_sh %>%
   rename(FYG = EUYG)
 ZonalYieldGap_l_sh$Zone <- gsub("BENSHANGULGUMUZ", "BG", ZonalYieldGap_l_sh$Zone)
+names(ZonalYieldGap_l_sh) <- c("ZONE" ,"TEYG", "AYG", "EYG", "TYG", "YG")
 knitr::kable(ZonalYieldGap_l_sh, caption = "Relative yield gap", digits = 0)
 ```
 \normalsize
@@ -113,11 +105,20 @@ pander(ME_tab)
 
 ## Remaining issues
 
-- Take cap values for nitrogen from nutrient gap project? Also useful for other countries.
+- Take cap values for nitrogen from nutrient gap project? Also useful for other countries. 
+
+- Reasonable increases in other variables such as labour and seed rates and dummy variables. Plus anything else we might expect?
 
 - Missing yield potential data - currently taking the national maximum, average values are too low, maximum is too high!
 
-- Reasonable increases in other variables such as labour and seed rates and dummy variables. Plus anything else we might expect?
+## Current assumptions
+
+- Nitrogen at 400 kg/ha - link to nutrient gap project
+- Seed rate increased by 50%
+- labour increased by 50%
+- dumoxen = 1, all plots use animal traction.
+- Other suggestions? Other dummies are Ph, crop count.
+- National maximum for water limited potential yield = 18072
 
 ## Endogeneity
 
