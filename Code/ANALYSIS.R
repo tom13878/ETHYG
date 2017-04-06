@@ -25,7 +25,7 @@ sf11x9 <- sfa(logyld ~ logN + loglab + logseed +
                 logN:loglab + logN:logseed +
                 loglab:logseed + logarea + phdum55_2_70 +
                 crop_count2 + dumoxen + SOC2 + logslope +
-                elevation + GGD + AI + TS + yesN|
+                elevation + GGD + AI + TS|
                 -1 + age + sex + ed_any + title +
                 extension + credit + dist_market +
                 popEA + logarea_tot, data=db1)
@@ -154,8 +154,7 @@ predict_dat2 <- mutate(predict_dat,
                        loglabsq = loglab^2,
                        logseed = logseed + log(1.5),
                        logseedsq = logseed^2,
-                       dumoxen = 1,
-                       yesN = 1)
+                       dumoxen = 1)
 
 # make prediction
 db2$PFY <- exp(predict.sfa(sf11x9, predict_dat2))
