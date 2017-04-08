@@ -204,8 +204,8 @@ wf.df <- GapClose3a %>%
   dplyr::select(PROD,  TEYG_close, EYG_close, EUYG_close, TYG_close, POTPROD)
 
 wf.df <- as.data.frame(t(wf.df)) %>%
-  mutate(category =c("Actual \n production", " Closing \n technical efficiency \n yield gap", " Closing \n economic \n yield gap",
-                     " Closing \n feasible \n yield gap", " Closing \n technical \n yield gap", "Potential \n production"),
+  mutate(category =c("Actual \n production", " Closing \n technical efficiency \n yield gap", " Closing \n allocative \n yield gap",
+                     " Closing \n economic \n yield gap", " Closing \n technical \n yield gap", "Potential \n production"),
          sector = category) %>%
   rename(value = V1)
 
