@@ -22,7 +22,7 @@ library(pander)
 root <- find_root(is_rstudio_project)
 # source(file.path(root, "Code/ETH_tab.R"))
 source(file.path(root, "Code/ETH_fig.R"))
-# source(file.path(root, "Code/ETH_map.R"))
+source(file.path(root, "Code/ETH_map.R"))
 ```
 
 ## Outline of analysis
@@ -34,9 +34,13 @@ source(file.path(root, "Code/ETH_fig.R"))
 - Heterogeneity not dealt with due to data limitations
 - Endogeneity
 
-## Yield gap framework
 
 ## LSMS-ISA and GYGA
+
+```{r GYGA_map}
+Map_GYGA_LSMS 
+```
+
 
 ## Data
 

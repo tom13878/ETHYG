@@ -471,7 +471,7 @@ geo <- readRDS(file.path(dataPath, "../Other/Spatial/ETH/ETH_geo_2013.rds"))
 # imputed and original gps measurements
 # included
 
-areas <- readRDS(file.path(dataPath, "../Other/Plot_size/areas_eth_y2_imputed.rds"))
+areas <- read_dta(file.path(dataPath, "../Other/Plot_size/areas_eth_y2_imputed.dta"))
 areas <- select(areas, holder_id, household_id2,
                 parcel_id, field_id, area_gps, area_gps_mi50,
                 area_farmer=area_sr)

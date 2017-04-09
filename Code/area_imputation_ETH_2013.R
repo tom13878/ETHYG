@@ -256,7 +256,7 @@ abline(0, 1, col='red', lwd=3)
 # include outliers - see world bank imputation 
 # paper
 
-source("C:/Users/Tomas/Documents/LEI/pro-gap/winsor.R")                 
+source("Code/winsor.R")                 
 areas$area_sr <- winsor(areas$area_sr, 0.001, lower=FALSE)
 
 # make another comparison plot

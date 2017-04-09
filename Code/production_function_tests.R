@@ -20,7 +20,7 @@ p_load(frontier)
 db1 <- readRDS(file.path(root, "Cache/db1.rds"))
 
 # make a summary tab of variables for paper
-sum_dat <- select(db1, yld, N, area, lab, seedha,
+sum_dat <- dplyr::select(db1, yld, N, area, lab, seedha,
                    phdum55_2_70, crop_count2,
                   dumoxen, SOC2, logslope,
                   elevation, GGD, AI, TS)
@@ -316,7 +316,7 @@ model4$Variable <- names(coef(sf11x9))
 results_tab <- full_join(model1, model2) %>%
   full_join(model3) %>%
   full_join(model4) %>%
-  select(Variable, everything())
+  dplyr::select(Variable, everything())
 names(results_tab) <- c("Variable", "model 1", "model 2",
                         "model 3", "model 4")
 move <- which(results_tab$Variable %in% c("sigmaSq", "gamma"))
