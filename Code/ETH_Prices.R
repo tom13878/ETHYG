@@ -87,7 +87,7 @@ base <- hhid2013 %>%
 # Values are winsored aggregates are presented for at least 5 values
 # market  prices
 fertmar <- fert2013 %>%
-  mutate(price = winsor2(price))
+  mutate(price = winsor2(price, multiple = 1.5))
 
 medianPrice_f <- function(df, level, group){
   prices <- df %>% 
@@ -134,7 +134,7 @@ fertPrice <- bind_rows(fpWoreda, fpKebele, fpRegion, fpZone, fpCountry) %>%
 maizemar2013 <- ETH2013 %>% 
   filter(crop_code %in% 2 & status %in% "HEAD") %>%
   select(household_id2, holder_id, field_id, parcel_id, ZONE = REGNAME, REGNAME = ZONENAME, WOREDACODE, KEBELECODE, surveyyear, price = crop_price) %>%
-  mutate(price = winsor2(price))
+  mutate(price = winsor2(price, multiple = 1.5))
 
 mpCountry <- maizemar2013 %>% 
   dplyr::summarize(price = median(price, na.rm=T)) %>%
@@ -166,7 +166,7 @@ plotFertPrice <- ETH2013 %>%
   filter(crop_code %in% 2 & status %in% "HEAD") %>%
   select(household_id2, holder_id, field_id, parcel_id, ZONE = REGNAME, REGNAME = ZONENAME, WOREDACODE, KEBELECODE, surveyyear, WPn) %>%
     left_join(fertPrice) %>%
-    mutate(WPn = winsor2(WPn),
+    mutate(WPn = winsor2(WPn, multiple = 1.5),
            price = ifelse(is.na(WPn), price, WPn)) %>%
   select(-WPn) 
  
