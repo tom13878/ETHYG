@@ -37,7 +37,7 @@ xvars <- names(coef(sf11x9))[1:(min(zidx)-1)]
 X <- sf11x9$dataTable[, xvars]
 X <- as.data.frame(X)
 xcoef <- coef(sf11x9)[1:(min(zidx)-1)]
-relprices <- db1$relprice[sf11x9$validObs]
+relprices <- rep(6, nrow(db1)) #db1$relprice[sf11x9$validObs]
 
 # function to calculate the MPP
 calc_mpp <- function(N, row){
@@ -249,6 +249,7 @@ summary(Overall_check)
 # Create database with relevant variables for further analysis
 db3 <- select(db2, hhid, holder_id, parcel_id, field_id, ZONE,
               REGNAME, surveyyear, lat, lon, crop_count2, area,
+              relprice,
               Npm, yesN, Y, N, Ycor, TEY, EY, PFY, PY, ERROR_l,
               ERROR_s, TEYG_l, TEYG_s, EYG_l, EYG_s, EUYG_l,
               EUYG_s, TYG_l, TYG_s, YG_l, YG_s, YG_l_Ycor, YG_s_Ycor)
