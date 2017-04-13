@@ -37,7 +37,7 @@ xvars <- names(coef(sf11x9))[1:(min(zidx)-1)]
 X <- sf11x9$dataTable[, xvars]
 X <- as.data.frame(X)
 xcoef <- coef(sf11x9)[1:(min(zidx)-1)]
-relprices <- rep(5, nrow(db1)) #db1$relprice[sf11x9$validObs]
+relprices <-db1$relprice[sf11x9$validObs]
 
 # function to calculate the MPP
 calc_mpp <- function(N, row){
