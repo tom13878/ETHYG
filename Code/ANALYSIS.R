@@ -167,7 +167,7 @@ db2$PY <- db2$YW * 1000
 # maximum water limited yield (Yw) is a reasonable proxy for
 # missing information. Might scale this down to see the effect.
 
-GYGA_YW <- max(db2$PY, na.rm=TRUE)
+GYGA_YW <- mean(db2$PY, na.rm=TRUE)
 db2 <- mutate(db2, PY = ifelse(is.na(PY), GYGA_YW, PY))
 
 # join all the yield measures into a single
