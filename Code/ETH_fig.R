@@ -124,7 +124,10 @@ GapClose1a <- GapClose1 %>%
 
 SPAMData <- readRDS(file.path(root, "Cache/SPAMData_ETH.rds"))  %>%
   rename(ZONE = zone, Y_SPAM = yield, PROD = TargetProduction) %>%
-  mutate(ZONE = toupper(ZONE))
+  mutate(ZONE = toupper(ZONE),
+         ZONE = dplyr::recode(ZONE, "BENISHANGUL GUMUZ" = "BENSHANGULGUMUZ",
+                              "SOMALIE" = "SOMALI"))
+
 
 
 # Closing of yield gaps per zone
