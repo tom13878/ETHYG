@@ -167,7 +167,7 @@ db2$PY <- db2$YW * 1000
 # maximum water limited yield (Yw) is a reasonable proxy for
 # missing information. Might scale this down to see the effect.
 
-GYGA_YW <- max(db2$PY, na.rm=TRUE)
+GYGA_YW <- mean(db2$PY, na.rm=TRUE)
 db2 <- mutate(db2, PY = ifelse(is.na(PY), GYGA_YW, PY))
 
 # join all the yield measures into a single
@@ -249,7 +249,7 @@ summary(Overall_check)
 # Create database with relevant variables for further analysis
 db3 <- select(db2, hhid, holder_id, parcel_id, field_id, ZONE,
               REGNAME, surveyyear, lat, lon, crop_count2, area,
-              relprice,
+              relprice, Pn, Pm, mpp,
               Npm, yesN, Y, N, Ycor, TEY, EY, PFY, PY, ERROR_l,
               ERROR_s, TEYG_l, TEYG_s, EYG_l, EYG_s, EUYG_l,
               EUYG_s, TYG_l, TYG_s, YG_l, YG_s, YG_l_Ycor, YG_s_Ycor)

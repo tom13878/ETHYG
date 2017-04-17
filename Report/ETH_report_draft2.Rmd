@@ -1,6 +1,6 @@
 ---
 title: "Ethiopia Stochastic Frontiers Analysis Draft 2"
-author: "Tomas Morley"
+author: "Tomas Morley", "Michiel van Dijk", "Assefa Admassie", "Roel Jongeneel"
 date: "30 March 2017"
 output:
   pdf_document: default
