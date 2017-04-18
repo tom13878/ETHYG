@@ -39,7 +39,8 @@ by_zone <- group_by(db3, ZONE) %>%
             relprice = mean(relprice, na.rm=TRUE),
             mpp = mean(mpp, na.rm=TRUE))
 
-# 
+# get rid of NA values for the yield gap. caused by NA values
+# for the Npm variable
 db4 <- filter(db3, !is.na(EY))
 
 # Table with yield levels
