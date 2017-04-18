@@ -29,9 +29,18 @@ source(file.path(root, "Code/waterfall_plot.r"))
 
 ### LOAD DATA
 db3 <- readRDS(file.path(root, "Cache/db3.rds"))
-#db_sfaCD_CRE_Z <- readRDS(file.path(root, "Cache/db_sfaCD_CRE_Z.rds"))
 
-# 
+# table of N, N0, pm, pn, relprice and mpp by zone
+by_zone <- group_by(db3, ZONE) %>%
+  summarise(n = mean(N, na.rm=TRUE),
+            n0 = mean(N[yesN == 1], na.rm=TRUE),
+            pn = mean(Pn, na.rm=TRUE),
+            pm = mean(Pm, na.rm=TRUE),
+            relprice = mean(relprice, na.rm=TRUE),
+            mpp = mean(mpp, na.rm=TRUE))
+
+# get rid of NA values for the yield gap. caused by NA values
+# for the Npm variable
 db4 <- filter(db3, !is.na(EY))
 
 # Table with yield levels

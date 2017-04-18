@@ -24,17 +24,11 @@ sf11x9 <- sfa(logyld ~ logN + loglab + logseed +
                 logNsq + loglabsq + logseedsq +
                 logN:loglab + logN:logseed +
                 loglab:logseed + logarea + manure + phdum55_2_70 +
-                crop_count2 + dumoxen + impr + SOC2 + logslope +
+                crop_count2 + dumoxen + impr + noN + SOC2 + logslope +
                 elevation + GGD + AI + TS|
                 -1 + age + sex + ed_any + title +
                 extension + credit + dist_market +
                 popEA + logarea_tot, data=db1)
-
-# tobit model of logN against prices
-library(AER)
-summary(tobit(logN ~ log(Pn) + log(Pm) + phdum55_2_70 + manure +
-                credit + title + literate + extension + sex + age +
-                area_tot + dist_market + cost2large_town, data=db1))
 
 # we want to evaluate the frontier function
 # and avoid the Z variables
@@ -80,8 +74,8 @@ econ_opt <- function(i){
   # even on the most productive farms
   # 700 kg/ha of nitrogen is excessive
   lower <- tryCatch(optimize(function(x) mpp_price(x, row, relprice),
-                       interval=c(1, 700),
-                       maximum =TRUE)$maximum, error=function(err) NA)
+                             interval=c(1, 700),
+                             maximum =TRUE)$maximum, error=function(err) NA)
   
   # then we need to find the root
   # i.e. the point at which the
@@ -125,7 +119,7 @@ db2 <- db2 %>%
     TEY = exp(as.numeric(fitted(model))),
     TE = as.numeric(efficiencies(model)),
     resid = as.numeric(resid(model))
-)
+  )
 
 # 2. Economic yield is found by evaluating the frontier 
 # function at the economically optimal nitrogen rate (Npm)
@@ -161,7 +155,8 @@ predict_dat2 <- mutate(predict_dat,
                        logseed = logseed + log(1.5),
                        logseedsq = logseed^2,
                        dumoxen = 1,
-                       impr = 1)
+                       impr = 1,
+                       noN = 0)
 
 # make prediction
 db2$PFY <- exp(predict.sfa(sf11x9, predict_dat2))
@@ -234,7 +229,7 @@ mean(db2$EUYG_s)
 check <- select(X_EUYG_check, hhid, holder_id, parcel_id, field_id,
                 surveyyear, ZONE, REGNAME, area, crop_count2,
                 lat, lon, noN, yesN, loglab, lab, Npm, mpp, Y, 
-                       PFY, EY, EUYG_l) 
+                PFY, EY, EUYG_l) 
 
 # TYG
 X_TYG_check <- filter(db2, TYG_l<0)        
