@@ -30,6 +30,12 @@ sf11x9 <- sfa(logyld ~ logN + loglab + logseed +
                 extension + credit + dist_market +
                 popEA + logarea_tot, data=db1)
 
+# tobit model of logN against prices
+library(AER)
+summary(tobit(logN ~ log(Pn) + log(Pm) + phdum55_2_70 + manure +
+                credit + title + literate + extension + sex + age +
+                area_tot + dist_market + cost2large_town, data=db1))
+
 # we want to evaluate the frontier function
 # and avoid the Z variables
 zidx <- grep("Z_", names(coef(sf11x9)))
