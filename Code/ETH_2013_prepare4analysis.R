@@ -146,6 +146,9 @@ db1$manure <- ifelse(db1$manure %in% 2, 1,
 db1$compost <- ifelse(db1$compost %in% 2, 1,
                      ifelse(db1$compost %in% 1, 0, NA))
 
+# set manure variable to 0 if it is NA
+db1$manure <- ifelse(is.na(db1$manure), 0, db1$manure)
+
 # remove everything but the cleaned data
 rm(db0, dbP, Prices, ETH2013)
 
