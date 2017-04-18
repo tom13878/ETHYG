@@ -23,7 +23,7 @@ source(file.path(root, "Code/predict.sfa.R"))
 sf11x9 <- sfa(logyld ~ logN + loglab + logseed +
                 logNsq + loglabsq + logseedsq +
                 logN:loglab + logN:logseed +
-                loglab:logseed + logarea + phdum55_2_70 +
+                loglab:logseed + logarea + manure + phdum55_2_70 +
                 crop_count2 + dumoxen + SOC2 + logslope +
                 elevation + GGD + AI + TS|
                 -1 + age + sex + ed_any + title +
