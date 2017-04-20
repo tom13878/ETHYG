@@ -1,6 +1,6 @@
 ---
 title: "Ethiopia Stochastic Frontiers Analysis Draft 2"
-author: "Tomas Morley", "Michiel van Dijk", "Assefa Admassie", "Roel Jongeneel"
+author: "Tomas Morley, Michiel van Dijk, Assefa Admassie, Roel Jongeneel"
 date: "30 March 2017"
 output:
   pdf_document: default
@@ -38,7 +38,7 @@ source(file.path(root, "Code/production_function_tests.R"))
 # Source figures, tables and maps
 source(file.path(root, "Code/ETH_fig.R"))
 source(file.path(root, "Code/ETH_tab.R"))
-# source(file.path(root, "Code/ETH_map.R"))
+source(file.path(root, "Code/ETH_map.R"))
 
 ```
 
@@ -124,6 +124,13 @@ The main data source is the Living Standards Measurement Study - Integrated Surv
 In both waves of the data respondents were visited twice as part of a post planting and post harvesting questionnaire. Through these questionnaires, detailed information at the plot level was gathered including the size of the harvest for each crop. The vast majority of plots were GPS measured, however, in some cases this was not the case and area measurements were imputed using multiple imputation and following LSMS-ISA World Bank (2014). Respondents were asked to record key production inputs including seed application, fertilizer and labour rates. Moreover, important variables regarding environmental variables, crop management practices, and the socioeconomic status of the household were recorded at the plot, household and community levels.
 
 The longitude and latitude of each household was recorded and households were matched as part of the LSMS-ISA with climate, soil and geographical from sources including IFPRI, Worlclim, NASA and the Ethiopian Roads Agency among others. Using the longitude and latitude of the households we were able to further augment the dataset with more granular informationfrom the Africa Soil Information Service (AfSIS, http://africasoils.net) and the Global Yield Gap Atlas (GYGA, www.yieldgap.org). AfSIS provides soil quality maps for Africa at 250m spatial resolution and various depths based on 28 thousand sampling locations (Hengl et al., 2015). We use AfSIS data to derive the soil organic carbon stock and pH for the top 200cm soil layer. We also derive the water-limited potential yield from GYGA which acts as a cap on the highest yield levels that can be attained in Ethiopia from a biophysical standpoint.
+
+```{r}
+Map_GYGA_LSMS
+Map_ZONE_LSMS
+```
+
+
 
 Table 1 provides summary statistics for the key variables in our study.
 
@@ -247,4 +254,4 @@ __Table 4: __
 pander(ZonalYieldGap_l_sh)
 ```
 
-![](C:/Users/morle001/WEcR/ETHYG/FigTabMap/Framework.png)
+

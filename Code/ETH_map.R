@@ -98,49 +98,49 @@ Map_GYGA_LSMS <- Map_GYGA +
 
 Map_GYGA_LSMS 
 
-# # Zonal map with community yield levels
-# # read in map of Ethiopia as a SpatialPolygonsDataFrame
-# 
-# countryMap <- getData('GADM', country = "ETH", level = 1) 
-# 
-# # Rename zones using LSMS names
-# countryMap@data$ZONE <- countryMap@data$NAME_1
-# countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Oromia")] <- "Oromiya"
-# countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Somali")] <- "Somalie"
-# countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Benshangul-Gumaz")] <- "Benishangul Gumuz"
-# countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Southern Nations, Nationalities and Peoples")] <- "SNNP"
-# countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Gambela Peoples")] <- "Gambella"
-# countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Harari People")] <- "Harari"
-# countryMap@data$ZONE <- factor(countryMap@data$ZONE)
-# 
-# # Remove Addis Ababa and Dire Dawa
-# countryMap <- countryMap[!(countryMap@data$ZONE %in% c("Addis Abeba", "Dire Dawa")),]
-# plot(countryMap)
-# 
-# #  fortify spatial data to use with ggplot and join using join functions from dplyr
-# #    The join is on id, make sure all ids are character vectors
-# tf <- fortify(countryMap)
-# countryMap@data <- rename(countryMap@data, id = ID_1)
-# countryMap@data$id <- as.character(countryMap@data$id)
-# tf2 <- left_join(tf, countryMap@data)
-# 
-# # Use ggplot to plot map of Tanzania, specifying the labels and choosing nice colours
-# #    from the RColorBrewer package
-# 
-# #display.brewer.all()
-# 
-# ZONE_LSMS <- ggplot()+
-#   geom_polygon(data=tf2, aes(x=long, y=lat, group=group, fill=ZONE), colour="black")+
-#   geom_point(data=meanYield, aes(x=lon, y=lat, size=(meanYield2)), colour="black")+
-#   scale_fill_brewer(name = "Zones", palette = "Set1") +
-#   scale_size_manual(name="Average yield (tons)", values=c(1.5, 2.5, 3.5, 4,5)) +
-#   coord_equal()+
-#   labs(x="", y="")+
-#   theme_classic() +
-#   theme(legend.key=element_blank(),
-#         line = element_blank(),
-#         axis.text = element_blank())
-# #ZONE_LSMS 
-# 
-# 
-# 
+# Zonal map with community yield levels
+# read in map of Ethiopia as a SpatialPolygonsDataFrame
+
+countryMap <- getData('GADM', country = "ETH", level = 1)
+
+# Rename zones using LSMS names
+countryMap@data$ZONE <- countryMap@data$NAME_1
+countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Oromia")] <- "Oromiya"
+countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Somali")] <- "Somalie"
+countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Benshangul-Gumaz")] <- "Benishangul Gumuz"
+countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Southern Nations, Nationalities and Peoples")] <- "SNNP"
+countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Gambela Peoples")] <- "Gambella"
+countryMap@data$ZONE[countryMap@data$NAME_1 %in% c("Harari People")] <- "Harari"
+countryMap@data$ZONE <- factor(countryMap@data$ZONE)
+
+# Remove Addis Ababa and Dire Dawa
+countryMap <- countryMap[!(countryMap@data$ZONE %in% c("Addis Abeba", "Dire Dawa")),]
+plot(countryMap)
+
+#  fortify spatial data to use with ggplot and join using join functions from dplyr
+#    The join is on id, make sure all ids are character vectors
+tf <- fortify(countryMap)
+countryMap@data <- rename(countryMap@data, id = ID_1)
+countryMap@data$id <- as.character(countryMap@data$id)
+tf2 <- left_join(tf, countryMap@data)
+
+# Use ggplot to plot map of Tanzania, specifying the labels and choosing nice colours
+#    from the RColorBrewer package
+
+#display.brewer.all()
+
+Map_ZONE_LSMS <- ggplot()+
+  geom_polygon(data=tf2, aes(x=long, y=lat, group=group, fill=ZONE), colour="black")+
+  geom_point(data = yld, aes(x = lon, y = lat, size = av_yld2), colour = "black") +
+  scale_size_manual(name =  "Average yield (tons)", values = c(1, 2, 3, 4)) + 
+  scale_fill_brewer(name = "Zones", palette = "Set1") +
+  coord_equal()+
+  labs(x="", y="")+
+  theme_classic() +
+  theme(legend.key=element_blank(),
+        line = element_blank(),
+        axis.text = element_blank())
+Map_ZONE_LSMS
+
+
+

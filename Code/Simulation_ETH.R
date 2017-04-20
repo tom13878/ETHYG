@@ -1,6 +1,17 @@
+
+# All plots have extension => Ycorr *1.1
+# AYg calculated at MVCR = 2
+# All plots use fertilizer at optimal rate using MVC = 2
+# all plots impr seeds, all plots pesticides.
+# MVC = 1
+# Fertilizer subsidies
+# Transport costs decrease
+# Innovation = MPP increase
+
+
 #'==============================================================================
 #' Project:  IMAGINE ETH
-#' Subject:  Analysis file
+#' Subject:  Simulation file
 #' Author:   Michiel van Dijk & Tom Morley
 #' Contact:  michiel.vandijk@wur.nl, Tomas.morley@wur.nl
 #' Output:   yield gap breakdown 
@@ -114,8 +125,6 @@ db2$mpp <- calc_mpp((exp(X$logN) - 1) , X)
 
 model <- sf11x9
 
-# Calculate VCR
-db2$vcr = db2$mpp/db2$relprice
 
 # 1. Technical efficiency yield is found using the
 # output of the sfa model
@@ -130,6 +139,14 @@ db2 <- db2 %>%
     resid = as.numeric(resid(model))
   )
 
+# 1a. Calculate yield level if all plots would receive extension services.
+# We use the elasticity that is found in the z-part of the analysis
+ext <- 0.1
+db2 <- db2 %>%
+  mutate(Yext = ifelse(extension !=1, Ycor*(1+ext), Ycor))
+
+
+
 # 2. Economic yield is found by evaluating the frontier 
 # function at the economically optimal nitrogen rate (Npm)
 # This means we need to swap out the N (logN) variable
@@ -139,9 +156,8 @@ model_vars <- names(sf11x9$olsParam)[-c(1, length(names(sf11x9$olsParam)))]
 model_vars <- model_vars[-grep(":", model_vars)] # get rid of interaction terms
 predict_dat <- db2[, model_vars]
 predict_dat <- mutate(predict_dat,
-                      logN = log(db2$Npm),
+                      logN = ifelse(db2$Npm > db2$N, log(db2$Npm), log(db2$N)),
                       logNsq = logN^2)
-                      
 
 # now make the prediction predict.sfa
 # function is not made to handle NA values
@@ -168,9 +184,43 @@ predict_dat2 <- mutate(predict_dat,
                        impr = 1,
                        manure = 1)
 
-
 # make prediction
 db2$PFY <- exp(predict.sfa(sf11x9, predict_dat2))
+
+# 3a. Calculate yield when all plots would use more seeds
+predict_dat3 <- mutate(predict_dat,
+                      logN = log(db2$Npm),
+                      logNsq = logN^2,
+                      logseed = logseed + log(1.5),
+                      logseedsq = logseed^2)
+
+# now make the prediction predict.sfa
+# function is not made to handle NA values
+# so to keep order and compare with other yield
+# measures we probably want to set NA values to
+# zero temporarily 
+predict_dat3$logN[is.na(predict_dat3$logN)] <- 0
+predict_dat3$logNsq[is.na(predict_dat3$logNsq)] <- 0
+db2$Yseed <- exp(predict.sfa(model, predict_dat3))
+db2$Yseed[predict_dat3$logN == 0] <- NA
+
+# 3b. Calculate yield when all plots would use improved seeds
+predict_dat4 <- mutate(predict_dat,
+                       logN = log(db2$Npm),
+                       logNsq = logN^2,
+                       logseed = logseed + log(1.5),
+                       logseedsq = logseed^2,
+                       impr = 1)
+
+# now make the prediction predict.sfa
+# function is not made to handle NA values
+# so to keep order and compare with other yield
+# measures we probably want to set NA values to
+# zero temporarily 
+predict_dat4$logN[is.na(predict_dat4$logN)] <- 0
+predict_dat4$logNsq[is.na(predict_dat4$logNsq)] <- 0
+db2$Yimpr <- exp(predict.sfa(model, predict_dat4))
+db2$Yimpr[predict_dat4$logN == 0] <- NA
 
 # 4. Potential yield
 db2$PY <- db2$YW * 1000
@@ -187,6 +237,9 @@ db2 <- mutate(db2, PY = ifelse(is.na(PY), GYGA_YW, PY))
 # dataframe
 #  We cap all values at PY because we consider this as an absolute potential and recalculate all gaps.
 db2 <- mutate(db2, PFY = ifelse(PY-PFY<0, PY, PFY),
+              Yimpr = ifelse(PY-Yimpr<0, PY, Yimpr),
+              Yseed = ifelse(PY-Yseed<0, PY, Yseed),
+              Yext = ifelse(PY-Yext<0, PY, Yext),
               EY = ifelse(PY-EY<0, PY, EY),
               TEY = ifelse(PY-TEY<0, PY, TEY),
               Ycor = ifelse(PY-Ycor<0, PY, Ycor),
@@ -199,10 +252,13 @@ db2 <- db2 %>%
     ERROR_s = Y/Ycor,      # Error gap
     TEYG_l = TEY-Ycor,     # Technical efficiency yield gap using Ycor as basis
     TEYG_s = Ycor/TEY,     # Technical efficiency yield gap using Ycor as basis
+    YextG_l = Yext-Ycor,
     EYG_l = EY-TEY,        # Economic yield gap
     EYG_s = TEY/EY,        # Economic yield gap
     EUYG_l = PFY-EY,       # Feasible yield gap
     EUYG_s = EY/PFY,       # Feasible yield gap
+    YseedG_l = Yseed-EY,
+    YimprG_l = Yimpr-Yseed,
     TYG_l = PY-PFY,        # Technology yield gap
     TYG_s = PFY/PY,        # Technology yield gap
     YG_l = PY-Y,           # Yield gap
@@ -225,18 +281,15 @@ mean(db2$TEYG_s, na.rm=TRUE)
 # will have lower Y when they start using N. This is because there yield can be located above the frontier (based on fertilizer users) because of the positive effect of noN.
 # If we believe that these plots are structurally different and do not use fertilizer because of better soils, they will in fact use too much N and have to decrease.
 X_EYG_check <- filter(db2, EYG_l<0)        
-mean(db2$EYG_s)
+mean(db2$EYG_s, na.rm = T)
 
 # EUYG
 # A number of plots have negative EUYG_l because Npm is
 # larger than Npy, the nitrogen that is required to
 # achieve Potential yield (Yw). We have corrected this
 # so check should be 0.
-# CHECK: we stil find negative values. It is possible
-# that because of the interaction with labour >N results
-# in <y? TO BE CHECKED
 X_EUYG_check <- filter(db2, EUYG_l<0)        
-mean(db2$EUYG_s)
+mean(db2$EUYG_s, na.rm = T)
 check <- select(X_EUYG_check, hhid, holder_id, parcel_id, field_id,
                 surveyyear, ZONE, REGNAME, area, crop_count2,
                 lat, lon, noN, yesN, loglab, lab, Npm, mpp, Y, 
@@ -260,12 +313,13 @@ summary(Overall_check)
 
 
 # Create database with relevant variables for further analysis
-db3 <- select(db2, hhid, holder_id, parcel_id, field_id, ZONE, vcr, 
+dbsim <- select(db2, hhid, holder_id, parcel_id, field_id, ZONE,
               REGNAME, surveyyear, lat, lon, crop_count2, area,
-              relprice, Pn, Pm, mpp,
-              Npm, yesN, Y, N, Ycor, TEY, EY, PFY, PY, ERROR_l,
-              ERROR_s, TEYG_l, TEYG_s, EYG_l, EYG_s, EUYG_l,
+              relprice,
+              Npm, yesN, Y, N, Ycor, Yext, TEY, EY, Yseed, Yimpr, PFY, PY, ERROR_l,
+              ERROR_s, TEYG_l, YextG_l, TEYG_s, EYG_l, EYG_s, YseedG_l, YimprG_l, EUYG_l,
               EUYG_s, TYG_l, TYG_s, YG_l, YG_s, YG_l_Ycor, YG_s_Ycor)
 
-# save db3 for further analysis
-saveRDS(db3, "Cache/db3.rds")
+# save dbsim for further analysis
+saveRDS(dbsim, "Cache/dbsim.rds")
+
