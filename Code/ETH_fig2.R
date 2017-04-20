@@ -34,7 +34,7 @@ db3 <- readRDS(file.path(root, "Cache/db3.rds"))
 # Group ZONES
 db3 <- db3 %>% 
   mutate(ZONE = ifelse( ZONE %in% c("DIRE DAWA", "AFAR", "GAMBELLA"), "Other", ZONE))
-
+db3$mpp[db3$ZONE %in% "BENSHANGULGUMUZ"] <- NA # ignore as less than 5 mpp values or so
 
 # table of N, N0, pm, pn, relprice and mpp by zone
 by_zone <- db3 %>%
@@ -47,7 +47,7 @@ by_zone <- db3 %>%
             pn = mean(Pn, na.rm=TRUE),
             pm = mean(Pm, na.rm=TRUE),
             relprice = mean(relprice, na.rm=TRUE),
-            mpp = mean(as.numeric(mpp), na.rm=TRUE),
+            mpp = mean(as.numeric(mpp), na.rm=TRUE)),
             vcr = mean(as.numeric(vcr), na.rm = TRUE))
 
 # get rid of NA values for the yield gap. caused by NA values
@@ -101,4 +101,20 @@ yg_share <- yg_level %>%
     TYG = 100*TYG_l/YG_l_Ycor,
     YG = 100*(TEYG_l + EYG_l + EUYG_l + TYG_l)/YG_l_Ycor) %>%
   dplyr::select(ZONE, TEYG:YG) 
+
+# bar charts
+yg_share2 <- gather(yg_share[, -6], gap, level, -ZONE)
+yg_level2 <- gather(yg_level[, -6], gap, level, -ZONE)
+factor()
+
+ggplot(yg_share2, aes(x = ZONE, y = level, fill = gap)) + 
+  geom_bar(stat = "identity")
+
+ggplot(yg_level2, aes(x = ZONE, y = level, fill = gap)) + 
+  geom_bar(stat = "identity")
+
+# histogram of TEYG
+ggplot(db3, aes(x = TEYG_l)) + geom_histogram() +
+  geom_vline(xintercept = mean(db3$TEYG_l), color = "red") +
+  geom_vline(xintercept = median(db3$TEYG_l))
 
