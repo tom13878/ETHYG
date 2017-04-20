@@ -24,7 +24,7 @@ sf11x9 <- sfa(logyld ~ logN + loglab + logseed +
                 logNsq + loglabsq + logseedsq +
                 logN:loglab + logN:logseed +
                 loglab:logseed + logarea + manure + phdum55_2_70 +
-                crop_count2 + dumoxen + impr + noN + SOC2 + logslope +
+                crop_count2 + dumoxen  + impr + noN + SOC2 + logslope +
                 elevation + GGD + AI + TS|
                 -1 + age + sex + ed_any + title +
                 extension + credit + dist_market +
