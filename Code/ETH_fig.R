@@ -31,13 +31,17 @@ source(file.path(root, "Code/waterfall_plot.r"))
 db3 <- readRDS(file.path(root, "Cache/db3.rds"))
 
 # table of N, N0, pm, pn, relprice and mpp by zone
-by_zone <- group_by(db3, ZONE) %>%
-  summarise(n = mean(N, na.rm=TRUE),
+by_zone <- db3 %>%
+  ungroup() %>%
+  group_by(ZONE) %>%
+  summarize(number = n(),
+            n = mean(N, na.rm=TRUE),
             n0 = mean(N[yesN == 1], na.rm=TRUE),
+            Npm = mean(Npm, na.rm=TRUE),
             pn = mean(Pn, na.rm=TRUE),
             pm = mean(Pm, na.rm=TRUE),
             relprice = mean(relprice, na.rm=TRUE),
-            mpp = mean(mpp, na.rm=TRUE))
+            mpp = mean(as.numeric(mpp), na.rm=TRUE))
 
 # get rid of NA values for the yield gap. caused by NA values
 # for the Npm variable
@@ -46,7 +50,7 @@ db4 <- filter(db3, !is.na(EY))
 # Table with yield levels
 YieldLevels <- bind_rows(
   db4 %>% 
-    select(Zone = ZONE, Y, Ycor, TEY, EY, PFY, PY, area) %>%
+    dplyr::select(Zone = ZONE, Y, Ycor, TEY, EY, PFY, PY, area) %>%
     group_by(Zone) %>%
     summarize(Y = (sum((Y)*area)/sum(area)),
               Ycor = (sum((Ycor)*area)/sum(area)),
@@ -64,7 +68,7 @@ YieldLevels <- bind_rows(
               EY = (sum((EY)*area, na.rm=TRUE)/sum(area)),
               PFY = (sum((PFY)*area)/sum(area)),
               PY = (sum((PY)*area)/sum(area)))) %>%
-  select(Zone, Y, Ycor, TEY, EY, PFY, PY)
+  dplyr::select(Zone, Y, Ycor, TEY, EY, PFY, PY)
 
 
 # Table with absolute yield gap information per zone
@@ -72,7 +76,7 @@ YieldLevels <- bind_rows(
 # We therefore calculate YG_s as the product of the weighted components.
 ZonalYieldGap_l <- bind_rows(
   db4 %>% 
-    select(Zone = ZONE, ERROR_l, TEYG_l, EYG_l, EUYG_l, TYG_l, YG_l_Ycor, YG_l, area) %>%
+    dplyr::select(Zone = ZONE, ERROR_l, TEYG_l, EYG_l, EUYG_l, TYG_l, YG_l_Ycor, YG_l, area) %>%
     group_by(Zone) %>%
     summarize(ERROR_l =(sum((ERROR_l)*area, na.rm=TRUE)/sum(area)),
               TEYG_l = (sum((TEYG_l)*area, na.rm=TRUE)/sum(area)),
@@ -234,6 +238,7 @@ Fig_waterfall <- waterfall_f(wf.df, offset=offset) +
   scale_y_continuous(breaks=seq(0, 45, 5), labels = comma) +
   theme_classic() 
 
+Fig_waterfall
 
 
 
